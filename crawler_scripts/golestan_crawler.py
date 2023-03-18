@@ -26,12 +26,15 @@ class GolestanCrawler(Crawler):
         find_serial = Wait(self.driver, 5).until(ec.visibility_of_element_located((By.ID, id_name)))
         find_serial.click()
 
+    def get_captcha(self):
+        # TODO: this should be replace with python code instead of getting from input
+        return input()
+
     def login(self, student_id, national_id):
         self.go_to_frame(1)
         self.fill_input("F80351", student_id)
         self.fill_input("F80401", national_id)
-        # TODO: this should be replace with python code instead of getting from input
-        captcha = input()
+        captcha = self.get_captcha()
         self.fill_input("F51701", captcha)
         self.click_on_button("btnLog")
         time.sleep(5)
