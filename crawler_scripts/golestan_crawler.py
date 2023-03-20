@@ -1,7 +1,3 @@
-import pprint
-import string
-
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -14,10 +10,18 @@ class GolestanCrawler(Crawler):
         super().__init__()
         self.driver.get('https://golestan.iust.ac.ir/forms/authenticateuser/main.htm')
 
-    def go_to_frame(self, number):
-        frames = ['Faci' + str(number), 'Master', 'Form_Body']
+    def switch_to_inner_frames(self, frames):
+        self.driver.switch_to.default_content()
         for frame in frames:
             self.driver.switch_to.frame(frame)
+
+    @staticmethod
+    def get_form_body(number):
+        return ['Faci' + str(number), 'Master', 'Form_Body']
+
+    @staticmethod
+    def get_commander(number):
+        return ['Faci' + str(number), 'Commander']
 
     def fill_input(self, id_name, value):
         find_serial = Wait(self.driver, 5).until(ec.visibility_of_element_located((By.ID, id_name)))
@@ -49,7 +53,7 @@ class GolestanCrawler(Crawler):
         return input()
 
     def login(self, student_id, national_id):
-        self.go_to_frame(1)
+        self.switch_to_inner_frames(self.get_form_body(1))
         time.sleep(1)
         self.fill_input("F80351", student_id)
         self.fill_input("F80401", national_id)
@@ -59,7 +63,7 @@ class GolestanCrawler(Crawler):
         time.sleep(5)
 
     def go_to_102(self):
-        self.go_to_frame(2)
+        self.switch_to_inner_frames(self.get_form_body(2))
         self.fill_input("F20851", "102")
         self.click_on_button("OK")
         time.sleep(5)
@@ -67,11 +71,9 @@ class GolestanCrawler(Crawler):
     def go_to_this_term_courses(self, available=True):
         self.go_to_102()
         self.driver.switch_to.default_content()
-        self.go_to_frame(3)
+        self.switch_to_inner_frames(self.get_form_body(3))
         self.fill_input('GF10956_0', int(available))
-        self.driver.switch_to.default_content()
-        self.driver.switch_to.frame('Faci3')
-        self.driver.switch_to.frame('Commander')
+        self.switch_to_inner_frames(self.get_commander(3))
         self.click_on_button("IM16_ViewRep")
         time.sleep(10)
 
@@ -92,13 +94,11 @@ class GolestanCrawler(Crawler):
 
     def get_courses(self, available=True):
         self.go_to_this_term_courses(available)
-        self.driver.switch_to.default_content()
-        parent_window_handle = self.driver.current_window_handle
-        self.driver.switch_to.frame('Faci3')
-        self.driver.switch_to.frame('Commander')
+        self.switch_to_inner_frames(frames=self.get_commander(3))
         self.click_on_button('ExToEx')
-        self.switch_to_child_window(self.driver.window_handles[1])
+        self.switch_to_child_window(window_title=self.driver.window_handles[1])
         time.sleep(2)
         self.extract_courses()
-        self.close_all_windows(parent_window_handle)
-        self.switch_to_parent_window(parent_window_handle)
+        self.close_all_windows(parent_window_handle=self.driver.window_handles[0])
+        self.switch_to_parent_window(parent_window_handle=self.driver.window_handles[0])
+        time.sleep(5)
