@@ -1,9 +1,8 @@
-from bs4 import BeautifulSoup
-import requests
 from requests import Response
+from bs4_crawler import BS4Crawler
 
 
-class LMSCrawler:
+class LMSCrawler(BS4Crawler):
     LOGIN_URL = 'https://lms.iust.ac.ir/login/index.php'
     AUTHENTICATION_URL = 'https://its.iust.ac.ir/oauth2/autheticate'
     BASE_COURSE_VIEW_LINK = 'https://lms.iust.ac.ir/course/view.php?id='
@@ -11,8 +10,7 @@ class LMSCrawler:
     LMS_PROFILE_URL = 'https://lms.iust.ac.ir/user/profile.php'
 
     def __init__(self):
-        self.soup = None
-        self.session = requests.session()
+        super().__init__()
 
     @staticmethod
     def get_login_data(username, password) -> dict:
@@ -21,13 +19,6 @@ class LMSCrawler:
             "pass": password,
             "form_id": "oauth2_server_authenticate_form",
         }
-
-    def close_session(self):
-        self.session.close()
-
-    def set_soup(self, url):
-        response = self.session.get(url)
-        self.soup = BeautifulSoup(response.text, 'html.parser')
 
     def login(self, username, password) -> Response | None:
         self.set_soup(self.LOGIN_URL)
