@@ -1,11 +1,11 @@
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
-from crawler_scripts.crawler import Crawler
+from crawler_scripts.selenium_crawler import SeleniumCrawler
 import time
 
 
-class GolestanCrawler(Crawler):
+class GolestanCrawler(SeleniumCrawler):
     def __init__(self):
         super().__init__()
         self.driver.get('https://golestan.iust.ac.ir/forms/authenticateuser/main.htm')

@@ -2,7 +2,7 @@ from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-class Crawler:
+class SeleniumCrawler:
     def __init__(self):
         self.options = webdriver.ChromeOptions()
         self.options.add_experimental_option("detach", True)
