@@ -7,6 +7,7 @@ name = "pypi"
 selenium = "*"
 bs4 = "*"
 webdriver-manager = "*"
+requests = "*"
 
 [dev-packages]
 
