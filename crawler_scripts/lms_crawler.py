@@ -8,6 +8,7 @@ class LMSCrawler:
     AUTHENTICATION_URL = 'https://its.iust.ac.ir/oauth2/autheticate'
     BASE_COURSE_VIEW_LINK = 'https://lms.iust.ac.ir/course/view.php?id='
     BASE_COURSE_INFO_LINK = 'https://lms.iust.ac.ir/course/info.php?id='
+    LMS_PROFILE_URL = 'https://lms.iust.ac.ir/user/profile.php'
 
     def __init__(self):
         self.soup = None
@@ -21,9 +22,15 @@ class LMSCrawler:
             "form_id": "oauth2_server_authenticate_form",
         }
 
-    def login(self, username, password) -> Response | None:
-        response = self.session.get(self.LOGIN_URL)
+    def close_session(self):
+        self.session.close()
+
+    def set_soup(self, url):
+        response = self.session.get(url)
         self.soup = BeautifulSoup(response.text, 'html.parser')
+
+    def login(self, username, password) -> Response | None:
+        self.set_soup(self.LOGIN_URL)
         url = self.soup.find(class_="btn btn-primary btn-block")['href']
         self.session.get(url)
         data = self.get_login_data(username, password)
@@ -33,46 +40,57 @@ class LMSCrawler:
         else:
             return None
 
-    def find_user_courses(self, all_terms=False):
+    def find_user_courses(self, all_terms=False) -> dict:
         """
         Using this method we can get data about user's courses. this data can be from this term's courses or
         previous terms' courses.
         fields of data: {"id": course_lms_id, "term": course_term,
                         "view_link": course_view_link, "info_link": course_info_link,
                         "is_active": course_is_active, "days": days_list, "clock": course_clock_time,
-                        "teacher_lms_id"}
+                        "course_number", "course_group", "teacher_lms_id"}
         """
-        response = self.session.get('https://lms.iust.ac.ir/user/profile.php')
-        self.soup = BeautifulSoup(response.text, 'html.parser')
-
+        self.set_soup(self.LMS_PROFILE_URL)
         courses_dict = {}
         courses = self.soup.find('li', class_="contentnode courseprofiles").find_all('a')
         if all_terms:
-            response = self.session.get(courses[-1]['href'])
-            self.soup = BeautifulSoup(response.text, 'html.parser')
+            self.set_soup(courses[-1]['href'])
             courses = self.soup.find('li', class_="contentnode courseprofiles").find_all('a')
         else:
             courses = [course for course in courses if course.span]
 
         for course in courses:
             course_name, course_info = self.get_course_info(course)
-            days_list, clock, is_active = self.get_date_time_for_course(course_info['view_link'], all_terms)
+            days_list, clock, is_active, course_number, course_group = self.get_course_view_url_data(
+                course_info['view_link'])
             course_info['days'] = days_list
             course_info['clock'] = clock
             course_info['is_active'] = is_active
+            course_info['course_number'] = course_number
+            course_info['course_group'] = course_group
             teacher_lms_id = self.get_course_teacher_id(course_info['info_link'])
             course_info['teacher_lms_id'] = teacher_lms_id
             courses_dict[course_name] = course_info
 
         return courses_dict
 
-    def get_date_time_for_course(self, view_link, all_terms):
-        response = self.session.get(view_link)
-        self.soup = BeautifulSoup(response.text, 'html.parser')
-        if all_terms:
+    def get_course_view_url_data(self, view_link):
+        self.set_soup(view_link)
+        try:
             adobe = self.soup.find(class_="activity adobeconnect modtype_adobeconnect").find('a')['href']
-            response = self.session.get(adobe)
-            self.soup = BeautifulSoup(response.text, 'html.parser')
+            is_active = True
+        except AttributeError:
+            try:
+                adobe = self.soup.find(class_="activity adobearchive modtype_adobearchive").find('a')['href']
+                is_active = False
+            except:
+                return None, None, False, None, None
+        self.set_soup(adobe)
+        days_list, clock = self.get_date_time_for_course(is_active)
+        course_number, course_group = self.get_course_number_group()
+        return days_list, clock, is_active, course_number, course_group
+
+    def get_date_time_for_course(self, is_active) -> (str, str):
+        if is_active:
             class_time = self.soup.find(class_="aconmeetinforow").find_all(class_="aconlabeltitle")[-1].text
             d_c = class_time.split('از ساعت')
             days = d_c[0].split('زمان تشکیل جلسه :هر')[-1].split(' و ')
@@ -81,15 +99,21 @@ class LMSCrawler:
                 day = day.strip(' ')
                 days_list.append(day)
             clock = d_c[-1].split(' ')[1]
-            return days_list, clock, True
+            return days_list, clock
         else:
-            return None, None, False
+            return None, None
 
-    def get_course_teacher_id(self, course_info_link):
+    def get_course_number_group(self):
+        title = self.soup.find('title').string[-15:-1]
+        title_parts = title.split('-')
+        course_number = title_parts[1]
+        course_group = title_parts[2]
+        return course_number, course_group
+
+    def get_course_teacher_id(self, course_info_link) -> str | None:
         try:
-            response = self.session.get(course_info_link)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            teacher = soup.find(class_="teachers").find('a')
+            self.set_soup(course_info_link)
+            teacher = self.soup.find(class_="teachers").find('a')
             teacher_lms_id = teacher['href'].split('id=')[-1].split('&')[0]
             return teacher_lms_id
         except:
@@ -104,6 +128,3 @@ class LMSCrawler:
         course_info_link = self.BASE_COURSE_INFO_LINK + course_id
         return course_name, {"id": course_id, "term": course_term,
                              "view_link": course_view_link, "info_link": course_info_link}
-
-    def close_session(self):
-        self.session.close()
