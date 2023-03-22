@@ -1,8 +1,10 @@
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
-from crawler_scripts.crawler import Crawler
+from crawler import Crawler
 import time
+import numpy as np
+from bs4 import BeautifulSoup
 
 
 class GolestanCrawler(Crawler):
@@ -79,18 +81,16 @@ class GolestanCrawler(Crawler):
 
     def extract_courses(self):
         self.driver.switch_to.default_content()
-        rows = self.driver.find_elements(by=By.XPATH, value='.//tr')
-        data = []
+        page_source = self.driver.page_source
+        soup = BeautifulSoup(page_source, 'html.parser')
+        courses = []
+        rows = soup.find_all('tr')
         for row in rows:
-            datum = []
-            columns = row.find_elements(by=By.XPATH, value='.//td')
-            for column in columns:
-                if column.text.strip() == '':
-                    datum.append(column.get_attribute('innerHTML'))
-                else:
-                    datum.append(column.text)
-            data.append(datum)
-        return data
+            cols = row.find_all('td')
+            cols = [ele.text.strip() for ele in cols]
+            if cols:
+                courses.append([ele for ele in cols if ele])
+
 
     def get_courses(self, available=True):
         self.go_to_this_term_courses(available)
