@@ -90,7 +90,8 @@ class GolestanCrawler(SeleniumCrawler):
         self.click_on_button('ExToEx')
         self.switch_to_child_window(window_title=self.driver.window_handles[1])
         time.sleep(2)
-        self.extract_courses()
+        data = self.extract_courses()
         self.close_all_windows(parent_window_handle=self.driver.window_handles[0])
         self.switch_to_parent_window(parent_window_handle=self.driver.window_handles[0])
         time.sleep(5)
+        return data
