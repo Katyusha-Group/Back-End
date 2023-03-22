@@ -1,14 +1,13 @@
-from selenium.webdriver.support.ui import WebDriverWait as Wait
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
 from crawler_scripts.selenium_crawler import SeleniumCrawler
 import time
 
 
 class GolestanCrawler(SeleniumCrawler):
+    AUTHENTICATION_URL = 'https://golestan.iust.ac.ir/forms/authenticateuser/main.htm'
+
     def __init__(self):
         super().__init__()
-        self.driver.get('https://golestan.iust.ac.ir/forms/authenticateuser/main.htm')
 
     def switch_to_inner_frames(self, frames):
         self.driver.switch_to.default_content()
@@ -22,14 +21,6 @@ class GolestanCrawler(SeleniumCrawler):
     @staticmethod
     def get_commander(number):
         return ['Faci' + str(number), 'Commander']
-
-    def fill_input(self, id_name, value):
-        find_serial = Wait(self.driver, 5).until(ec.visibility_of_element_located((By.ID, id_name)))
-        find_serial.send_keys(value)
-
-    def click_on_button(self, id_name):
-        find_serial = Wait(self.driver, 5).until(ec.visibility_of_element_located((By.ID, id_name)))
-        find_serial.click()
 
     def switch_to_child_window(self, window_title):
         for window_handle in self.driver.window_handles:
@@ -53,6 +44,7 @@ class GolestanCrawler(SeleniumCrawler):
         return input()
 
     def login(self, student_id, national_id):
+        self.driver.get(self.AUTHENTICATION_URL)
         self.switch_to_inner_frames(self.get_form_body(1))
         time.sleep(1)
         self.fill_input("F80351", student_id)
