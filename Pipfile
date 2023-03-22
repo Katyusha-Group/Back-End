@@ -8,6 +8,7 @@ selenium = "*"
 bs4 = "*"
 webdriver-manager = "*"
 requests = "*"
+mechanicalsoup = "*"
 
 [dev-packages]
 
