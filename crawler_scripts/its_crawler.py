@@ -22,14 +22,14 @@ class ITSCrawler(BS4Crawler):
             self.close_browser()
             return None
 
-    def find_its_id(self):
+    def find_its_id(self) -> str:
         self.browser.open(self.DASHBOARD_URL)
         cur_url = self.browser.url
         url_parts = cur_url.split('/')
         its_id = url_parts[4]
         return its_id
 
-    def crawl_profile_data(self):
+    def crawl_profile_data(self) -> dict:
         resp = self.browser.open(self.PROFILE_URL)
         self.browser.add_soup(response=resp, soup_config={'features': 'lxml'})
         elements = resp.soup.find_all('div', class_='profile-info-value')
@@ -38,7 +38,7 @@ class ITSCrawler(BS4Crawler):
         return data
 
     @staticmethod
-    def extract_data_from_elements(elements):
+    def extract_data_from_elements(elements) -> dict:
         elements = [el.text.strip() for el in elements]
 
         if 'نیست' in elements[11]:
