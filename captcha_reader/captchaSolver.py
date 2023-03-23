@@ -8,9 +8,9 @@ from captcha_reader.cropLettersFromImage import getWords
 
 
 class CaptchaSolver:
-    BASE_DIR = "C:/Users/Kamyar/Dropbox/PC/Documents/Uni/Sem6/Analysis and Designing System/Katyusha/Back-End/captcha_reader/"
-    DATA_DIRECTORY = "./DataSet/"
-    MODEL_PATH = "./finalized_model.sav"
+    BASE_DIR = os.path.join(os.getcwd(), "..\\captcha_reader")
+    DATA_DIRECTORY = "DataSet\\"
+    MODEL_PATH = "finalized_model.sav"
     
     def __init__(self):
         os.chdir(self.BASE_DIR)
