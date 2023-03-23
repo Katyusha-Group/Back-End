@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from crawler import Crawler
 import time
-import numpy as np
+from excel_creator import ExcelCreator
 from bs4 import BeautifulSoup
 
 
@@ -90,8 +90,9 @@ class GolestanCrawler(Crawler):
             cols = [ele.text.strip() for ele in cols]
             if cols:
                 courses.append([ele for ele in cols if ele])
-
-
+        excel_creator = ExcelCreator(courses, 'golestan_courses.xlsx')
+        excel_creator.create_excel()
+        
     def get_courses(self, available=True):
         self.go_to_this_term_courses(available)
         self.switch_to_inner_frames(frames=self.get_commander(3))
