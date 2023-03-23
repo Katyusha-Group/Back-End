@@ -3,7 +3,7 @@ import os
 
 
 class ExcelCreator:
-    DIR = "./data/"
+    DIR = "../data/"
     
     def __init__(self, data, file_name):
         self.data = data

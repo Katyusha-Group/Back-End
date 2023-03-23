@@ -55,13 +55,13 @@ class GolestanCrawler(SeleniumCrawler):
         captcha = self.get_captcha()
         self.fill_input("F51701", captcha)
         self.click_on_button("btnLog")
-        time.sleep(5)
+        time.sleep(3)
 
     def go_to_102(self):
         self.switch_to_inner_frames(self.get_form_body(2))
         self.fill_input("F20851", "102")
         self.click_on_button("OK")
-        time.sleep(5)
+        time.sleep(2)
 
     def go_to_this_term_courses(self, available=True):
         self.go_to_102()
@@ -70,7 +70,7 @@ class GolestanCrawler(SeleniumCrawler):
         self.fill_input('GF10956_0', int(available))
         self.switch_to_inner_frames(self.get_commander(3))
         self.click_on_button("IM16_ViewRep")
-        time.sleep(10)
+        time.sleep(4)
 
     def extract_courses(self):
         self.driver.switch_to.default_content()
@@ -91,8 +91,8 @@ class GolestanCrawler(SeleniumCrawler):
         self.switch_to_inner_frames(frames=self.get_commander(3))
         self.click_on_button('ExToEx')
         self.switch_to_child_window(window_title=self.driver.window_handles[1])
-        time.sleep(2)
+        time.sleep(1)
         self.extract_courses()
         self.close_all_windows(parent_window_handle=self.driver.window_handles[0])
         self.switch_to_parent_window(parent_window_handle=self.driver.window_handles[0])
-        time.sleep(5)
+        time.sleep(2)
