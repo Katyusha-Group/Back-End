@@ -7,9 +7,10 @@ from selenium.webdriver.support import expected_conditions as ec
 
 class SeleniumCrawler:
     def __init__(self):
-        self.options = webdriver.ChromeOptions()
-        self.options.add_experimental_option("detach", True)
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.options)
+        # self.options = webdriver.ChromeOptions()
+        # self.options.add_experimental_option("detach", True)
+        # self.driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.options)
+        self.driver = webdriver.Chrome()
 
     def fill_input(self, id_name, value):
         find_serial = Wait(self.driver, 5).until(ec.visibility_of_element_located((By.ID, id_name)))
