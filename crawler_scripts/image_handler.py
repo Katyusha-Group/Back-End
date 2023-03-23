@@ -13,17 +13,17 @@ class ImageHandler:
         try:
             print('creating image with url :::', captcha_url)
             image = requests.get(captcha_url).content
-            return self.save(png=image)
+            return self.save(gif=image)
         except Exception as e:
             print("Error downloading image: ", e)
 
-    def save(self, png):
+    def save(self, gif):
         try:
             img_name = str(int(random.uniform(10000, 99999))) + ".gif"
             img_path = os.path.join(self.output_dir, img_name)
             print('creating image with path :::', img_path)
             with open(img_path, 'wb') as fh:
-                fh.write(png)
+                fh.write(gif)
             return img_path
         except Exception as e:
             print("Error downloading image: ", e)
