@@ -1,4 +1,7 @@
+from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
+
+from crawler_scripts.excel_creator import ExcelCreator
 from crawler_scripts.selenium_crawler import SeleniumCrawler
 import time
 
@@ -71,18 +74,17 @@ class GolestanCrawler(SeleniumCrawler):
 
     def extract_courses(self):
         self.driver.switch_to.default_content()
-        rows = self.driver.find_elements(by=By.XPATH, value='.//tr')
-        data = []
+        page_source = self.driver.page_source
+        soup = BeautifulSoup(page_source, 'html.parser')
+        courses = []
+        rows = soup.find_all('tr')
         for row in rows:
-            datum = []
-            columns = row.find_elements(by=By.XPATH, value='.//td')
-            for column in columns:
-                if column.text.strip() == '':
-                    datum.append(column.get_attribute('innerHTML'))
-                else:
-                    datum.append(column.text)
-            data.append(datum)
-        return data
+            cols = row.find_all('td')
+            cols = [ele.text.strip() for ele in cols]
+            if cols:
+                courses.append([ele for ele in cols if ele])
+        excel_creator = ExcelCreator(courses, 'golestan_courses.xlsx')
+        excel_creator.create_excel()
 
     def get_courses(self, available=True):
         self.go_to_this_term_courses(available)
@@ -90,8 +92,7 @@ class GolestanCrawler(SeleniumCrawler):
         self.click_on_button('ExToEx')
         self.switch_to_child_window(window_title=self.driver.window_handles[1])
         time.sleep(2)
-        data = self.extract_courses()
+        self.extract_courses()
         self.close_all_windows(parent_window_handle=self.driver.window_handles[0])
         self.switch_to_parent_window(parent_window_handle=self.driver.window_handles[0])
         time.sleep(5)
-        return data
