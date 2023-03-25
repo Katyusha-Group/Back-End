@@ -3,6 +3,9 @@ from django.contrib.auth.hashers import make_password
 from accounts.models import *
 from datetime import datetime, timedelta
 from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
+from django.core import exceptions as exception
+
 
 class SignUpSerializer(serializers.ModelSerializer):
     password1 = serializers.CharField(write_only=True)
@@ -61,3 +64,22 @@ class LoginSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         return user
+    
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    new_password1 = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password1']:
+            raise serializers.ValidationError({
+                'new_password1': ['Passwords must match.'],
+            })
+        try:
+            validate_password(attrs['new_password'])
+        except exception.ValidationError as e:
+            raise serializers.ValidationError({
+                'new_password': list(e.messages)
+            })
+        return super().validate(attrs)

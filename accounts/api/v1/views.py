@@ -23,6 +23,11 @@ class SignUpView(APIView):
     def post(self, request):
         serializer = SignUpSerializer(
             data=request.data, context={'request': request})
+        # validate password
+        try:
+            validate_password(request.data['password1'])
+        except exception.ValidationError as e:
+            return Response({"password": e.messages}, status=400)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         # --------- send email ---------
@@ -84,4 +89,29 @@ class LogoutView(APIView):
                 logout(request)
                 return Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
             else:
-                return Response(data={'detail': 'Not logged in'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={'detail': 'Not logged in, so cannot log out'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(generics.UpdateAPIView):
+    model = User
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
+
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        return obj
+    
+    def update(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        serializer = ChangePasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            if not self.object.check_password(serializer.data.get("old_password")):
+                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
+            
+            self.object.set_password(serializer.data.get("new_password"))
+            self.object.save()
+            return Response({"status": "password set"}, status=status.HTTP_200_OK)
+        
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
