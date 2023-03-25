@@ -11,6 +11,7 @@ from django.contrib.auth import authenticate, login, logout
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework.authtoken.models import Token
+from rest_framework import status
 
 
 
@@ -56,8 +57,31 @@ class LoginView(APIView):
                 "message": "Invalid Credentials"
             }, status=400)
         login(request, user)
+        token = Token.objects.get_or_create(user=user)[0].key,
         return Response({
-            "token" : Token.objects.get_or_create(user=user)[0].key,
+            "token" : token,
             "message": "Login Successful"
             
         }, status=200)
+
+
+
+
+class LogoutView(APIView):
+    permission_classes = []
+
+    def get(self, request):
+        refresh_token = request.COOKIES.get('token')
+        if refresh_token:
+            token = Token.objects.get(refresh_token=refresh_token)
+            token.blacklist()
+            response = Response()
+            response.delete_cookie('refresh_token')
+            response.delete_cookie('access_token')
+            return response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
+        else:
+            if request.user.is_authenticated:
+                logout(request)
+                return Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
+            else:
+                return Response(data={'detail': 'Not logged in'}, status=status.HTTP_400_BAD_REQUEST)
