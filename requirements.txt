@@ -1,0 +1,13 @@
+# General Module
+django>3.2,<3.3
+Pillow
+djangorestframework
+
+
+# Third Party Module
+markdown
+django-filter
+drf-yasg[validation]
+
+lxml
+
