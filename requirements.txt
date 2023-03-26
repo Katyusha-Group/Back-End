@@ -10,4 +10,4 @@ django-filter
 drf-yasg[validation]
 
 lxml
-
+django-mail-templated
