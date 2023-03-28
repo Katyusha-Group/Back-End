@@ -1,3 +1,4 @@
+import os
 import time
 
 from bs4 import BeautifulSoup
@@ -17,6 +18,7 @@ class SeleniumCrawler:
         self.options.add_argument('--no-sandbox')
         self.options.add_experimental_option("detach", True)
         self.driver = webdriver.Chrome(options=self.options)
+        self.image_handler = ImageHandler(os.path.abspath(os.path.join(__file__, os.pardir)) + '/captcha_images/')
 
     def fill_input(self, id_name, value):
         self.driver.find_element(by=By.ID, value=id_name).clear()
