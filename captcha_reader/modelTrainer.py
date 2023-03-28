@@ -13,7 +13,7 @@ from sklearn.neighbors import KNeighborsClassifier
 print('loading DateSet...')
 target = []
 flat_data = []
-DataDirectory = './DataSet/'
+DataDirectory = os.path.dirname(os.path.abspath(__file__)) + '/DataSet'
 
 Categories = os.listdir(DataDirectory)
 
@@ -51,7 +51,7 @@ knn = KNeighborsClassifier(n_neighbors = 3, metric = 'minkowski', p = 2)
 knn.fit(x_train, y_train)
 
 print('saving model...')
-filename = 'finalized_model.sav'
+filename = os.path.dirname(os.path.abspath(__file__)) + '/finalized_model.sav'
 pickle.dump(knn, open(filename, 'wb'))
 
 y_pred = knn.predict(x_test)
