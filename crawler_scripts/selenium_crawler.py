@@ -22,11 +22,11 @@ class SeleniumCrawler:
 
     def fill_input(self, id_name, value):
         self.driver.find_element(by=By.ID, value=id_name).clear()
-        find_serial = Wait(self.driver, 5).until(ec.visibility_of_element_located((By.ID, id_name)))
+        find_serial = Wait(self.driver, 10).until(ec.visibility_of_element_located((By.ID, id_name)))
         find_serial.send_keys(value)
 
     def click_on_button(self, id_name):
-        find_serial = Wait(self.driver, 5).until(ec.visibility_of_element_located((By.ID, id_name)))
+        find_serial = Wait(self.driver, 10).until(ec.visibility_of_element_located((By.ID, id_name)))
         find_serial.is_selected = False
         find_serial.click()
 
@@ -39,3 +39,7 @@ class SeleniumCrawler:
         self.driver.refresh()
         self.driver.switch_to.alert.accept()
         time.sleep(3)
+
+    def remove_disable_attr(self, id_name):
+        element = Wait(self.driver, 10).until(ec.visibility_of_element_located((By.ID, id_name)))
+        self.driver.execute_script('arguments[0].removeAttribute("disabled");', element)
