@@ -12,8 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework.authtoken.models import Token
 from rest_framework import status
-from mail_templated import send_mail
-
+from mail_templated import EmailMessage
 
 class SignUpView(APIView):
     serializer_class = SignUpSerializer
@@ -62,10 +61,10 @@ class LoginView(APIView):
                 "message": "Invalid Credentials"
             }, status=400)
         
-        if not user.is_email_verified:
-            return Response({
-                "message": "Email is not verified"
-            }, status=400)
+        # if not user.is_email_verified:
+        #     return Response({
+        #         "message": "Email is not verified"
+        #     }, status=400)
         
         login(request, user)
         token = Token.objects.get_or_create(user=user)[0].key,
@@ -132,8 +131,8 @@ class ChangePasswordView(generics.UpdateAPIView):
 
 class TestView(generics.GenericAPIView):
     def get(self, request):
-        send_mail(['email/hello.html', {'name': 'John Doe'}, 'ali@gmail.com', 'salim@gmail.com'])
-            
+        message = EmailMessage('email/hello.tpl', {'user': 'ali'}, 'ali.288@gmail.com',
+                       to=['marg@gmail.com'])           
         return Response({
             "message": "Test Successful"
         }, status=200)
