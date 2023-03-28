@@ -13,17 +13,19 @@ from image_handler import ImageHandler
 
 class SeleniumCrawler:
     def __init__(self):
-        # self.options = webdriver.ChromeOptions()
-        # self.options.add_argument('--headless')
-        # self.options.add_argument('--disable-gpu')
-        # self.options.add_argument('--no-sandbox')
-        # self.options.add_experimental_option("detach", True)
-        # self.driver = webdriver.Chrome(options=self.options)
-        self.driver = webdriver.Chrome()
+        self.options = webdriver.ChromeOptions()
+        self.options.add_argument('--headless')
+        self.options.add_argument('--disable-gpu')
+        self.options.add_argument('--no-sandbox')
+        self.options.add_experimental_option("detach", True)
+        self.driver = webdriver.Chrome(options=self.options)
         self.image_handler = ImageHandler(os.path.abspath(os.path.join(__file__, os.pardir)) + '/captcha_images/')
 
     def wait_on_find_element_by_id(self, id_name, sleep_time) -> WebElement:
         return Wait(self.driver, sleep_time).until(ec.visibility_of_element_located((By.ID, id_name)))
+
+    def wait_on_find_element_by_name(self, name, sleep_time) -> WebElement:
+        return Wait(self.driver, sleep_time).until(ec.visibility_of_element_located((By.NAME, name)))
 
     def fill_input(self, id_name, value, sleep_time=10):
         element = self.wait_on_find_element_by_id(id_name, sleep_time)

@@ -32,7 +32,8 @@ class GolestanCrawler(SeleniumCrawler):
     def switch_to_inner_frames(self, frames):
         self.driver.switch_to.default_content()
         for frame in frames:
-            self.driver.switch_to.frame(frame)
+            element = self.wait_on_find_element_by_name(frame, 5)
+            self.driver.switch_to.frame(element)
 
     @staticmethod
     def get_form_body(number):
@@ -94,6 +95,7 @@ class GolestanCrawler(SeleniumCrawler):
         return is_logged_in
 
     def pass_captcha(self):
+        time.sleep(3)
         i = 0
         next_captcha = 'a'
         is_logged_in = False
@@ -113,7 +115,6 @@ class GolestanCrawler(SeleniumCrawler):
         self.switch_to_inner_frames(self.get_form_body(2))
         self.fill_input("F20851", "102")
         self.click_on_button("OK")
-        time.sleep(0.5)
 
     def go_to_this_term_courses(self, available=True):
         if self.user_login:
@@ -125,7 +126,7 @@ class GolestanCrawler(SeleniumCrawler):
         self.click_on_button("IM16_ViewRep")
 
     def extract_courses(self):
-        time.sleep(0.5)
+        time.sleep(2)
         self.driver.switch_to.default_content()
         soup = self.get_soup()
         courses = []
@@ -135,14 +136,15 @@ class GolestanCrawler(SeleniumCrawler):
             cols = [ele.text.strip() for ele in cols]
             if cols:
                 courses.append([ele for ele in cols if ele])
-        excel_creator = ExcelCreator(courses, 'golestan_courses.xlsx')
+        suffix = '_captcha' if not self.user_login else ''
+        excel_creator = ExcelCreator(courses, f'golestan_courses{suffix}.xlsx')
         excel_creator.create_excel()
 
     def get_courses(self, available=True):
         self.go_to_this_term_courses(available)
         self.switch_to_inner_frames(frames=self.get_commander(self.get_number()))
         if not self.user_login:
-            self.remove_disable_attr('ExToEx')
+            self.remove_disable_attr('ExToEx', 20)
         self.click_on_button('ExToEx')
         self.switch_to_child_window(window_title=self.driver.window_handles[1])
         self.extract_courses()
