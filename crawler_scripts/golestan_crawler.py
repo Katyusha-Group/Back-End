@@ -135,7 +135,7 @@ class GolestanCrawler(SeleniumCrawler):
             cols = row.find_all('td')
             cols = [ele.text.strip() for ele in cols]
             if cols:
-                courses.append([ele for ele in cols if ele])
+                courses.append(cols)
         suffix = '_captcha' if not self.user_login else ''
         excel_creator = ExcelCreator(courses, f'golestan_courses{suffix}.xlsx')
         excel_creator.create_excel()
