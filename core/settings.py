@@ -37,14 +37,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts',
     'rest_framework',
     'rest_framework.authtoken',
-    'mail_templated'
-    
+    'debug_toolbar',
+    "django_filters",
+    'mail_templated',
+    'accounts',
+    'university',
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

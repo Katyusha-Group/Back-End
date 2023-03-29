@@ -130,3 +130,9 @@ dmypy.json
 
 # Captcha img files
 /captcha_images/
+
+# idea folder
+.idea/
+
+# test_crawler.py file
+/crawler_scripts/test_crawler.py

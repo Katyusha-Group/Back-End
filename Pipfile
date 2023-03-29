@@ -15,6 +15,15 @@ matplotlib = "==3.5.1"
 pandas = "==1.4.0"
 opencv-python = "==4.5.5.62"
 numpy = "*"
+django = "==3.2"
+pillow = "*"
+djangorestframework = "*"
+markdown = "*"
+django-filter = "*"
+drf-yasg = {extras = ["validation"], version = "*"}
+lxml = "*"
+django-mail-templated = "*"
+django-debug-toolbar = "*"
 
 [dev-packages]
 
