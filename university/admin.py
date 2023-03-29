@@ -17,6 +17,6 @@ class ExamTimePlaceAdmin(admin.ModelAdmin):
     )
 
     formfield_overrides = {
-        models.DateTimeField: {'widget': jadmin.widgets.AdminSplitjDateTime}
+        models.DateTimeField: {'widget': jadmin.widgets.AdminjDateWidget}
     }
 
