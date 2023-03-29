@@ -32,8 +32,7 @@ class GolestanCrawler(SeleniumCrawler):
     def switch_to_inner_frames(self, frames):
         self.driver.switch_to.default_content()
         for frame in frames:
-            element = self.wait_on_find_element_by_name(frame, 5)
-            self.driver.switch_to.frame(element)
+            self.driver.switch_to.frame(frame)
 
     @staticmethod
     def get_form_body(number):
@@ -61,7 +60,7 @@ class GolestanCrawler(SeleniumCrawler):
                 self.driver.close()
 
     def get_captcha(self):
-        time.sleep(1)
+        time.sleep(2)
         soup = self.get_soup()
         png_url = soup.find('img', {'id': 'imgCaptcha'})['src']
         img_path = self.image_handler.download(png_url)
@@ -71,7 +70,7 @@ class GolestanCrawler(SeleniumCrawler):
         return captcha_text
 
     def verify_login(self) -> bool:
-        time.sleep(1)
+        time.sleep(2)
         logged_in = self.driver.find_elements(by=By.ID, value='_mt_usr')
         return len(logged_in) > 0
 
@@ -83,6 +82,7 @@ class GolestanCrawler(SeleniumCrawler):
             return self.login_admin()
 
     def login_user(self):
+        time.sleep(2)
         self.switch_to_inner_frames(self.get_form_body(1))
         self.fill_input("F80351", self.username)
         self.fill_input("F80401", self.password)
@@ -90,12 +90,13 @@ class GolestanCrawler(SeleniumCrawler):
         return is_logged_in
 
     def login_admin(self) -> bool:
+        time.sleep(2)
         self.switch_to_inner_frames(self.get_form_body(1))
         is_logged_in = self.pass_captcha()
         return is_logged_in
 
     def pass_captcha(self):
-        time.sleep(3)
+        time.sleep(1)
         i = 0
         next_captcha = 'a'
         is_logged_in = False
@@ -112,6 +113,7 @@ class GolestanCrawler(SeleniumCrawler):
         return is_logged_in
 
     def go_to_102(self):
+        time.sleep(2)
         self.switch_to_inner_frames(self.get_form_body(2))
         self.fill_input("F20851", "102")
         self.click_on_button("OK")
@@ -120,6 +122,7 @@ class GolestanCrawler(SeleniumCrawler):
         if self.user_login:
             self.go_to_102()
         self.driver.switch_to.default_content()
+        time.sleep(1)
         self.switch_to_inner_frames(self.get_form_body(self.get_number()))
         self.fill_input('GF10956_0', int(available))
         self.switch_to_inner_frames(self.get_commander(self.get_number()))
@@ -136,12 +139,15 @@ class GolestanCrawler(SeleniumCrawler):
             cols = [ele.text.strip() for ele in cols]
             if cols:
                 courses.append(cols)
+        courses[0][1] = 'کد دانشكده درس'
+        courses[0][3] = 'کد گروه آموزشی درس'
         suffix = '_captcha' if not self.user_login else ''
         excel_creator = ExcelCreator(courses, f'golestan_courses{suffix}.xlsx')
         excel_creator.create_excel()
 
     def get_courses(self, available=True):
         self.go_to_this_term_courses(available)
+        time.sleep(1)
         self.switch_to_inner_frames(frames=self.get_commander(self.get_number()))
         if not self.user_login:
             self.remove_disable_attr('ExToEx', 20)

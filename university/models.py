@@ -1,6 +1,3 @@
-import uuid
-
-from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator
 from django_jalali.db import models as jmodels
@@ -49,7 +46,12 @@ class BaseCourse(models.Model):
 
 
 class Teacher(models.Model):
-    name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی')
+    name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['name', ]),
+        ]
 
     def __str__(self):
         return self.name + ' : ' + self.course_set
@@ -70,9 +72,10 @@ class Course(models.Model):
     capacity = models.PositiveSmallIntegerField(verbose_name='ظرفیت')
     registered_count = models.PositiveSmallIntegerField(verbose_name='تعداد ثبت نام شده ها')
     waiting_count = models.PositiveSmallIntegerField(verbose_name='تعداد افراد حاضر در لیست انتظار')
-    sex = models.CharField(choices=Sex.choices, max_length=1, verbose_name='جنسیت')
     guest_able = models.BooleanField(verbose_name='قابل اخذ توسط مهمان')
+    registration_limit = models.CharField(max_length=255, verbose_name='محدودیت اخذ')
     description = models.CharField(max_length=511, verbose_name='توضیحات')
+    sex = models.CharField(choices=Sex.choices, max_length=1, verbose_name='جنسیت')
     presentation_type = models.CharField(choices=PresentationType.choices, max_length=1, verbose_name='نحوه ارائه درس')
     base_course = models.ForeignKey(to=BaseCourse, on_delete=models.PROTECT, verbose_name='درس پایه')
     teacher = models.ForeignKey(to=Teacher, on_delete=models.DO_NOTHING, verbose_name='استاد درس')
@@ -86,21 +89,18 @@ class ExamTimePlace(models.Model):
     date = jmodels.jDateField(verbose_name='تاریخ امتحان', help_text='سال را به فرم yyyy-mm-dd وارد کنید.')
     start_time = models.TimeField(verbose_name='زمان شروع')
     end_time = models.TimeField(verbose_name='زمان پایان')
-    place = models.CharField(max_length=255, verbose_name='مکان امتحان')
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس')
 
     def __str__(self):
-        return str(self.date) + ' ' + str(self.start_time) + ' ' + str(self.end_time) + ' --- ' + self.place
+        return str(self.date) + ' ' + str(self.start_time) + ' ' + str(self.end_time)
 
 
 class CourseTimePlace(models.Model):
     DAYS_CHOICES = [(1, 'شنبه'),
-                    (2, 'یکشنبه'),
-                    (3, 'دو شنبه'),
+                    (2, 'یک شنبه'),
+                    (3, 'دوشنبه'),
                     (4, 'سه شنبه'),
-                    (5, 'چهار شنبه'),
-                    (6, 'پنجشنبه'),
-                    (7, 'جمعه')]
+                    (5, 'چهارشنبه'), ]
 
     start_time = models.TimeField(verbose_name='زمان شروع')
     end_time = models.TimeField(verbose_name='زمان پایان')
