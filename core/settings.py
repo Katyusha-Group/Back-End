@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     "django_filters",
     'mail_templated',
+    'django_jalali',
     'accounts',
     'university',
 ]

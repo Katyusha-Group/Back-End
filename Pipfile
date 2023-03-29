@@ -24,6 +24,7 @@ drf-yasg = {extras = ["validation"], version = "*"}
 lxml = "*"
 django-mail-templated = "*"
 django-debug-toolbar = "*"
+django-jalali = "*"
 
 [dev-packages]
 

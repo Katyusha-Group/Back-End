@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "e90a9b4f163072f973e6ef8f74c7a490e33fea7a4381603b5ec5404fb3f0180e"
+            "sha256": "2f20ddeb02272f5872e4b46b6cba4a9212083ba2f4a5c9b1cafba928ab5ebe5a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -268,6 +268,14 @@
             "index": "pypi",
             "version": "==23.1"
         },
+        "django-jalali": {
+            "hashes": [
+                "sha256:d5c98d88e410b4a86d1de2377f07a49beb8b76ca9f9f94348e6f9b5302474fb3",
+                "sha256:eff215be352ccee074c4b6b7217dba8ff878c1aeff038b77d46975e4969a4a63"
+            ],
+            "index": "pypi",
+            "version": "==6.0.1"
+        },
         "django-mail-templated": {
             "hashes": [
                 "sha256:2ce4b415d97f50587d9f9ff395b01e919539e1734b6b6f84385f4d2e6d3db7b5"
@@ -348,6 +356,14 @@
                 "sha256:af886f129dea4a2a1e3d36595a2d139589e4dd287f5cab0b40e799ee81570ff1"
             ],
             "version": "==1.2.0"
+        },
+        "jdatetime": {
+            "hashes": [
+                "sha256:1dd0ee210160c7bd30002803c443e6260ac602ea65b065652a1d567d3bfdca7a",
+                "sha256:8b56c702406eaf84d2ad673c41180488f8c77f156c3ac0630ce0caabaf6af5b8"
+            ],
+            "markers": "python_version >= '3.7'",
+            "version": "==4.1.1"
         },
         "jinja2": {
             "hashes": [
