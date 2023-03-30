@@ -25,6 +25,7 @@ lxml = "*"
 django-mail-templated = "*"
 django-debug-toolbar = "*"
 django-jalali = "*"
+watchdog = "*"
 
 [dev-packages]
 
