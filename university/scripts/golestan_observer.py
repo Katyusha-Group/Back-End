@@ -11,7 +11,7 @@ class ExcelHandler(FileSystemEventHandler):
     def __init__(self, file):
         self.logger = logging.getLogger('changes')
         self.logger.setLevel(logging.DEBUG)
-        handler = logging.FileHandler('changes.log', encoding="utf-8")
+        handler = logging.FileHandler('../../crawler_scripts/changes.log', encoding="utf-8")
         handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(message)s')
         handler.setFormatter(formatter)
@@ -52,10 +52,10 @@ class ExcelHandler(FileSystemEventHandler):
 
 
 if __name__ == "__main__":
-    event_handler = ExcelHandler('../data/golestan_courses.xlsx')
+    event_handler = ExcelHandler('../../data/golestan_courses.xlsx')
     observer = Observer()
     observer.schedule(event_handler,
-                      path='../data/')
+                      path='../../data/')
     observer.start()
     try:
         while True:

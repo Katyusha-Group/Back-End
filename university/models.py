@@ -31,7 +31,7 @@ class CourseStudyingGP(models.Model):
 
 
 class BaseCourse(models.Model):
-    course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس')
+    course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس', db_index=True)
     name = models.CharField(max_length=255, verbose_name='نام درس')
     total_unit = models.SmallIntegerField(validators=[MinValueValidator(1)], verbose_name='کل واحد')
     practical_unit = models.PositiveSmallIntegerField(verbose_name='واحد های عملی')

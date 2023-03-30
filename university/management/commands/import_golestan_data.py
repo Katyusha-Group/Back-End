@@ -1,12 +1,14 @@
 import os
 
 import pandas as pd
+from pathlib import Path
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
-from pathlib import Path
 
 from university.models import Semester, Department, CourseStudyingGP, BaseCourse, Teacher, ExamTimePlace, \
     CourseTimePlace, Course
+from university.scripts import clean_data, get_or_create
 
 
 class Command(BaseCommand):
@@ -73,94 +75,30 @@ class Command(BaseCommand):
             except IntegrityError:
                 pass
             except Exception as ex:
+                print(course_number)
                 raise CommandError(ex)
 
-    def populate_course(self, data: pd.DataFrame):
+    @staticmethod
+    def populate_course(data: pd.DataFrame):
         df = pd.DataFrame(data=data.iloc[:, [5, 9, 10, 11, 12, 13, 14, 15, 19, 22, 23, 16]])
         for row in df.values:
-            course_number = row[0].split('_')[0]
-            course_gp = row[0].split('_')[1]
+            course_number, course_gp = clean_data.get_course_code(entry=row[0])
             base_course = BaseCourse.objects.get(course_number=course_number)
-            teacher = self.get_or_create_teacher(teacher_name=row[5])
-            sex = self.determine_sex(row[4])
-            presentation_type = self.determine_presentation_type(row[8])
-            guest_able = True if row[9] == 'بله' else False
+            teacher = get_or_create.get_or_create_teacher(name=row[5])[0]
+            sex = clean_data.determine_sex(sex=row[4])
+            presentation_type = clean_data.determine_presentation_type(presentation_type=row[8])
+            guest_able = clean_data.determine_guest_able(entry=row[9])
+            course = Course.objects.create(class_gp=course_gp, teacher=teacher, base_course=base_course,
+                                           sex=sex, presentation_type=presentation_type, guest_able=guest_able,
+                                           capacity=row[1], registered_count=row[2], registration_limit=row[11],
+                                           waiting_count=row[3], description=row[10])
             try:
-                course = Course.objects.create(class_gp=course_gp, teacher=teacher, base_course=base_course,
-                                               sex=sex, presentation_type=presentation_type, guest_able=guest_able,
-                                               capacity=row[1], registered_count=row[2], registration_limit=row[11],
-                                               waiting_count=row[3], description=row[10])
-            except Exception as ex:
-                raise CommandError(ex)
-            self.create_course_time_place(course, row[6])
-            self.create_exam_time(course, row[7])
+                data = clean_data.prepare_data_for_course_time_place(entry=row[6])
+                get_or_create.create_course_time_place(course=course, data=data)
+            except:
+                pass
 
-    def create_exam_time(self, course, entry):
-        try:
-            exam_data = entry.split()
-            date = str.join('-', exam_data[1].split('/'))
-            exam_start_time, exam_end_time = self.get_time(exam_data[3])
-            ExamTimePlace.objects.create(course=course, start_time=exam_start_time,
-                                         end_time=exam_end_time, date=date)
-        except:
-            pass
-
-    def create_course_time_place(self, course, entry):
-        try:
-            presentation_data = entry.split('،')
-            for presentation_detail in presentation_data:
-                day, start_time, end_time, place = self.find_presentation_detail(presentation_detail.split())
-                CourseTimePlace.objects.create(day=day, start_time=start_time, end_time=end_time,
-                                               place=place, course=course)
-        except:
-            pass
-
-    @staticmethod
-    def get_or_create_teacher(teacher_name):
-        try:
-            teacher = Teacher.objects.filter(name=teacher_name).first()
-            if not teacher:
-                teacher = Teacher.objects.create(name=teacher_name)
-        except Exception as ex:
-            raise CommandError(ex)
-        return teacher
-
-    def find_presentation_detail(self, presentation_detail):
-        if presentation_detail[2] == 'شنبه':
-            if presentation_detail[1] == 'یک':
-                day = 2
-            else:
-                day = 4
-            start_time, end_time = self.get_time(presentation_detail[3])
-            place = str.join(' ', presentation_detail[5:])
-        else:
-            if presentation_detail[1] == 'شنبه':
-                day = 1
-            elif presentation_detail[1] == 'دوشنبه':
-                day = 3
-            else:
-                day = 5
-            start_time, end_time = self.get_time(presentation_detail[2])
-            place = str.join(' ', presentation_detail[4:])
-        return day, start_time, end_time, place
-
-    @staticmethod
-    def get_time(presentation_time_detail):
-        presentation_time = presentation_time_detail.split('-')
-        return presentation_time[0], presentation_time[1]
-
-    @staticmethod
-    def determine_sex(sex):
-        if sex == 'مختلط':
-            return 'B'
-        elif sex == 'مرد':
-            return 'M'
-        return 'F'
-
-    @staticmethod
-    def determine_presentation_type(presentation_type):
-        if presentation_type == 'عادي':
-            return 'N'
-        elif presentation_type == 'الکترونيکي':
-            return 'E'
-        return 'B'
+            try:
+                get_or_create.create_exam_time(course=course, entry=row[7])
+            except:
+                pass
