@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_jalali',
     'accounts',
     'university',
+    'core'
 ]
 
 MIDDLEWARE = [
