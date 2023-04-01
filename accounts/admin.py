@@ -7,13 +7,13 @@ from .models import User
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     list_display = ('email', 'username', 'first_name',
-                    'last_name', 'is_staff', 'is_active', 'is_email_verified')
+                    'last_name', 'is_staff', 'is_active', 'is_email_verified' )
     list_filter = ('email', 'username', 'first_name',
                    'last_name', 'is_staff', 'is_active')
     fieldsets = (
-        (None, {'fields': ('email', 'username', 'password')}),
+        (None, {'fields': ('email', 'username', 'password', )}),
         ('Personal info', {'fields': ('first_name', 'last_name')}),
-        ('Permissions', {'fields': ('is_staff', 'is_active')}),
+        ('Permissions', {'fields': ('is_staff', 'is_active', 'is_email_verified')}),
     )
     add_fieldsets = (
         (None, {

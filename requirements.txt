@@ -11,3 +11,5 @@ drf-yasg[validation]
 
 lxml
 django-mail-templated
+
+django-rest-swagger
