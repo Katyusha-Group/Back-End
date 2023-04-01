@@ -45,7 +45,7 @@ def get_course_code(entry):
     return course_number, course_gp
 
 
-def determine_guest_able(entry):
+def determine_true_false(entry):
     return True if entry == 'بله' else False
 
 
