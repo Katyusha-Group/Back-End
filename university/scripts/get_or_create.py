@@ -1,20 +1,11 @@
-from . import clean_data
-from ..models import BaseCourse, Teacher, Department, Semester, CourseStudyingGP, Course, ExamTimePlace, CourseTimePlace
+from university.scripts import clean_data
+from university.models import BaseCourse, Teacher, Department, Semester, CourseStudyingGP, Course, ExamTimePlace, \
+    CourseTimePlace
 
 
 def get_base_course(**kwargs):
     return BaseCourse.objects.filter(course_number=kwargs['course_number']).first()
 
-
-#
-# def create_base_course(**kwargs):
-#     course_number = clean_data.get_course_code(kwargs['course_code'])[0]
-#     emergency_deletion = clean_data.determine_true_false(kwargs['emergency_deletion'])
-#     course_studying_gp = CourseStudyingGP.objects.get
-#     return BaseCourse.objects.create(course_number=course_number, course_studying_gp_id=kwargs['course_studying_gp_id'],
-#                                      emergency_deletion=emergency_deletion, total_unit=kwargs['total_unit'],
-#                                      practical_unit=kwargs['practical_unit'], semester_id=kwargs['semester_id'],
-#                                      name=kwargs['name'], department_id=kwargs['department_id'])
 
 def get_department(**kwargs):
     return Department.objects.filter(department_number=kwargs['department_number']).first()
@@ -32,6 +23,15 @@ def get_course(**kwargs):
     return Course.objects.filter(base_course_id=kwargs['course_number'], class_gp=kwargs['class_gp']).first()
 
 
+def create_base_course(**kwargs):
+    course_number = clean_data.get_course_code(kwargs['course_code'])[0]
+    emergency_deletion = clean_data.determine_true_false(kwargs['emergency_deletion'])
+    course_studying_gp = get_course_studying_gp(name=kwargs['course_studying_name'])
+    return BaseCourse.objects.create(course_number=course_number, course_studying_gp_id=course_studying_gp,
+                                     emergency_deletion=emergency_deletion, total_unit=kwargs['total_unit'],
+                                     practical_unit=kwargs['practical_unit'], semester_id=kwargs['semester_id'],
+                                     name=kwargs['name'], department_id=kwargs['department_id'])
+#
 #
 # def create_course(**kwargs):
 #     guest_able = clean_data.determine_true_false(kwargs['guest_able'])
