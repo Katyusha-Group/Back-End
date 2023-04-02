@@ -2,7 +2,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from .serializers import *
 from .serializers import LoginSerializer
-from ...models import User
+from ..models import User
 from django.contrib.sites.shortcuts import get_current_site  # for email
 from django.urls import reverse  # for email
 from django.conf import settings
@@ -15,7 +15,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework import status
 from mail_templated import EmailMessage
 from mail_templated import send_mail
-from ..utils import EmailThread
+from .utils import EmailThread
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import GenericAPIView
