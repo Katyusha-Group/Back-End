@@ -20,7 +20,8 @@ def get_course_studying_gp(**kwargs):
 
 
 def get_course(**kwargs):
-    return Course.objects.filter(base_course_id=kwargs['course_number'], class_gp=kwargs['class_gp']).first()
+    course_number, class_gp = clean_data.get_course_code(entry=kwargs['course_code'])
+    return Course.objects.filter(base_course_id=course_number, class_gp=class_gp).first()
 
 
 def create_base_course(**kwargs):

@@ -92,8 +92,7 @@ def populate_course_class_time(data):
     df = pd.DataFrame(data=data, columns=['زمان و مكان ارائه', 'شماره و گروه درس'])
     class_times = []
     for row in df.values:
-        course_number, class_gp = clean_data.get_course_code(entry=row[1])
-        course = get_or_create.get_course(course_number=course_number, class_gp=class_gp)
+        course = get_or_create.get_course(course_code=row[1])
         try:
             prep_data = clean_data.prepare_data_for_course_time_place(row[0])
             for pres in prep_data:
@@ -109,8 +108,7 @@ def populate_exam_time(data):
     df = pd.DataFrame(data=data, columns=['زمان و مكان امتحان', 'شماره و گروه درس'])
     exams = []
     for row in df.values:
-        course_number, class_gp = clean_data.get_course_code(entry=row[1])
-        course = get_or_create.get_course(course_number=course_number, class_gp=class_gp)
+        course = get_or_create.get_course(course_code=row[1])
         try:
             exam_data = row[0].split()
             date = str.join('-', exam_data[1].split('/'))
