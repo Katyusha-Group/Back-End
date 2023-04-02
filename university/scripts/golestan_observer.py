@@ -1,12 +1,7 @@
-import os
-import time
-
 import pandas as pd
 import logging
 
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-
 
 from university.scripts import course_updater
 
@@ -34,37 +29,8 @@ class ExcelHandler(FileSystemEventHandler):
             # Check for changes
             if not diff.empty:
                 create_list, update_list = self.make_create_update_list(diff)
+                course_updater.create(data=create_list)
                 course_updater.update(data=update_list)
-                # group_keys = modifications.all().index.values.tolist()
-                # for key in group_keys:
-                #     print(key)
-                #     print(modifications.get_group([key]))
-                # changes = {}
-                # changes_count = len(diff) // 2
-                # old_data = diff[:changes_count]
-                # new_data = diff[changes_count:]
-                # indexes = old_data.index.values.tolist()[:changes_count]
-                # with pd.option_context('display.max_rows', None, 'display.max_columns',
-                #                        None):  # more options can be specified also
-                #     print(diff)
-                # self.logger.info(f'The following rows have been modified in {self.file}:')
-                # for i in range(changes_count):
-                #
-                #     temp_df = pd.DataFrame(data=old_data.iloc[i]).compare(pd.DataFrame(new_data.iloc[i]),
-                #                                                           keep_shape=False)
-                #     changes[i] = []
-                #     self.logger.info(f'\tIndex {indexes[i]}:')
-                #     columns = temp_df.index.values.tolist()
-                #     # golestan_updater = GolestanUpdater(old_row=old_data.loc[indexes[i]],
-                #     #                                    new_row=new_data.loc[indexes[i]],
-                #     #                                    columns=columns)
-                #     for col in columns:
-                #         old_value = old_data.loc[indexes[i], col]
-                #         new_value = new_data.loc[indexes[i], col]
-                #         element = {col: (old_value, new_value)}
-                #         self.logger.info(f'\t\tColumn: {col} - old value: {old_value}, new value: {new_value}')
-                #         changes[i].append(element)
-                # Update the DataFrame
                 self.df = df_new
 
     @staticmethod
