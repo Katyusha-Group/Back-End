@@ -13,8 +13,8 @@ def populate_all_tables(data):
     populate_base_course(data)
     populate_teacher(data)
     populate_course(data, False)
-    populate_course_class_time(data)
-    populate_exam_time(data)
+    populate_course_class_time(data, False)
+    populate_exam_time(data, False)
 
 
 def populate_semester(data, ignore_conflicts=True):
