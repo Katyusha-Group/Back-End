@@ -3,6 +3,8 @@ def determine_presentation_type(presentation_type):
         return 'N'
     elif presentation_type == 'الکترونيکي':
         return 'E'
+    elif presentation_type == 'آرشیو':
+        return 'A'
     return 'B'
 
 
