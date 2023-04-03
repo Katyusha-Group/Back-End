@@ -46,6 +46,6 @@ class ExcelHandler(FileSystemEventHandler):
             elif len(indices) == 1:
                 row = modifications.get_group(key)
                 create_list.append(row)
-        create_list = pd.concat(create_list) if len(create_list) > 0 else None
-        update_list = pd.concat(update_list) if len(update_list) > 0 else None
+        create_list = pd.concat(create_list) if len(create_list) > 0 else pd.DataFrame()
+        update_list = pd.concat(update_list) if len(update_list) > 0 else pd.DataFrame()
         return create_list, update_list

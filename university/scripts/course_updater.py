@@ -7,6 +7,8 @@ from university.scripts import populate_table, maps, get_or_create, clean_data
 
 
 def create(data: pd.DataFrame):
+    if data.empty:
+        return
     print('Adding new courses to database.')
     pre = time.time()
     populate_table.populate_all_tables(data)
@@ -14,6 +16,8 @@ def create(data: pd.DataFrame):
 
 
 def update(data: pd.DataFrame):
+    if data.empty:
+        return
     data_length = len(data) // 2
     old_data = data[::2]
     new_data = data[1::2]
