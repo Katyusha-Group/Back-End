@@ -104,7 +104,7 @@ class Course(models.Model):
     teacher = models.ForeignKey(to=Teacher, on_delete=models.DO_NOTHING, verbose_name='استاد درس')
 
     def __str__(self):
-        return str(self.id)
+        return str(self.base_course) + '_' + str(self.class_gp)
 
     class Meta:
         verbose_name = 'درس'
