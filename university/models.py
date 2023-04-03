@@ -72,7 +72,7 @@ class Teacher(models.Model):
         verbose_name_plural = 'اساتید'
 
     def __str__(self):
-        return self.name + ' : ' + self.course_set
+        return self.name
 
 
 class Course(models.Model):
@@ -89,7 +89,7 @@ class Course(models.Model):
         ('A', 'آرشیو'),
     )
 
-    objects = managers.CourseManager()
+    objects = managers.SignalSenderManager()
 
     class_gp = models.CharField(max_length=2, verbose_name='گروه درس')
     capacity = models.PositiveSmallIntegerField(verbose_name='ظرفیت')
@@ -112,7 +112,8 @@ class Course(models.Model):
 
 
 class ExamTimePlace(models.Model):
-    objects = jmodels.jManager()
+    objects = managers.jSignalSenderManager()
+
     date = jmodels.jDateField(verbose_name='تاریخ امتحان', help_text='سال را به فرم yyyy-mm-dd وارد کنید.')
     start_time = models.TimeField(verbose_name='زمان شروع')
     end_time = models.TimeField(verbose_name='زمان پایان')
@@ -132,6 +133,8 @@ class CourseTimePlace(models.Model):
                     (3, 'دوشنبه'),
                     (4, 'سه شنبه'),
                     (5, 'چهارشنبه'), ]
+
+    objects = managers.SignalSenderManager()
 
     start_time = models.TimeField(verbose_name='زمان شروع')
     end_time = models.TimeField(verbose_name='زمان پایان')
