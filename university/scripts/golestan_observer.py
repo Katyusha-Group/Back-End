@@ -9,13 +9,6 @@ from university.scripts import course_updater
 class ExcelHandler(FileSystemEventHandler):
     def __init__(self, file):
         self.file = file
-        self.logger = logging.getLogger('changes')
-        self.logger.setLevel(logging.DEBUG)
-        handler = logging.FileHandler('./changes.log', encoding="utf-8")
-        handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(message)s')
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
         self.df = pd.read_excel(file)
 
     def on_modified(self, event):
