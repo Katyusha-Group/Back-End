@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class CourseTracker(models.Model):
+class ModelTracker(models.Model):
     ACTION_CHOICES = (
         ('C', 'ایجاد'),
         ('U', 'بروزرسانی'),
@@ -12,13 +12,14 @@ class CourseTracker(models.Model):
         ('C', 'اعمال شده'),
     )
 
-    course_id = models.IntegerField(verbose_name='شناسه')
+    model = models.CharField(max_length=255, verbose_name='مدل')
+    instance_id = models.IntegerField(verbose_name='شناسه')
     action = models.CharField(max_length=1, choices=ACTION_CHOICES, verbose_name='عملیات')
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, verbose_name='وضعیت')
     applied_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
 
     def __str__(self):
-        return str(self.course_id) + ' : ' + str(self.action)
+        return str(self.model) + str(self.instance_id) + ' : ' + str(self.action)
 
     class Meta:
         ordering = ['-applied_at']
@@ -26,13 +27,13 @@ class CourseTracker(models.Model):
         verbose_name_plural = 'ترکرها'
 
 
-class ColumnModification(models.Model):
-    column = models.CharField(max_length=255, verbose_name='ستون')
+class FieldTracker(models.Model):
+    field = models.CharField(max_length=255, verbose_name='ستون')
     value = models.CharField(max_length=1023, verbose_name='مقدار')
-    course_tracker = models.ForeignKey(CourseTracker, on_delete=models.CASCADE, verbose_name='ترکر')
+    tracker = models.ForeignKey(ModelTracker, on_delete=models.CASCADE, verbose_name='ترکر', related_name='fields')
 
     def __str__(self):
-        return str(self.column) + ' : ' + str(self.value)
+        return str(self.field) + ' : ' + str(self.value)
 
     class Meta:
         verbose_name = 'تغییرات ستون'
