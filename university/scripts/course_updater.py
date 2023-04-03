@@ -3,7 +3,7 @@ import time
 import pandas as pd
 
 from university.models import Course, Teacher, CourseTimePlace, ExamTimePlace
-from university.scripts import populate_table, maps, get_or_create, clean_data
+from university.scripts import populate_table, maps, get_or_create, clean_data, delete_from_table
 
 
 def create(data: pd.DataFrame):
@@ -24,28 +24,37 @@ def update(data: pd.DataFrame):
     populate_table.populate_teacher(new_data)
     diff = old_data.compare(new_data, keep_shape=False)
     columns = [col[0] for col in diff.columns.values.tolist()[::2]]
-    courses = _extract_courses(columns, data_length, diff, old_data)
+    courses, exam_time_df, class_time_df = _extract_courses(columns, data_length, diff, new_data)
     columns = _remove_additional_columns(columns)
     Course.objects.bulk_update(courses, fields=[maps.course_field_mapper[col] for col in columns])
-    _delete_course_time_place(courses)
-    _delete_exam_time(courses)
-    populate_table.populate_course_class_time(data=new_data)
-    populate_table.populate_exam_time(data=new_data)
+    delete_from_table.delete_from_exam_time(exam_time_df)
+    delete_from_table.delete_from_course_time(class_time_df)
+    populate_table.populate_exam_time(exam_time_df)
+    populate_table.populate_course_class_time(class_time_df)
 
 
-def _extract_courses(columns, data_length, diff, old_data):
+def _extract_courses(columns, data_length, diff, new_data):
     courses = []
+    exam_time_list = []
+    class_time_list = []
     for i in range(data_length):
-        course_code = old_data.iloc[i].loc['شماره و گروه درس']
+        course_code = new_data.iloc[i].loc['شماره و گروه درس']
         course = get_or_create.get_course(course_code=course_code)
         for col in columns:
             old_val = diff.iloc[i].loc[col].loc['self']
             new_val = diff.iloc[i].loc[col].loc['other']
             if pd.isna(old_val) and pd.isna(new_val):
                 continue
-            course = _update_column(course=course, column=col, value=new_val)
+            if col == 'زمان و مكان امتحان':
+                exam_time_list.append(new_data.iloc[i])
+            elif col == 'زمان و مكان ارائه':
+                class_time_list.append(new_data.iloc[i])
+            else:
+                course = _update_column(course=course, column=col, value=new_val)
         courses.append(course)
-    return courses
+    class_time_df = pd.concat(class_time_list) if len(class_time_list) > 0 else pd.DataFrame()
+    exam_time_df = pd.concat(exam_time_list) if len(exam_time_list) > 0 else pd.DataFrame()
+    return courses, exam_time_df, class_time_df
 
 
 def _remove_additional_columns(columns):
@@ -76,21 +85,3 @@ def _update_column(course: Course, column: str, value):
     elif column == 'توضيحات':
         course.description = value
     return course
-
-
-def _delete_course_time_place(courses: list[Course]):
-    course_time_list = []
-    for course in courses:
-        for course_time in course.coursetimeplace_set.all():
-            course_time_list.append(course_time.id)
-    course_time_list_query = CourseTimePlace.objects.filter(pk__in=course_time_list)
-    course_time_list_query._raw_delete(using=course_time_list_query.db)
-
-
-def _delete_exam_time(courses: list[Course]):
-    exam_time_list = []
-    for course in courses:
-        for course_time in course.examtimeplace_set.all():
-            exam_time_list.append(course_time.id)
-    exam_time_list_query = ExamTimePlace.objects.filter(pk__in=exam_time_list)
-    exam_time_list_query._raw_delete(using=exam_time_list_query.db)
