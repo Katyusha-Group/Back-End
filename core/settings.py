@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     "django_filters",
     'mail_templated',
     'drf_yasg',    
-    'rest_framework_simplejwt'
+    'rest_framework_simplejwt',
     'django_jalali',
     'accounts',
     'university',
