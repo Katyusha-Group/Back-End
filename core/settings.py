@@ -157,3 +157,45 @@ SIMPL_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
+
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:5173",
+]
+
+CORS_ORIGIN_REGEX_WHITELIST = [
+    "http://localhost:5173",
+]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+CORS_EXPOSE_HEADERS = [
+    'Cache-Control',
+    'Content-Language',
+    'Content-Type',
+    'Expires',
+    'Last-Modified',
+    'Pragma',
+]
