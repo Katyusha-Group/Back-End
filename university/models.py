@@ -1,9 +1,8 @@
-import uuid
-
-from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator
 from django_jalali.db import models as jmodels
+
+from university import managers
 
 
 # Create your models here.
@@ -14,7 +13,9 @@ class Semester(models.Model):
         return str(self.year)
 
     class Meta:
-        ordering = ['year']
+        ordering = ['-year']
+        verbose_name = 'ترم'
+        verbose_name_plural = 'ترم ها'
 
 
 class Department(models.Model):
@@ -24,17 +25,25 @@ class Department(models.Model):
     def __str__(self):
         return str(self.department_number)
 
+    class Meta:
+        verbose_name = 'دانشکده'
+        verbose_name_plural = 'دانشکده ها'
+
 
 class CourseStudyingGP(models.Model):
-    gp_id = models.IntegerField(verbose_name='کد دوره آموزشی')
-    name = models.CharField(max_length=255, unique=True, verbose_name='نام دوره آموزشی')
+    gp_id = models.IntegerField(verbose_name='کد گروه آموزشی')
+    name = models.CharField(max_length=255, unique=True, verbose_name='نام گروه آموزشی')
 
     def __str__(self):
         return str(self.gp_id) + ' --- ' + self.name
 
+    class Meta:
+        verbose_name = 'گروه آموزشی'
+        verbose_name_plural = 'گروه های آموزشی'
+
 
 class BaseCourse(models.Model):
-    course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس')
+    course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس', db_index=True)
     name = models.CharField(max_length=255, verbose_name='نام درس')
     total_unit = models.SmallIntegerField(validators=[MinValueValidator(1)], verbose_name='کل واحد')
     practical_unit = models.PositiveSmallIntegerField(verbose_name='واحد های عملی')
@@ -47,60 +56,85 @@ class BaseCourse(models.Model):
     def __str__(self):
         return str(self.course_number) + ' --- ' + self.name
 
+    class Meta:
+        verbose_name = 'درس پایه'
+        verbose_name_plural = 'دروس پایه'
+
 
 class Teacher(models.Model):
-    name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی')
+    name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['name', ]),
+        ]
+        verbose_name = 'استاد'
+        verbose_name_plural = 'اساتید'
 
     def __str__(self):
-        return self.name + ' : ' + self.course_set
+        return self.name
 
 
 class Course(models.Model):
-    class Sex(models.TextChoices):
-        MALE = 'C'
-        FEMALE = 'F'
-        BOTH = 'B'
+    SEX_CHOICES = (
+        ('M', 'مرد'),
+        ('F', 'زن'),
+        ('B', 'مختلط'),
+    )
 
-    class PresentationType(models.TextChoices):
-        NORMAL = 'N'
-        ELECTRONIC = 'E'
-        BOTH = 'B'
+    PRESENTATION_TYPE_CHOICES = (
+        ('N', 'عادی'),
+        ('E', 'الکترونیکی'),
+        ('B', 'عادی-نوری'),
+        ('A', 'آرشیو'),
+    )
+
+    objects = managers.SignalSenderManager()
 
     class_gp = models.CharField(max_length=2, verbose_name='گروه درس')
     capacity = models.PositiveSmallIntegerField(verbose_name='ظرفیت')
     registered_count = models.PositiveSmallIntegerField(verbose_name='تعداد ثبت نام شده ها')
     waiting_count = models.PositiveSmallIntegerField(verbose_name='تعداد افراد حاضر در لیست انتظار')
-    sex = models.CharField(choices=Sex.choices, max_length=1, verbose_name='جنسیت')
     guest_able = models.BooleanField(verbose_name='قابل اخذ توسط مهمان')
-    description = models.CharField(max_length=511, verbose_name='توضیحات')
-    presentation_type = models.CharField(choices=PresentationType.choices, max_length=1, verbose_name='نحوه ارائه درس')
+    registration_limit = models.CharField(max_length=1023, verbose_name='محدودیت اخذ')
+    description = models.CharField(max_length=1023, verbose_name='توضیحات')
+    sex = models.CharField(choices=SEX_CHOICES, max_length=1, verbose_name='جنسیت')
+    presentation_type = models.CharField(choices=PRESENTATION_TYPE_CHOICES, max_length=1, verbose_name='نحوه ارائه درس')
     base_course = models.ForeignKey(to=BaseCourse, on_delete=models.PROTECT, verbose_name='درس پایه')
     teacher = models.ForeignKey(to=Teacher, on_delete=models.DO_NOTHING, verbose_name='استاد درس')
 
     def __str__(self):
-        return str(self.base_course.course_number) + '-' + self.class_gp + ' --- ' + self.base_course.name
+        return str(self.base_course) + '_' + str(self.class_gp)
+
+    class Meta:
+        verbose_name = 'درس'
+        verbose_name_plural = 'درس ها'
 
 
 class ExamTimePlace(models.Model):
-    objects = jmodels.jManager()
+    objects = managers.jSignalSenderManager()
+
     date = jmodels.jDateField(verbose_name='تاریخ امتحان', help_text='سال را به فرم yyyy-mm-dd وارد کنید.')
     start_time = models.TimeField(verbose_name='زمان شروع')
     end_time = models.TimeField(verbose_name='زمان پایان')
-    place = models.CharField(max_length=255, verbose_name='مکان امتحان')
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس')
 
     def __str__(self):
-        return str(self.date) + ' ' + str(self.start_time) + ' ' + str(self.end_time) + ' --- ' + self.place
+        return str(self.date) + ' ' + str(self.start_time) + ' ' + str(self.end_time)
+
+    class Meta:
+        verbose_name = 'تاریخ امتحان'
+        verbose_name_plural = 'تاریخ امتحانات'
 
 
 class CourseTimePlace(models.Model):
     DAYS_CHOICES = [(1, 'شنبه'),
-                    (2, 'یکشنبه'),
-                    (3, 'دو شنبه'),
+                    (2, 'یک شنبه'),
+                    (3, 'دوشنبه'),
                     (4, 'سه شنبه'),
-                    (5, 'چهار شنبه'),
-                    (6, 'پنجشنبه'),
-                    (7, 'جمعه')]
+                    (5, 'چهارشنبه'), ]
+
+    objects = managers.SignalSenderManager()
 
     start_time = models.TimeField(verbose_name='زمان شروع')
     end_time = models.TimeField(verbose_name='زمان پایان')
@@ -110,3 +144,7 @@ class CourseTimePlace(models.Model):
 
     def __str__(self):
         return str(self.day) + ' ' + str(self.start_time) + ' ' + str(self.end_time) + ' --- ' + self.place
+
+    class Meta:
+        verbose_name = 'زمان و مکان کلاس'
+        verbose_name_plural = 'زمان و مکان کلاس ها'

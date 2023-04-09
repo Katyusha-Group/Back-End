@@ -25,6 +25,8 @@ lxml = "*"
 django-mail-templated = "*"
 django-debug-toolbar = "*"
 django-jalali = "*"
+watchdog = "*"
+psycopg2 = "*"
 
 [dev-packages]
 
