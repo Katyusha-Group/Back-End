@@ -8,7 +8,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 
-from image_handler import ImageHandler
+from crawler_scripts.image_handler import ImageHandler
 
 
 class SeleniumCrawler:
@@ -19,6 +19,7 @@ class SeleniumCrawler:
         self.options.add_argument('--no-sandbox')
         self.options.add_experimental_option("detach", True)
         self.driver = webdriver.Chrome(options=self.options)
+        # self.driver = webdriver.Chrome()
         self.image_handler = ImageHandler(os.path.abspath(os.path.join(__file__, os.pardir)) + '/captcha_images/')
 
     def wait_on_find_element_by_id(self, id_name, sleep_time) -> WebElement:
