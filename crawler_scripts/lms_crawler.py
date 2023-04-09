@@ -2,6 +2,7 @@ from requests import Response
 from bs4_crawler import BS4Crawler
 
 
+# TODO: retrieve archive of classes too
 class LMSCrawler(BS4Crawler):
     LOGIN_URL = 'https://lms.iust.ac.ir/login/index.php'
     AUTHENTICATION_URL = 'https://its.iust.ac.ir/oauth2/autheticate'

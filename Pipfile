@@ -27,6 +27,8 @@ django-debug-toolbar = "*"
 django-jalali = "*"
 watchdog = "*"
 psycopg2 = "*"
+rest-framework-simplejwt = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
 

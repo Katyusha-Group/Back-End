@@ -2,6 +2,7 @@ from requests import Response
 from bs4_crawler import BS4Crawler
 
 
+# TODO: Retrieve profile image too
 class ITSCrawler(BS4Crawler):
     LOGIN_URL = 'https://cas.iust.ac.ir/auth/login?service=https%3A%2F%2Fits.iust.ac.ir%2Fuser'
     DASHBOARD_URL = 'https://its.iust.ac.ir/dash/'
