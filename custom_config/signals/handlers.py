@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from university.models import Course, ExamTimePlace, CourseTimePlace
-from core.models import ModelTracker, FieldTracker
+from custom_config.models import ModelTracker, FieldTracker
 
 
 @receiver(post_save, sender=ExamTimePlace)

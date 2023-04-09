@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('field', models.CharField(max_length=255, verbose_name='ستون')),
                 ('value', models.CharField(max_length=1023, verbose_name='مقدار')),
-                ('tracker', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='core.modeltracker', verbose_name='ترکر')),
+                ('tracker', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='custom_config.modeltracker', verbose_name='ترکر')),
             ],
             options={
                 'verbose_name': 'تغییرات ستون',
