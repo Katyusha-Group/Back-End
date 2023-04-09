@@ -21,6 +21,10 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import GenericAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import ActivationResendSerializer
+import jwt 
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.exceptions import AuthenticationFailed
+
 
 class SignUpView(GenericAPIView):
     serializer_class = SignUpSerializer
@@ -134,13 +138,9 @@ class ChangePasswordView(generics.GenericAPIView):
 #     pass
 
 
-import jwt 
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.exceptions import AuthenticationFailed
 
 class ActivationConfirmView(APIView):
     def get(self, request, token,*args, **kwargs):
-        
         # decode token  -> id user
         # get user
         # is_email_verified = True
