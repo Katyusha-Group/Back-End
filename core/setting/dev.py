@@ -26,8 +26,12 @@ SECRET_KEY = 'django-insecure-v&!uiuu&^nb0rn@2e0u3-&qnt0g8@f+wt02z3du7@21t0klum-
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'katyusha',
+        'USER': 'postgres',
+        'PASSWORD': '@dmin2023',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
