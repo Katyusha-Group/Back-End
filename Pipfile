@@ -29,6 +29,7 @@ watchdog = "*"
 psycopg2 = "*"
 rest-framework-simplejwt = "*"
 djangorestframework-simplejwt = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 
