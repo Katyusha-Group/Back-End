@@ -30,6 +30,7 @@ psycopg2 = "*"
 rest-framework-simplejwt = "*"
 djangorestframework-simplejwt = "*"
 django-cors-headers = "*"
+importlib-metadata = "*"
 
 [dev-packages]
 

@@ -33,8 +33,7 @@ class SignUpView(GenericAPIView):
     authentication_classes = []
 
     def post(self, request):
-        serializer = SignUpSerializer(
-            data=request.data, context={'request': request})
+        serializer = SignUpSerializer(data=request.data, context={'request': request})
 
         # validate password
         try:
@@ -55,7 +54,7 @@ class SignUpView(GenericAPIView):
    
         # ------------------------------
         return Response({
-            "user": {"username": user.username,
+            "user": {"department": user.department,
                      "email": email,
                      "gender": user.gender},
             "message": "User created successfully. Now perform Login to get your token",
@@ -71,7 +70,7 @@ class SignUpView(GenericAPIView):
 
 
 
-class LoginView(ObtainAuthToken):
+class LoginView(APIView):
     serializer_class = LoginSerializer
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
