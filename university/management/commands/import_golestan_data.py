@@ -6,7 +6,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
-from university.scripts import populate_table
+from university.scripts import populate_table, app_variables
 
 
 class Command(BaseCommand):
@@ -16,7 +16,7 @@ class Command(BaseCommand):
         # get the path of Excel file
         path = Path(os.path.basename(__file__))
         path = Path(path.parent.absolute())
-        path = os.path.join(path, 'data', 'golestan_courses_captcha.xlsx')
+        path = os.path.join(path, 'data', app_variables.EXCEL_FILE)
         data = pd.read_excel(path)
         # start populating
         pre = time.time()

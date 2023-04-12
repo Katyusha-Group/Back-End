@@ -1,4 +1,6 @@
-EXCEL_FILE = 'golestan_courses_captcha.xlsx'
+EXCEL_FILE = 'golestan_courses.xlsx'
+DATA_DIRECTORY_NAME = 'data'
+DATA_DIRECTORY = './data/'
 
 # columns:
 SEMESTER = 'ترم ارائه درس'

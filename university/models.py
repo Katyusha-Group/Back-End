@@ -97,7 +97,7 @@ class Course(models.Model):
     registered_count = models.PositiveSmallIntegerField(verbose_name='تعداد ثبت نام شده ها')
     waiting_count = models.PositiveSmallIntegerField(verbose_name='تعداد افراد حاضر در لیست انتظار')
     guest_able = models.BooleanField(verbose_name='قابل اخذ توسط مهمان')
-    registration_limit = models.CharField(max_length=4000, verbose_name='محدودیت اخذ')
+    registration_limit = models.CharField(max_length=1000, verbose_name='محدودیت اخذ')
     description = models.CharField(max_length=400, verbose_name='توضیحات')
     sex = models.CharField(choices=SEX_CHOICES, max_length=1, verbose_name='جنسیت')
     presentation_type = models.CharField(choices=PRESENTATION_TYPE_CHOICES, max_length=1, verbose_name='نحوه ارائه درس')

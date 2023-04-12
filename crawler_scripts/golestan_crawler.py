@@ -8,26 +8,12 @@ import time
 
 class GolestanCrawler(SeleniumCrawler):
     AUTHENTICATION_URL = 'https://golestan.iust.ac.ir/forms/authenticateuser/main.htm'
+    FORM_NUMBER = 2
+    EXCEL_NAME = 'golestan_courses.xlsx'
 
-    def __init__(self, user_login, username=None, password=None):
+    def __init__(self):
         super().__init__()
         self.driver.get(self.AUTHENTICATION_URL)
-        self.user_login = user_login
-        self.set_user_login(user_login)
-        self.username = username
-        self.password = password
-
-    def set_user_login(self, user_login):
-        self.user_login = user_login
-
-    def set_username(self, username):
-        self.username = username
-
-    def set_password(self, password):
-        self.password = password
-
-    def get_number(self):
-        return 3 if self.user_login else 2
 
     def switch_to_inner_frames(self, frames):
         self.driver.switch_to.default_content()
@@ -60,7 +46,7 @@ class GolestanCrawler(SeleniumCrawler):
                 self.driver.close()
 
     def get_captcha(self):
-        time.sleep(2)
+        time.sleep(3)
         soup = self.get_soup()
         png_url = soup.find('img', {'id': 'imgCaptcha'})['src']
         img_path = self.image_handler.download(png_url)
@@ -70,26 +56,12 @@ class GolestanCrawler(SeleniumCrawler):
         return captcha_text
 
     def verify_login(self) -> bool:
-        time.sleep(2)
+        time.sleep(3)
         logged_in = self.driver.find_elements(by=By.ID, value='_mt_usr')
         return len(logged_in) > 0
 
     def login(self) -> bool:
         """Login to Golestan Account. if login was done successfully we'll return True. else False will be returned"""
-        if self.user_login:
-            return self.login_user()
-        else:
-            return self.login_admin()
-
-    def login_user(self):
-        time.sleep(2)
-        self.switch_to_inner_frames(self.get_form_body(1))
-        self.fill_input("F80351", self.username)
-        self.fill_input("F80401", self.password)
-        is_logged_in = self.pass_captcha()
-        return is_logged_in
-
-    def login_admin(self) -> bool:
         time.sleep(2)
         self.switch_to_inner_frames(self.get_form_body(1))
         is_logged_in = self.pass_captcha()
@@ -104,7 +76,7 @@ class GolestanCrawler(SeleniumCrawler):
             curr_captcha = next_captcha
             next_captcha = self.get_captcha()
             self.fill_input("F51701", curr_captcha)
-            if not self.user_login and i == 0:
+            if i == 0:
                 self.driver.find_element(by=By.XPATH, value='//*[@id="dsetting"]/label[5]').click()
             else:
                 self.click_on_button("btnLog")
@@ -119,13 +91,12 @@ class GolestanCrawler(SeleniumCrawler):
         self.click_on_button("OK")
 
     def go_to_this_term_courses(self, available=True):
-        if self.user_login:
-            self.go_to_102()
         self.driver.switch_to.default_content()
         time.sleep(1)
-        self.switch_to_inner_frames(self.get_form_body(self.get_number()))
+        self.switch_to_inner_frames(self.get_form_body(self.FORM_NUMBER))
         self.fill_input('GF10956_0', int(available))
-        self.switch_to_inner_frames(self.get_commander(self.get_number()))
+        self.fill_input('GF665530_0', 4)
+        self.switch_to_inner_frames(self.get_commander(self.FORM_NUMBER))
         self.click_on_button("IM16_ViewRep")
 
     def extract_courses(self):
@@ -140,17 +111,15 @@ class GolestanCrawler(SeleniumCrawler):
             if cols:
                 courses.append(cols)
         courses[0][1] = 'کد دانشكده درس'
-        courses[0][3] = 'کد گروه آموزشی درس'
-        suffix = '_captcha' if not self.user_login else ''
-        excel_creator = ExcelCreator(courses, f'golestan_courses{suffix}.xlsx')
+        courses[0][3] = 'کد گروه آموزشي درس'
+        excel_creator = ExcelCreator(courses, self.EXCEL_NAME)
         excel_creator.create_excel()
 
     def get_courses(self, available=True):
         self.go_to_this_term_courses(available)
         time.sleep(1)
-        self.switch_to_inner_frames(frames=self.get_commander(self.get_number()))
-        if not self.user_login:
-            self.remove_disable_attr('ExToEx', 20)
+        self.switch_to_inner_frames(frames=self.get_commander(self.FORM_NUMBER))
+        self.remove_disable_attr('ExToEx', 20)
         self.click_on_button('ExToEx')
         self.switch_to_child_window(window_title=self.driver.window_handles[1])
         self.extract_courses()
