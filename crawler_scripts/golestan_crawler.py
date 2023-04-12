@@ -9,7 +9,7 @@ import time
 class GolestanCrawler(SeleniumCrawler):
     AUTHENTICATION_URL = 'https://golestan.iust.ac.ir/forms/authenticateuser/main.htm'
     FORM_NUMBER = 2
-    EXCEL_NAME = 'golestan_courses.xlsx'
+    EXCEL_NAME = 'new_golestan_courses.xlsx'
 
     def __init__(self):
         super().__init__()

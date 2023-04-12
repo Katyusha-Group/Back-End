@@ -1,4 +1,5 @@
 EXCEL_FILE = 'golestan_courses.xlsx'
+NEW_EXCEL_FILE = 'new_golestan_courses.xlsx'
 DATA_DIRECTORY_NAME = 'data'
 DATA_DIRECTORY = './data/'
 
