@@ -3,7 +3,7 @@ import logging
 
 from watchdog.events import FileSystemEventHandler
 
-from university.scripts import course_updater
+from university.scripts import course_updater, app_variables
 
 
 class ExcelHandler(FileSystemEventHandler):
@@ -14,7 +14,7 @@ class ExcelHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if event.is_directory:
             return None
-        elif event.event_type == 'modified' and event.src_path.endswith('golestan_courses.xlsx'):
+        elif event.event_type == 'modified' and event.src_path.endswith(app_variables.EXCEL_FILE):
             # Load the Excel file
             df_new = pd.read_excel(self.file)
             # Compare the rows of the DataFrame
@@ -28,7 +28,7 @@ class ExcelHandler(FileSystemEventHandler):
 
     @staticmethod
     def make_create_update_list(diff):
-        modifications = diff.groupby(['شماره و گروه درس'])
+        modifications = diff.groupby([app_variables.COURSE_ID])
         update_list = []
         create_list = []
         for key in modifications.groups:

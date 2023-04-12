@@ -1,13 +1,13 @@
 import pandas as pd
 
 from university.models import CourseTimePlace, ExamTimePlace
-from university.scripts import get_or_create, clean_data
+from university.scripts import get_or_create, clean_data, app_variables
 
 
 def get_data_from_course_time(data):
     if data.empty:
         return
-    df = pd.DataFrame(data=data, columns=['زمان و مكان ارائه', 'شماره و گروه درس'])
+    df = pd.DataFrame(data=data, columns=[app_variables.COURSE_TIME_PLACE, app_variables.COURSE_ID])
     class_times = []
     for row in df.values:
         course = get_or_create.get_course(course_code=row[1])
@@ -25,7 +25,7 @@ def get_data_from_course_time(data):
 def get_data_from_exam_time(data):
     if data.empty:
         return
-    df = pd.DataFrame(data=data, columns=['زمان و مكان امتحان', 'شماره و گروه درس'])
+    df = pd.DataFrame(data=data, columns=[app_variables.EXAM_TIME_PLACE, app_variables.COURSE_ID])
     exams = []
     for row in df.values:
         course = get_or_create.get_course(course_code=row[1])

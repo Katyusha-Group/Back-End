@@ -3,7 +3,7 @@ from django.core.management import CommandError
 
 from university.models import Semester, Department, CourseStudyingGP, BaseCourse, Teacher, Course, CourseTimePlace, \
     ExamTimePlace
-from university.scripts import clean_data, get_or_create, get_data
+from university.scripts import clean_data, get_data, app_variables
 
 
 def populate_all_tables(data):
@@ -19,17 +19,18 @@ def populate_all_tables(data):
 
 def populate_semester(data, ignore_conflicts=True):
     try:
-        years = data['ترم ارائه درس'].unique()
+        years = data[app_variables.SEMESTER].unique()
         Semester.objects.bulk_create([Semester(year=y) for y in years],
-                                             ignore_conflicts=ignore_conflicts)
+                                     ignore_conflicts=ignore_conflicts)
     except Exception as ex:
         raise CommandError(ex)
 
 
 def populate_department(data, ignore_conflicts=True):
+    columns = [app_variables.DEPARTMENT_ID, app_variables.DEPARTMENT_NAME]
     try:
-        df = pd.DataFrame(data=data, columns=['کد دانشكده درس', 'دانشكده درس'])
-        departments = df.groupby(['کد دانشكده درس', 'دانشكده درس']).all().index.values
+        df = pd.DataFrame(data=data, columns=columns)
+        departments = df.groupby(columns).all().index.values
         Department.objects.bulk_create(
             [Department(department_number=dp_id, name=dp_name) for dp_id, dp_name in departments],
             ignore_conflicts=ignore_conflicts
@@ -39,9 +40,10 @@ def populate_department(data, ignore_conflicts=True):
 
 
 def populate_gp_studying(data, ignore_conflicts=True):
+    columns = [app_variables.STUDYING_GROUP_ID, app_variables.STUDYING_GROUP_NAME]
     try:
-        df = pd.DataFrame(data=data, columns=['کد گروه آموزشي درس', 'گروه آموزشي درس'])
-        gp_studying = df.groupby(['کد گروه آموزشي درس', 'گروه آموزشي درس']).all().index.values
+        df = pd.DataFrame(data=data, columns=columns)
+        gp_studying = df.groupby(columns).all().index.values
         CourseStudyingGP.objects.bulk_create(
             [CourseStudyingGP(gp_id=data_gp_id, name=data_gp_name) for data_gp_id, data_gp_name in gp_studying],
             ignore_conflicts=ignore_conflicts
@@ -66,7 +68,7 @@ def populate_base_course(data, ignore_conflicts=True):
 
 def populate_teacher(data, ignore_conflicts=True):
     try:
-        teachers = data['نام استاد'].unique()
+        teachers = data[app_variables.TEACHER].unique()
         Teacher.objects.bulk_create([Teacher(name=name) for name in teachers],
                                     ignore_conflicts=ignore_conflicts)
     except Exception as ex:

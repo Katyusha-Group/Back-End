@@ -3,6 +3,7 @@ from django.core.validators import MinValueValidator
 from django_jalali.db import models as jmodels
 
 from university import managers
+from university.scripts import app_variables
 
 
 # Create your models here.
@@ -77,16 +78,16 @@ class Teacher(models.Model):
 
 class Course(models.Model):
     SEX_CHOICES = (
-        ('M', 'مرد'),
-        ('F', 'زن'),
-        ('B', 'مختلط'),
+        ('M', app_variables.MAN),
+        ('F', app_variables.WOMAN),
+        ('B', app_variables.BOTH_SEX),
     )
 
     PRESENTATION_TYPE_CHOICES = (
-        ('N', 'عادی'),
-        ('E', 'الکترونیکی'),
-        ('B', 'عادی-نوری'),
-        ('A', 'آرشیو'),
+        ('N', app_variables.NORMAL),
+        ('E', app_variables.ELECTRONIC),
+        ('B', app_variables.BOTH_PRESENTATION_TYPE),
+        ('A', app_variables.ARCHIVE),
     )
 
     objects = managers.SignalSenderManager()
@@ -128,11 +129,11 @@ class ExamTimePlace(models.Model):
 
 
 class CourseTimePlace(models.Model):
-    DAYS_CHOICES = [(1, 'شنبه'),
-                    (2, 'یک شنبه'),
-                    (3, 'دوشنبه'),
-                    (4, 'سه شنبه'),
-                    (5, 'چهارشنبه'), ]
+    DAYS_CHOICES = [(0, app_variables.SAT),
+                    (1, app_variables.SUN),
+                    (2, app_variables.MON),
+                    (3, app_variables.TUE),
+                    (4, app_variables.WED), ]
 
     objects = managers.SignalSenderManager()
 
