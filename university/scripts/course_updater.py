@@ -6,6 +6,23 @@ from university.models import Course, Teacher, CourseTimePlace, ExamTimePlace
 from university.scripts import populate_table, maps, get_or_create, clean_data, delete_from_table, app_variables
 
 
+def make_create_update_list(diff):
+    modifications = diff.groupby([app_variables.COURSE_ID])
+    update_list = []
+    create_list = []
+    for key in modifications.groups:
+        indices = modifications.groups[key].tolist()
+        if len(indices) == 2:
+            rows = modifications.get_group(key)
+            update_list.append(rows)
+        elif len(indices) == 1:
+            row = modifications.get_group(key)
+            create_list.append(row)
+    create_list = pd.concat(create_list) if len(create_list) > 0 else pd.DataFrame()
+    update_list = pd.concat(update_list) if len(update_list) > 0 else pd.DataFrame()
+    return create_list, update_list
+
+
 def create(data: pd.DataFrame):
     if data.empty:
         return

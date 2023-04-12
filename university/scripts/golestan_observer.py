@@ -21,24 +21,7 @@ class ExcelHandler(FileSystemEventHandler):
             diff = pd.concat([self.df, df_new]).drop_duplicates(keep=False)
             # Check for changes
             if not diff.empty:
-                create_list, update_list = self.make_create_update_list(diff)
+                create_list, update_list = course_updater.make_create_update_list(diff)
                 course_updater.create(data=create_list)
                 course_updater.update(data=update_list)
                 self.df = df_new
-
-    @staticmethod
-    def make_create_update_list(diff):
-        modifications = diff.groupby([app_variables.COURSE_ID])
-        update_list = []
-        create_list = []
-        for key in modifications.groups:
-            indices = modifications.groups[key].tolist()
-            if len(indices) == 2:
-                rows = modifications.get_group(key)
-                update_list.append(rows)
-            elif len(indices) == 1:
-                row = modifications.get_group(key)
-                create_list.append(row)
-        create_list = pd.concat(create_list) if len(create_list) > 0 else pd.DataFrame()
-        update_list = pd.concat(update_list) if len(update_list) > 0 else pd.DataFrame()
-        return create_list, update_list
