@@ -14,12 +14,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # get the path of Excel file
-        path = Path('import_golestan_data.py')
+        path = Path(os.path.basename(__file__))
         path = Path(path.parent.absolute())
-        path = os.path.join(path, 'data', 'golestan_courses.xlsx')
+        path = os.path.join(path, 'data', 'golestan_courses_captcha.xlsx')
         data = pd.read_excel(path)
         # start populating
         pre = time.time()
         populate_table.populate_all_tables(data)
         print(time.time() - pre)
-

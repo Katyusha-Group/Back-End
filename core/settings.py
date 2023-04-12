@@ -11,9 +11,12 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = 'django-insecure-v&!uiuu&^nb0rn@2e0u3-&qnt0g8@f+wt02z3du7@21t0klum-'
 
 # Application definition
 
@@ -73,9 +76,9 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'katyusha',
-        'USER': 'postgres',
-        'PASSWORD': '@dmin2023',
+        'NAME': 'katyush1_db',
+        'USER': 'katyush1_admin',
+        'PASSWORD': 'katyusha@dmin2023',
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -140,8 +143,6 @@ AUTH_USER_MODEL = 'accounts.User'
 
 # email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-from datetime import timedelta
 
 SIMPL_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),

@@ -15,25 +15,15 @@ DEBUG = True
 
 SECRET_KEY = 'django-insecure-v&!uiuu&^nb0rn@2e0u3-&qnt0g8@f+wt02z3du7@21t0klum-'
 
-# ALLOWED_HOSTS = ['www.katyushaiust.ir', 'katyushaiust.ir']
+ALLOWED_HOSTS = ['www.katyushaiust.ir', 'katyushaiust.ir', '127.0.0.1']
 
 # INSTALLED_APPS = []
 
 # SITE_ID = 2
 
 # Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'katyusha',
-        'USER': 'postgres',
-        'PASSWORD': '@dmin2023',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
+# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 STATIC_ROOT = BASE_DIR / 'static'
 MEDIA_ROOT = BASE_DIR / 'media'
