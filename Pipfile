@@ -30,6 +30,7 @@ psycopg2 = "*"
 rest-framework-simplejwt = "*"
 djangorestframework-simplejwt = "*"
 django-cors-headers = "*"
+django-crontab = "*"
 
 [dev-packages]
 

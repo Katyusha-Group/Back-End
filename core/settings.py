@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'rest_framework_simplejwt',
     'django_jalali',
+    'django_crontab',
     'accounts',
     'university',
     'custom_config',
@@ -189,3 +190,7 @@ CORS_EXPOSE_HEADERS = [
     'Last-Modified',
     'Pragma',
 ]
+
+# CRONJOBS = [
+#     ('*/1 * * * *', 'university.cron.watch_golestan', '>> /home/katyusha1/project/cron.log'),
+# ]
