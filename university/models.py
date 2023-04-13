@@ -25,7 +25,7 @@ class Department(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name='نام دانشکده')
 
     def __str__(self):
-        return str(self.department_number)
+        return str(self.name)
 
     class Meta:
         verbose_name = 'دانشکده'
