@@ -27,18 +27,18 @@ def get_time(presentation_time_detail):
 def find_presentation_detail(presentation_detail):
     if presentation_detail[2] == app_variables.SAT:
         if presentation_detail[1] == app_variables.PERSIAN_ONE:
-            day = 2
+            day = 1
         else:
-            day = 4
+            day = 3
         start_time, end_time = get_time(presentation_detail[3])
         place = str.join(' ', presentation_detail[5:])
     else:
         if presentation_detail[1] == app_variables.SAT:
-            day = 1
+            day = 0
         elif presentation_detail[1] == app_variables.MON:
-            day = 3
+            day = 2
         else:
-            day = 5
+            day = 4
         start_time, end_time = get_time(presentation_detail[2])
         place = str.join(' ', presentation_detail[4:])
     return day, start_time, end_time, place
