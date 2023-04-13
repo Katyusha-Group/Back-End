@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from django_jalali.db import models as jmodels
+from django.conf import settings
 
 from university import managers
 from university.scripts import app_variables
@@ -103,6 +104,7 @@ class Course(models.Model):
     presentation_type = models.CharField(choices=PRESENTATION_TYPE_CHOICES, max_length=1, verbose_name='نحوه ارائه درس')
     base_course = models.ForeignKey(to=BaseCourse, on_delete=models.PROTECT, verbose_name='درس پایه')
     teacher = models.ForeignKey(to=Teacher, on_delete=models.DO_NOTHING, verbose_name='استاد درس')
+    students = models.ManyToManyField(to=settings.AUTH_USER_MODEL, related_name='courses')
 
     def __str__(self):
         return str(self.base_course) + '_' + str(self.class_gp)
@@ -118,7 +120,7 @@ class ExamTimePlace(models.Model):
     date = jmodels.jDateField(verbose_name='تاریخ امتحان', help_text='سال را به فرم yyyy-mm-dd وارد کنید.')
     start_time = models.TimeField(verbose_name='زمان شروع')
     end_time = models.TimeField(verbose_name='زمان پایان')
-    course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس')
+    course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس', related_name='exam_times')
 
     def __str__(self):
         return str(self.date) + ' ' + str(self.start_time) + ' ' + str(self.end_time)
@@ -129,11 +131,11 @@ class ExamTimePlace(models.Model):
 
 
 class CourseTimePlace(models.Model):
-    DAYS_CHOICES = [(0, app_variables.SAT),
-                    (1, app_variables.SUN),
-                    (2, app_variables.MON),
-                    (3, app_variables.TUE),
-                    (4, app_variables.WED), ]
+    DAYS_CHOICES = [(app_variables.SAT_NUMBER, app_variables.SAT),
+                    (app_variables.SUN_NUMBER, app_variables.SUN),
+                    (app_variables.MON_NUMBER, app_variables.MON),
+                    (app_variables.TUE_NUMBER, app_variables.TUE),
+                    (app_variables.WED_NUMBER, app_variables.WED), ]
 
     objects = managers.SignalSenderManager()
 
@@ -141,7 +143,7 @@ class CourseTimePlace(models.Model):
     end_time = models.TimeField(verbose_name='زمان پایان')
     day = models.IntegerField(choices=DAYS_CHOICES, verbose_name='روز جلسه')
     place = models.CharField(max_length=255, verbose_name='مکان برگزاری جلسه')
-    course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس')
+    course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس', related_name='course_times')
 
     def __str__(self):
         return str(self.day) + ' ' + str(self.start_time) + ' ' + str(self.end_time) + ' --- ' + self.place
