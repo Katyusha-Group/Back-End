@@ -32,6 +32,7 @@ djangorestframework-simplejwt = "*"
 django-cors-headers = "*"
 django-crontab = "*"
 importlib-metadata = "*"
+drf-nested-routers = "*"
 
 [dev-packages]
 
