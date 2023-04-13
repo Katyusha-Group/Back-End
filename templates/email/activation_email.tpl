@@ -5,5 +5,5 @@ Account Activation
 {% endblock %}
 
 {% block html %}
-http://127.0.0.1:8000/activation-confirm/{{ token }}
+http://127.0.0.1:8000/accounts/activation-confirm/{{ token }}
 {% endblock %}
