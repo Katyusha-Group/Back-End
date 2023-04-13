@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Q
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -7,6 +9,7 @@ from university.pagination import DefaultPagination
 from university.models import Course, Department, Semester
 from university.serializers import DepartmentSerializer, SemesterSerializer, SimpleCourseSerializer, \
     MyCourseSerializer, AddCourseSerializer, CourseExamTimeSerializer
+from university.scripts import app_variables
 
 
 class DepartmentViewSet(ModelViewSet):
@@ -15,7 +18,10 @@ class DepartmentViewSet(ModelViewSet):
     serializer_class = DepartmentSerializer
 
     def get_queryset(self):
-        return Department.objects.all()
+        user_id = self.request.user.id
+        user = get_user_model().objects.get(id=user_id)
+        return Department.objects.filter(
+            department_number__in=app_variables.GENERAL_DEPARTMENTS + [user.department.department_number]).all()
 
 
 class SemesterViewSet(ModelViewSet):
@@ -43,33 +49,30 @@ class CourseViewSet(ModelViewSet):
         return SimpleCourseSerializer
 
     def get_queryset(self):
-        # TODO: Filter based on student sex
         department = self.request.query_params.get('department_pk', None)
-        semester = self.request.query_params.get('semester_pk', None)
-        if department is not None:
-            return Course.objects \
-                .filter(base_course__department=department) \
-                .select_related('base_course')
-        elif department is not None and semester is not None:
-            return Course.objects \
-                .filter(base_course__department=department,
-                        base_course__semester=semester) \
-                .select_related('base_course')
-
-        # TODO: When user department is done, change this line of code
-        return Course.objects.all().select_related('base_course')
+        user_id = self.request.user.id
+        user = get_user_model().objects.get(id=user_id)
+        courses = Course.objects.filter(Q(sex=user.gender) | Q(sex='B')).filter(
+            base_course__department__in=app_variables.GENERAL_DEPARTMENTS + [
+                user.department.department_number])
+        if department is not None and department.isdigit():
+            department = int(department)
+            if department in app_variables.GENERAL_DEPARTMENTS or department == user.department.department_number:
+                return courses.filter(base_course__department=department) \
+                    .select_related('base_course')
+        return courses.select_related('base_course')
 
     @action(detail=False, methods=['GET', 'PUT'])
     def my_courses(self, request):
         student = get_user_model().objects.get(id=request.user.id)
         if request.method == 'GET':
             courses = MyCourseSerializer(student.courses.all(), many=True)
-            return Response(courses.data)
+            return Response(status=status.HTTP_200_OK, data=courses.data)
         elif request.method == 'PUT':
             serializer = AddCourseSerializer(data=request.data, context={'user_id': request.user.id})
             serializer.is_valid(raise_exception=True)
             serializer.save(student=student)
-            return Response(status=201)
+            return Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['GET'])
     def my_exams(self, request):
@@ -80,4 +83,4 @@ class CourseViewSet(ModelViewSet):
             for exam in course.exam_times.all():
                 exams.append(exam)
         serializer = CourseExamTimeSerializer(exams, many=True)
-        return Response(serializer.data)
+        return Response(data=serializer.data)
