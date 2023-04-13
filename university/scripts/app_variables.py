@@ -50,3 +50,10 @@ NO = 'خیر'
 
 # persian numbers
 PERSIAN_ONE = 'یک'
+
+# related number of each day
+SAT_NUMBER = 0
+SUN_NUMBER = 1
+MON_NUMBER = 2
+TUE_NUMBER = 3
+WED_NUMBER = 4
