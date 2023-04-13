@@ -1,19 +1,27 @@
+import os
+import time
 import shutil
+from pathlib import Path
 
 import pandas as pd
 
 from crawler_scripts.golestan_crawler import GolestanCrawler
-from university.scripts import course_updater
+from university.scripts import course_updater, app_variables
 
 
-def watch_golestan(old_path, new_path):
+def watch_golestan():
+    path = Path(os.path.basename(__file__))
+    path = Path(path.parent.absolute())
+    old_path = os.path.join(path, app_variables.DATA_DIRECTORY_NAME, app_variables.EXCEL_FILE)
+    new_path = os.path.join(path, app_variables.DATA_DIRECTORY_NAME, app_variables.NEW_EXCEL_FILE)
+    pre_time = time.time()
     # crawling golestan
     crawler = GolestanCrawler()
     is_login = crawler.login()
     if is_login:
         crawler.get_courses()
     else:
-        print('Could not extract data')
+        print(f'could not extract data from golestan')
 
     # comparing old and new data
     df_old = pd.read_excel(old_path)
@@ -25,6 +33,4 @@ def watch_golestan(old_path, new_path):
         course_updater.update(data=update_list)
         shutil.copy2(new_path, old_path)
 
-
-watch_golestan('old.xlsx', 'new.xlsx')
-
+    print(f'watch_golestan took {time.time() - pre_time} seconds')
