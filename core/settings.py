@@ -36,14 +36,15 @@ INSTALLED_APPS = [
     'drf_yasg',
     'rest_framework_simplejwt',
     'django_jalali',
+    'django_crontab',
     'accounts',
     'university',
     'custom_config',
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -134,6 +135,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
+# INTERNAL_IPS = [
+#     "127.0.0.1",
+# ]
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
@@ -196,3 +201,6 @@ EMAIL_HOST_USER = 'katyushaiust@gmail.com'
 EMAIL_HOST_PASSWORD = 'tysifiqazxifzbsi'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+# CRONJOBS = [
+#     ('*/1 * * * *', 'university.cron.watch_golestan', '>> /home/katyusha1/project/cron.log'),
+# ]

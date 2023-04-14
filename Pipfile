@@ -23,15 +23,17 @@ django-filter = "*"
 drf-yasg = {extras = ["validation"], version = "*"}
 lxml = "*"
 django-mail-templated = "*"
-django-debug-toolbar = "*"
 django-jalali = "*"
 watchdog = "*"
 psycopg2 = "*"
 rest-framework-simplejwt = "*"
 djangorestframework-simplejwt = "*"
 django-cors-headers = "*"
+django-crontab = "*"
 importlib-metadata = "*"
 python-decouple = "*"
+drf-nested-routers = "*"
+django-debug-toolbar = "==3.4.0"
 
 [dev-packages]
 

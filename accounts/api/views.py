@@ -53,7 +53,7 @@ class SignUpView(GenericAPIView):
 
         # ------------------------------
         return Response({
-            "user": {"department": user.department,
+            "user": {"department": user.department.name,
                      "email": email,
                      "gender": user.gender},
             "message": "User created successfully. Please check your email to activate your account. ",
@@ -62,9 +62,13 @@ class SignUpView(GenericAPIView):
     def get_token_for_user(self, user):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
+        
+    
 
 
-class LoginView(TokenObtainPairView):
+
+
+class LoginView(APIView):
     serializer_class = LoginSerializer
 
     def post(self, request, *args, **kwargs):
@@ -130,8 +134,7 @@ class ChangePasswordView(generics.GenericAPIView):
 
 
 class ActivationConfirmView(APIView):
-    permission_classes = []
-    def get(self, request, token, *args, **kwargs):
+    def get(self, request, token,*args, **kwargs):
         # decode token  -> id user
         # get user
         # is_email_verified = True
