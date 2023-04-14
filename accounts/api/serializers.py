@@ -8,6 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core import exceptions as exception
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     password1 = serializers.CharField(write_only=True)
@@ -15,7 +16,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id',  'email',
+        fields = ('id', 'email',
                   'password1', 'password2', 'gender', 'department')
         extra_kwargs = {
             'password1': {'write_only': True},
@@ -23,7 +24,6 @@ class SignUpSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        
         if attrs['password1'] != attrs['password2']:
             raise serializers.ValidationError({
                 'password2': ['Passwords must match.'],
@@ -38,11 +38,9 @@ class SignUpSerializer(serializers.ModelSerializer):
             gender=validated_data['gender'],
             password=make_password(validated_data['password1'])
         )
-        
-        
+
         user.save()
         return user
-    
 
 
 class LoginSerializer(serializers.Serializer):
@@ -65,7 +63,6 @@ class LoginSerializer(serializers.Serializer):
 
         username = attrs.get('username', None)
         password = attrs.get('password', None)
-
 
         if username and password:
             user = authenticate(request=self.context.get('request'),
@@ -104,7 +101,7 @@ class ChangePasswordSerializer(serializers.Serializer):
                 'new_password': list(e.messages)
             })
         return super().validate(attrs)
-    
+
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     # def validate(self, attrs):
@@ -126,7 +123,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         validated_data['email'] = self.user.email
         validated_data['id'] = self.user.id
         return validated_data
-    
 
 
 class ActivationResendSerializer(serializers.Serializer):
@@ -134,14 +130,14 @@ class ActivationResendSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         email = attrs.get('email', None)
-        
+
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             raise serializers.ValidationError({"detail": "user does not exist."})
-        
+
         if user.is_email_verified:
             raise serializers.ValidationError({"detail": "user is already verified."})
-        
+
         attrs['user'] = user
         return attrs

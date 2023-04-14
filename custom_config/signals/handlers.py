@@ -29,11 +29,12 @@ def create_u_log(sender, **kwargs):
 
         fields_list = []
 
-        for field in kwargs['fields']:
-            fields_list.append(FieldTracker(
-                field=field,
-                value=kwargs['instance'].__dict__[field],
-                tracker=tracker,
-            ))
+        if 'fields' in kwargs:
+            for field in kwargs['fields']:
+                fields_list.append(FieldTracker(
+                    field=field,
+                    value=kwargs['instance'].__dict__[field],
+                    tracker=tracker,
+                ))
 
-        FieldTracker.objects.bulk_create(fields_list)
+            FieldTracker.objects.bulk_create(fields_list)
