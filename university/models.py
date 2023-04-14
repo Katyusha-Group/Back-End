@@ -20,7 +20,7 @@ class Semester(models.Model):
 
 
 class Department(models.Model):
-    department_number = models.SmallIntegerField(primary_key=True, verbose_name='کد دانشکده')
+    department_number = models.SmallIntegerField(primary_key=True,verbose_name= 'کد دانشکده')
     name = models.CharField(max_length=255, unique=True, verbose_name='نام دانشکده')
 
     def __str__(self):

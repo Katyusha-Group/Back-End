@@ -31,6 +31,7 @@ rest-framework-simplejwt = "*"
 djangorestframework-simplejwt = "*"
 django-cors-headers = "*"
 importlib-metadata = "*"
+python-decouple = "*"
 
 [dev-packages]
 
