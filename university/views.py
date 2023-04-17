@@ -4,6 +4,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import GenericAPIView, ListAPIView, UpdateAPIView
+from rest_framework.mixins import ListModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -13,7 +15,7 @@ from university.serializers import DepartmentSerializer, SemesterSerializer, Sim
 from university.scripts import app_variables
 
 
-class DepartmentViewSet(ModelViewSet):
+class DepartmentListView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
     serializer_class = DepartmentSerializer
