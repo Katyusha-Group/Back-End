@@ -133,6 +133,7 @@ class ChangePasswordView(generics.GenericAPIView):
 
 
 class ActivationConfirmView(APIView):
+    permission_classes = []
     def get(self, request, token,*args, **kwargs):
         # decode token  -> id user
         # get user
