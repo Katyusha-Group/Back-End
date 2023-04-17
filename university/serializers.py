@@ -1,13 +1,28 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher
+from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse
+from .scripts import app_variables
+
+
+class SimpleBaseCourseSerializer(serializers.ModelSerializer):
+    group_count = serializers.SerializerMethodField(read_only=True)
+
+    def get_group_count(self, obj: BaseCourse):
+        return obj.courses.count()
+
+    class Meta:
+        model = BaseCourse
+        fields = ['course_number', 'name', 'group_count']
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='department_number', read_only=True)
+    base_courses = SimpleBaseCourseSerializer(many=True, read_only=True)
+
     class Meta:
         model = Department
-        fields = ['department_number', 'name']
+        fields = ['id', 'name', 'base_courses']
 
 
 class SemesterSerializer(serializers.ModelSerializer):
@@ -45,13 +60,13 @@ class SimpleCourseSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
 
-    class Meta:
-        model = Course
-        fields = ['complete_course_number', 'name', 'capacity',
-                  'registered_count', 'sex']
-
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+
+    class Meta:
+        model = Course
+        fields = ['complete_course_number', 'name',
+                  'registered_count', 'capacity']
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -61,6 +76,8 @@ class CourseSerializer(serializers.ModelSerializer):
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
     teacher = TeacherSerializer(read_only=True)
+    name = serializers.CharField(source='base_course.name', read_only=True)
+    complete_course_number = serializers.SerializerMethodField(read_only=True)
 
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
@@ -69,8 +86,9 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = ['complete_course_number', 'name', 'total_unit',
                   'practical_unit', 'capacity', 'registered_count',
-                  'waiting_count', 'sex', 'teacher', 'emergency_deletion',
-                  'exam_times', 'course_times', ]
+                  'waiting_count', 'sex', 'guest_able', 'emergency_deletion',
+                  'registration_limit', 'description', 'presentation_type',
+                  'teacher', 'exam_times', 'course_times']
 
 
 class MyCourseSerializer(serializers.ModelSerializer):
@@ -90,16 +108,24 @@ class MyCourseSerializer(serializers.ModelSerializer):
                   'course_times', 'teacher']
 
 
-class AddCourseSerializer(serializers.Serializer):
+class ModifyMyCourseSerializer(serializers.Serializer):
     complete_course_number = serializers.CharField()
 
-    def validate_complete_course_number(self, value):
+    def validate(self, attrs):
         user_id = self.context['user_id']
         user = get_user_model().objects.get(id=user_id)
-        course_number, class_gp = value.split('_')
-        if not Course.objects.filter(class_gp=class_gp, base_course_id=course_number).exists():
-            raise serializers.ValidationError('No course with the given course number was found.')
-        return value
+        course_number, class_gp = attrs['complete_course_number'].split('_')
+        courses = Course.objects.filter(class_gp=class_gp, base_course_id=course_number)
+        if not courses.exists():
+            raise serializers.ValidationError(
+                detail='No course with the given course number was found.'
+            )
+        if not courses.first().base_course.department.name in \
+               [user.department.name] + app_variables.GENERAL_DEPARTMENTS:
+            raise serializers.ValidationError(
+                detail='This course can not be added, due to its department incompatibility with allowed departments',
+            )
+        return attrs
 
     def save(self, **kwargs):
         user = kwargs['student']
@@ -107,11 +133,13 @@ class AddCourseSerializer(serializers.Serializer):
         course = Course.objects.get(class_gp=class_gp, base_course_id=course_number)
         if course in user.courses.all():
             user.courses.remove(course)
+            created = False
         else:
             user.courses.add(course)
+            created = True
         course.save()
         user.save()
-        return course
+        return course, created
 
 
 class CourseExamTimeSerializer(serializers.ModelSerializer):
