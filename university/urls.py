@@ -4,10 +4,9 @@ from rest_framework_nested import routers
 from . import views
 
 router = routers.DefaultRouter()
-router.register('courses', viewset=views.CourseViewSet, basename='courses')
+router.register(r'courses', viewset=views.CourseViewSet, basename='courses')
 
 urlpatterns = [
     path('', include(router.urls)),
-    # path('courses/', views.CourseViewSet.as_view(), name='courses'),
     path('departments/', views.DepartmentListView.as_view(), name='departments')
 ]
