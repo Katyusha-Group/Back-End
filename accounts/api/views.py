@@ -48,9 +48,8 @@ class SignUpView(GenericAPIView):
 
         user_obj = get_object_or_404(User, email=email)
         token = self.get_token_for_user(user_obj)
-        message = EmailMessage('email/activation_email.tpl', {'token': token,}, 'asad@asd.com', to=[email])
+        message = EmailMessage('email/activation_email.tpl', {'token': token}, 'asad@asd.com', to=[email])
         message.send()
-
         # ------------------------------
         return Response({
             "user": {"department": user.department.name,
@@ -124,6 +123,7 @@ class ChangePasswordView(generics.GenericAPIView):
             self.object.set_password(serializer.data.get("new_password"))
             self.object.save()
             return Response({"status": "password set"}, status=status.HTTP_200_OK)
+
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -133,8 +133,6 @@ class ChangePasswordView(generics.GenericAPIView):
 
 
 class ActivationConfirmView(APIView):
-    permission_classes = []
-    authentication_classes = []
     def get(self, request, token,*args, **kwargs):
         # decode token  -> id user
         # get user
