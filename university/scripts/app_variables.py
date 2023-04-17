@@ -49,7 +49,7 @@ YES = 'بله'
 NO = 'خیر'
 
 # persian numbers
-PERSIAN_ONE = 'یک'
+PERSIAN_ONE = 'يك'
 
 # related number of each day
 SAT_NUMBER = 0
