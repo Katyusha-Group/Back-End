@@ -147,7 +147,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.User'
 
 # email configuration
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 SIMPL_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
@@ -195,6 +195,12 @@ CORS_EXPOSE_HEADERS = [
     'Pragma',
 ]
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'katyushaiust@gmail.com'
+EMAIL_HOST_PASSWORD = 'tysifiqazxifzbsi'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 # CRONJOBS = [
 #     ('*/1 * * * *', 'university.cron.watch_golestan', '>> /home/katyusha1/project/cron.log'),
 # ]

@@ -4,6 +4,8 @@ from django.contrib.auth.models import AbstractUser
 from university.models import Department
 
 
+
+
 class User(AbstractUser):
     GENDER_Male = 'M'
     GENDER_Female = 'F'

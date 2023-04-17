@@ -56,12 +56,16 @@ class SignUpView(GenericAPIView):
             "user": {"department": user.department.name,
                      "email": email,
                      "gender": user.gender},
-            "message": "User created successfully. Now perform Login to get your token",
+            "message": "User created successfully. Please check your email to activate your account. ",
         })
 
     def get_token_for_user(self, user):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
+        
+    
+
+
 
 
 class LoginView(APIView):
@@ -130,7 +134,7 @@ class ChangePasswordView(generics.GenericAPIView):
 
 
 class ActivationConfirmView(APIView):
-    def get(self, request, token, *args, **kwargs):
+    def get(self, request, token,*args, **kwargs):
         # decode token  -> id user
         # get user
         # is_email_verified = True
@@ -155,7 +159,7 @@ class ActivationConfirmView(APIView):
         # except jwt.exceptions.DecodeError:
         #     raise AuthenticationFailed('Token is invalid')
         # except jwt.exceptions.InvalidTokenError:
-        #     raise AuthenticationFailed('Token is invalid')       
+        #     raise AuthenticationFailed('Token is invalid')
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):

@@ -30,6 +30,11 @@ class SignUpSerializer(serializers.ModelSerializer):
             })
         return attrs
 
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already exists.")
+        return value
+
     def create(self, validated_data):
         user = User.objects.create(
             department=validated_data['department'],
