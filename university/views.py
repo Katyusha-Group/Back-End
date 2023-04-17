@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from university.models import Course, Department, Semester, ExamTimePlace
 from university.serializers import DepartmentSerializer, SemesterSerializer, SimpleCourseSerializer, \
-    ModifyMyCourseSerializer, CourseExamTimeSerializer, CourseSerializer
+    ModifyMyCourseSerializer, CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer
 from university.scripts import app_variables
 
 
@@ -49,6 +49,8 @@ class CourseViewSet(ModelViewSet):
             return SimpleCourseSerializer
         elif self.action == 'my_exams' and self.request.method == 'GET':
             return CourseExamTimeSerializer
+        elif self.action == 'my_summary' and self.request.method == 'GET':
+            return SummarySerializer
         return CourseSerializer
 
     def get_queryset(self):
@@ -64,7 +66,7 @@ class CourseViewSet(ModelViewSet):
             else:
                 return courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()
         except TypeError:
-            if self.action != 'my_exams' and self.action != 'my_courses':
+            if self.action != 'my_exams' and self.action != 'my_courses' and self.action != 'my_summary':
                 raise ValidationError(detail='Enter course_number as query string in the url.')
 
     @action(detail=False, methods=['GET', 'PUT'])
@@ -90,3 +92,16 @@ class CourseViewSet(ModelViewSet):
         exams = ExamTimePlace.objects.filter(pk__in=exam_ids)
         serializer = CourseExamTimeSerializer(exams, many=True)
         return Response(data=serializer.data)
+
+    @action(detail=False, methods=['GET'])
+    def my_summary(self, request):
+        user = get_user_model().objects.get(id=request.user.id)
+        course_data = user.courses.prefetch_related('base_course')
+        courses = SummaryCourseSerializer(
+            course_data,
+            many=True,
+            context={'user': user}
+        )
+        return Response(status=status.HTTP_200_OK,
+                        data={'unit_count': sum([course.base_course.total_unit for course in course_data]),
+                              'data': courses.data})

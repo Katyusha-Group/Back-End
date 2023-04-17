@@ -151,3 +151,19 @@ class CourseExamTimeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExamTimePlace
         fields = ['complete_course_number', 'date', 'start_time', 'end_time']
+
+
+class SummaryCourseSerializer(serializers.ModelSerializer):
+    complete_course_number = serializers.SerializerMethodField(read_only=True)
+    name = serializers.CharField(source='base_course.name', read_only=True)
+    total_unit = serializers.IntegerField(source='base_course.total_unit', read_only=True)
+
+    def get_complete_course_number(self, obj: Course):
+        course_number_str = str(obj.base_course.course_number)
+        return course_number_str[:2] + '-' + course_number_str[2:4] + '-' + course_number_str[4:7] + '-' + obj.class_gp
+
+    class Meta:
+        model = Course
+        fields = ['complete_course_number', 'name', 'total_unit']
+
+
