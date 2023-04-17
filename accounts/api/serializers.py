@@ -14,7 +14,6 @@ class SignUpSerializer(serializers.ModelSerializer):
     password1 = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
 
-
     class Meta:
         model = User
         fields = ('id', 'email',
@@ -36,8 +35,6 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Email already exists.")
         return value
 
-
-
     def create(self, validated_data):
         user = User.objects.create(
             department=validated_data['department'],
@@ -53,7 +50,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(
-        label=_("Username"),
+        label=_("Email"),
         write_only=True
     )
     password = serializers.CharField(
