@@ -34,6 +34,7 @@ importlib-metadata = "*"
 python-decouple = "*"
 drf-nested-routers = "*"
 django-debug-toolbar = "==3.4.0"
+openpyxl = "*"
 
 [dev-packages]
 

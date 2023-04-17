@@ -14,6 +14,7 @@ class SignUpSerializer(serializers.ModelSerializer):
     password1 = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
 
+
     class Meta:
         model = User
         fields = ('id', 'email',
@@ -34,6 +35,8 @@ class SignUpSerializer(serializers.ModelSerializer):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Email already exists.")
         return value
+
+
 
     def create(self, validated_data):
         user = User.objects.create(

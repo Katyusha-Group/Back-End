@@ -16,7 +16,7 @@ class User(AbstractUser):
 
     email = models.EmailField(unique=True)
     is_email_verified = models.BooleanField(default=False)
-    department = models.ForeignKey(to=Department, on_delete=models.DO_NOTHING)
+    department = models.ForeignKey(to=Department, on_delete=models.PROTECT)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
 
     def __str__(self):
