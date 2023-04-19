@@ -9,6 +9,21 @@ from django.core import exceptions as exception
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
+class VerificationSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True)
+
+    class Meta:
+        model = Verification
+        fields = ('email',)
+
+    def create(self, validated_data):
+        email = validated_data['email']
+
+        verification = Verification.objects.create(email=email)
+        verification.send_verification_email()
+        return verification
+
+
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     password1 = serializers.CharField(write_only=True)
@@ -146,3 +161,5 @@ class ActivationResendSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
+
+

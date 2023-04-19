@@ -26,7 +26,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 
-class SignUpView(GenericAPIView):
+class SignUpView(APIView):
     serializer_class = SignUpSerializer
 
     permission_classes = []
@@ -45,23 +45,36 @@ class SignUpView(GenericAPIView):
         email = serializer.validated_data['email']
 
         # --------- send email ---------
+        serializer_act = VerificationSerializer(data=request.data)
+        serializer_act.is_valid(raise_exception=True)
+        verification = serializer_act.save()
 
-        user_obj = get_object_or_404(User, email=email)
-        token = self.get_token_for_user(user_obj)
-        message = EmailMessage('email/activation_email.tpl', {'token': token}, 'asad@asd.com', to=[email])
-        message.send()
         # ------------------------------
         return Response({
-            "user": {"department": user.department.name,
-                     "email": email,
+            "user": {"department": user.department.name,"email": email,
                      "gender": user.gender},
             "message": "User created successfully. Please check your email to activate your account. ",
-        })
+        }, status=201)
 
     def get_token_for_user(self, user):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
-        
+
+    def put(self, request):
+        email = request.data.get('email')
+        code = request.data.get('code')
+
+        if not email or not code:
+            return Response({'message': 'Email and code are required'}, status=status.HTTP_400_BAD_REQUEST)
+        verification = Verifications.objects.filter(email=email, code=code).first()
+        if not verification:
+            return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
+        if not verification.is_valid:
+            verification.delete()
+            return Response({'message': 'Code is expired'}, status=status.HTTP_400_BAD_REQUEST)
+        verification.verify_email()
+        return Response({'message': 'Email verified successfully'}, status=status.HTTP_200_OK)
+
     
 
 
