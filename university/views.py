@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from university.models import Course, Department, Semester, ExamTimePlace
 from university.serializers import DepartmentSerializer, SemesterSerializer, SimpleCourseSerializer, \
-    ModifyMyCourseSerializer, CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer
+    ModifyMyCourseSerializer, CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, MyCourseSerializer
 from university.scripts import app_variables
 
 
@@ -46,11 +46,11 @@ class CourseViewSet(ModelViewSet):
         if self.action == 'my_courses' and self.request.method == 'PUT':
             return ModifyMyCourseSerializer
         elif self.action == 'my_courses' and self.request.method == 'GET':
-            return SimpleCourseSerializer
+            return MyCourseSerializer
         elif self.action == 'my_exams' and self.request.method == 'GET':
             return CourseExamTimeSerializer
         elif self.action == 'my_summary' and self.request.method == 'GET':
-            return SummarySerializer
+            return SummaryCourseSerializer
         return CourseSerializer
 
     def get_queryset(self):
@@ -73,7 +73,7 @@ class CourseViewSet(ModelViewSet):
     def my_courses(self, request):
         student = get_user_model().objects.get(id=request.user.id)
         if request.method == 'GET':
-            courses = SimpleCourseSerializer(
+            courses = MyCourseSerializer(
                 (student.courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()),
                 many=True
             )
