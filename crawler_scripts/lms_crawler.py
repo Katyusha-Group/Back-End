@@ -1,17 +1,21 @@
+import os
+
 from requests import Response
 from bs4_crawler import BS4Crawler
+from crawler_scripts.image_handler import ImageHandler
 
 
-# TODO: retrieve archive of classes too
 class LMSCrawler(BS4Crawler):
     LOGIN_URL = 'https://lms.iust.ac.ir/login/index.php'
     AUTHENTICATION_URL = 'https://its.iust.ac.ir/oauth2/autheticate'
     BASE_COURSE_VIEW_LINK = 'https://lms.iust.ac.ir/course/view.php?id='
     BASE_COURSE_INFO_LINK = 'https://lms.iust.ac.ir/course/info.php?id='
     LMS_PROFILE_URL = 'https://lms.iust.ac.ir/user/profile.php'
+    LMS_PROFILE_COUNT = 3260
 
     def __init__(self):
         super().__init__()
+        self.image_handler = ImageHandler(os.path.abspath(os.path.join(__file__, os.pardir)) + '/teacher_images/')
 
     @staticmethod
     def get_login_data(username, password) -> dict:
@@ -120,3 +124,38 @@ class LMSCrawler(BS4Crawler):
         course_info_link = self.BASE_COURSE_INFO_LINK + course_id
         return course_name, {"id": course_id, "term": course_term,
                              "view_link": course_view_link, "info_link": course_info_link}
+
+    def get_teachers_info(self, start, count):
+        data = []
+        for i in range(start, start + count):
+            teacher_info = self.get_teacher_info(i)
+            if teacher_info is not None:
+                data.append(teacher_info)
+        return data
+
+    def get_teacher_info(self, lms_id):
+        self.set_soup(self.LMS_PROFILE_URL + '?id=' + str(lms_id))
+        name = self.get_teacher_name()
+        if name is None:
+            return None
+        email = self.get_teacher_email()
+        img_url = self.get_teacher_image()
+        return [name, email, img_url, lms_id]
+
+    def get_teacher_name(self):
+        try:
+            return self.soup.find(class_="contentnode fullname").find('span').text
+        except AttributeError:
+            return None
+
+    def get_teacher_email(self):
+        try:
+            return self.soup.find(class_="contentnode email").find('dd').text
+        except AttributeError:
+            return None
+
+    def get_teacher_image(self):
+        try:
+            return self.soup.find(class_="contentnode userimage adaptableuserpicture").find('img').get('src')
+        except AttributeError:
+            return None

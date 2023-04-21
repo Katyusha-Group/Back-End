@@ -1,5 +1,6 @@
 import os
 import random
+from os.path import basename
 
 import requests
 
@@ -9,21 +10,30 @@ class ImageHandler:
         self.output_dir = output_dir
         self.create_path()
 
-    def download(self, captcha_url):
+    def download_captcha(self, url):
         try:
-            print('creating image with url :::', captcha_url)
-            image = requests.get(captcha_url).content
-            return self.save(gif=image)
+            print('creating image with url :::', url)
+            image = requests.get(url)
+            name = str(int(random.uniform(10000, 99999)))
+            return self.save(img=image, suffix='.gif', name=name)
         except Exception as e:
             print("Error downloading image: ", e)
 
-    def save(self, gif):
+    def download_img(self, url, name):
         try:
-            img_name = str(int(random.uniform(10000, 99999))) + ".gif"
+            print('creating image with url :::', url)
+            image = requests.get(url).content
+            return self.save(img=image, name=name, suffix='.png')
+        except Exception as e:
+            print("Error downloading image: ", e)
+
+    def save(self, img, name, suffix):
+        try:
+            img_name = name + suffix
             img_path = os.path.join(self.output_dir, img_name)
             print('creating image with path :::', img_path)
             with open(img_path, 'wb') as fh:
-                fh.write(gif)
+                fh.write(img)
             return img_path
         except Exception as e:
             print("Error downloading image: ", e)
