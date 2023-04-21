@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait as Wait
-
+from webdriver_manager.chrome import ChromeDriverManager
 from crawler_scripts.image_handler import ImageHandler
 
 
@@ -18,9 +18,13 @@ class SeleniumCrawler:
         self.options.add_argument('--disable-gpu')
         self.options.add_argument('--no-sandbox')
         self.options.add_experimental_option("detach", True)
-        self.driver = webdriver.Chrome(options=self.options)
+        # self.driver = webdriver.Chrome(options=self.options)
+        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=self.options)
         # self.driver = webdriver.Chrome()
         self.image_handler = ImageHandler(os.path.abspath(os.path.join(__file__, os.pardir)) + '/captcha_images/')
+
+    def wait_on_find_element_by_xpath(self, xpath, sleep_time) -> WebElement:
+        return Wait(self.driver, sleep_time).until(ec.visibility_of_element_located((By.XPATH, xpath)))
 
     def wait_on_find_element_by_id(self, id_name, sleep_time) -> WebElement:
         return Wait(self.driver, sleep_time).until(ec.visibility_of_element_located((By.ID, id_name)))
