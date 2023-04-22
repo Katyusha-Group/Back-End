@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import os
 from core.settings import *
 
 # Quick-start development settings - unsuitable for production
@@ -25,10 +26,9 @@ ALLOWED_HOSTS = ['katyushaiust.ir', 'www.katyushaiust.ir']
 
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-STATIC_ROOT = BASE_DIR / 'static'
-MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'staticfiles',
+    os.path.join(BASE_DIR, 'staticfiles'),
 ]
-
