@@ -7,7 +7,6 @@ from pathlib import Path
 from django.core.management.base import BaseCommand
 
 from university.scripts import populate_table
-from utils.excel_handler import ExcelHandler
 from utils import project_variables
 
 

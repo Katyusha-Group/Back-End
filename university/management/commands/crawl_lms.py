@@ -14,26 +14,26 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         pre = time.time()
-        #
-        # threads = []
-        #
-        # for i in range(10):
-        #     t = Thread(target=get_teachers_info, args=(i, ))
-        #     t.start()
-        #     threads.append(t)
-        #
-        # for i in range(10):
-        #     threads[i].join()
-        #
-        # count = len(pd.read_excel('../data/teachers_info.xlsx')) // 10 + 1
-        #
-        # for i in range(10):
-        #     t = Thread(target=grab_teacher_photo, args=(i, count))
-        #     t.start()
-        #     threads.append(t)
-        #
-        # for i in range(10):
-        #     threads[i].join()
+
+        threads = []
+
+        for i in range(10):
+            t = Thread(target=get_teachers_info, args=(i, ))
+            t.start()
+            threads.append(t)
+
+        for i in range(10):
+            threads[i].join()
+
+        count = len(pd.read_excel('../data/teachers_info.xlsx')) // 10 + 1
+
+        for i in range(10):
+            t = Thread(target=grab_teacher_photo, args=(i, count))
+            t.start()
+            threads.append(t)
+
+        for i in range(10):
+            threads[i].join()
 
         ExcelHandler().replace_arabian_letters_with_persian_letters('teachers_info')
 
