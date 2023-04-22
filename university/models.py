@@ -21,7 +21,7 @@ class Semester(models.Model):
 
 
 class Department(models.Model):
-    department_number = models.SmallIntegerField(primary_key=True,verbose_name= 'کد دانشکده')
+    department_number = models.SmallIntegerField(primary_key=True, verbose_name='کد دانشکده')
     name = models.CharField(max_length=255, unique=True, verbose_name='نام دانشکده')
 
     def __str__(self):
@@ -67,6 +67,11 @@ class BaseCourse(models.Model):
 
 class Teacher(models.Model):
     name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
+    email_address = models.CharField(max_length=255, verbose_name='ایمیل', null=True, blank=True)
+    lms_id = models.IntegerField(verbose_name='شماره استاد در سامانه LMS', null=True, blank=True)
+    teacher_image_url = models.CharField(max_length=255, verbose_name='آدرس تصویر استاد', null=True, blank=True)
+    teacher_image = models.ImageField(upload_to='images/teachers_image/', verbose_name='تصویر استاد',
+                                      default='images/teachers_image/default.png', blank=True)
 
     class Meta:
         indexes = [
