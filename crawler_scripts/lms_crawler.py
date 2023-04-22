@@ -1,8 +1,8 @@
 import os
 
 from requests import Response
-from bs4_crawler import BS4Crawler
-from crawler_scripts.image_handler import ImageHandler
+from crawler_scripts.bs4_crawler import BS4Crawler
+from utils.image_handler import ImageHandler
 
 
 class LMSCrawler(BS4Crawler):

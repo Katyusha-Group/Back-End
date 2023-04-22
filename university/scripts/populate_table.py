@@ -1,25 +1,29 @@
+import os
+
 import pandas as pd
+from django.core.files import File
 from django.core.management import CommandError
 
 from university.models import Semester, Department, CourseStudyingGP, BaseCourse, Teacher, Course, CourseTimePlace, \
     ExamTimePlace
-from university.scripts import clean_data, get_data, app_variables
+from university.scripts import clean_data, get_data
+from utils import project_variables
 
 
-def populate_all_tables(data):
-    populate_semester(data)
-    populate_department(data)
-    populate_gp_studying(data)
-    populate_base_course(data)
-    populate_teacher(data)
-    populate_course(data, False)
-    populate_course_class_time(data, False)
-    populate_exam_time(data, False)
+def populate_all_tables(golestan_data, teachers_data):
+    populate_semester(golestan_data)
+    populate_department(golestan_data)
+    populate_gp_studying(golestan_data)
+    populate_base_course(golestan_data)
+    populate_teacher(golestan_data, teachers_data)
+    populate_course(golestan_data, False)
+    populate_course_class_time(golestan_data, False)
+    populate_exam_time(golestan_data, False)
 
 
 def populate_semester(data, ignore_conflicts=True):
     try:
-        years = data[app_variables.SEMESTER].unique()
+        years = data[project_variables.SEMESTER].unique()
         Semester.objects.bulk_create([Semester(year=y) for y in years],
                                      ignore_conflicts=ignore_conflicts)
     except Exception as ex:
@@ -27,7 +31,7 @@ def populate_semester(data, ignore_conflicts=True):
 
 
 def populate_department(data, ignore_conflicts=True):
-    columns = [app_variables.DEPARTMENT_ID, app_variables.DEPARTMENT_NAME]
+    columns = [project_variables.DEPARTMENT_ID, project_variables.DEPARTMENT_NAME]
     try:
         df = pd.DataFrame(data=data, columns=columns)
         departments = df.groupby(columns).all().index.values
@@ -40,7 +44,7 @@ def populate_department(data, ignore_conflicts=True):
 
 
 def populate_gp_studying(data, ignore_conflicts=True):
-    columns = [app_variables.STUDYING_GROUP_ID, app_variables.STUDYING_GROUP_NAME]
+    columns = [project_variables.STUDYING_GROUP_ID, project_variables.STUDYING_GROUP_NAME]
     try:
         df = pd.DataFrame(data=data, columns=columns)
         gp_studying = df.groupby(columns).all().index.values
@@ -66,10 +70,25 @@ def populate_base_course(data, ignore_conflicts=True):
         raise CommandError(ex)
 
 
-def populate_teacher(data, ignore_conflicts=True):
+def populate_teacher(golestan_data, teachers_data, ignore_conflicts=True):
     try:
-        teachers = data[app_variables.TEACHER].unique()
-        Teacher.objects.bulk_create([Teacher(name=name) for name in teachers],
+        df = pd.DataFrame(golestan_data[project_variables.TEACHER].unique())
+        names = [name for name in df.iloc[:, 0].values]
+        names = pd.DataFrame({'name': names})
+        df = pd.merge(names, teachers_data, on='name', how='left').values
+        Teacher.objects.bulk_create([Teacher(name=row[0],
+                                             email_address=row[1],
+                                             lms_id=int(row[3]) if not pd.isna(row[3]) else None,
+                                             teacher_image_url=row[2],
+                                             teacher_image=File(
+                                                 file=open(f'./data/teachers_images/{int(row[3])}.png',
+                                                           'rb'),
+                                                 name=str(int(row[3])) + '.png') if not pd.isna(
+                                                 row[3]) and os.path.isfile(
+                                                 f'./data/teachers_images/{int(row[3])}.png')
+                                             else 'images/teachers_image/default.png',
+                                             )
+                                     for row in df],
                                     ignore_conflicts=ignore_conflicts)
     except Exception as ex:
         raise CommandError(ex)

@@ -1,20 +1,20 @@
-from university.scripts import app_variables
+from utils import project_variables
 
 
 def determine_presentation_type(presentation_type):
-    if presentation_type == app_variables.NORMAL:
+    if presentation_type == project_variables.NORMAL:
         return 'N'
-    elif presentation_type == app_variables.ELECTRONIC:
+    elif presentation_type == project_variables.ELECTRONIC:
         return 'E'
-    elif presentation_type == app_variables.ARCHIVE:
+    elif presentation_type == project_variables.ARCHIVE:
         return 'A'
     return 'B'
 
 
 def determine_sex(sex):
-    if sex == app_variables.BOTH_SEX:
+    if sex == project_variables.BOTH_SEX:
         return 'B'
-    elif sex == app_variables.MAN:
+    elif sex == project_variables.MAN:
         return 'M'
     return 'F'
 
@@ -25,17 +25,17 @@ def get_time(presentation_time_detail):
 
 
 def find_presentation_detail(presentation_detail):
-    if presentation_detail[2] == app_variables.SAT:
-        if presentation_detail[1] == app_variables.PERSIAN_ONE:
+    if presentation_detail[2] == project_variables.SAT:
+        if presentation_detail[1] == project_variables.PERSIAN_ONE:
             day = 1
         else:
             day = 3
         start_time, end_time = get_time(presentation_detail[3])
         place = str.join(' ', presentation_detail[5:])
     else:
-        if presentation_detail[1] == app_variables.SAT:
+        if presentation_detail[1] == project_variables.SAT:
             day = 0
-        elif presentation_detail[1] == app_variables.MON:
+        elif presentation_detail[1] == project_variables.MON:
             day = 2
         else:
             day = 4
@@ -51,7 +51,7 @@ def get_course_code(entry):
 
 
 def determine_true_false(entry):
-    return True if entry == app_variables.YES else False
+    return True if entry == project_variables.YES else False
 
 
 def prepare_data_for_course_time_place(entry):

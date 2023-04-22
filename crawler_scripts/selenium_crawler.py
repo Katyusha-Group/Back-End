@@ -1,5 +1,4 @@
 import os
-import time
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -8,18 +7,18 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 from webdriver_manager.chrome import ChromeDriverManager
-from crawler_scripts.image_handler import ImageHandler
+from utils.image_handler import ImageHandler
 
 
 class SeleniumCrawler:
     def __init__(self):
-        self.options = webdriver.ChromeOptions()
-        self.options.add_argument('--headless')
-        self.options.add_argument('--disable-gpu')
-        self.options.add_argument('--no-sandbox')
-        self.options.add_experimental_option("detach", True)
+        # self.options = webdriver.ChromeOptions()
+        # self.options.add_argument('--headless')
+        # self.options.add_argument('--disable-gpu')
+        # self.options.add_argument('--no-sandbox')
+        # self.options.add_experimental_option("detach", True)
         # self.driver = webdriver.Chrome(options=self.options)
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=self.options)
+        self.driver = webdriver.Chrome(ChromeDriverManager().install())
         # self.driver = webdriver.Chrome()
         self.image_handler = ImageHandler(os.path.abspath(os.path.join(__file__, os.pardir)) + '/captcha_images/')
 

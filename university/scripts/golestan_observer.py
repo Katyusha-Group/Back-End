@@ -1,9 +1,9 @@
 import pandas as pd
-import logging
 
 from watchdog.events import FileSystemEventHandler
 
-from university.scripts import course_updater, app_variables
+from university.scripts import course_updater
+from utils import project_variables
 
 
 class ExcelHandler(FileSystemEventHandler):
@@ -14,7 +14,7 @@ class ExcelHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if event.is_directory:
             return None
-        elif event.event_type == 'modified' and event.src_path.endswith(app_variables.EXCEL_FILE):
+        elif event.event_type == 'modified' and event.src_path.endswith(project_variables.GOLESTAN_EXCEL_FILE):
             # Load the Excel file
             df_new = pd.read_excel(self.file)
             # Compare the rows of the DataFrame

@@ -2,12 +2,13 @@ import time
 
 import pandas as pd
 
-from university.models import Course, Teacher, CourseTimePlace, ExamTimePlace
-from university.scripts import populate_table, maps, get_or_create, clean_data, delete_from_table, app_variables
+from university.models import Course, Teacher
+from university.scripts import populate_table, maps, get_or_create, clean_data, delete_from_table
+from utils import project_variables
 
 
 def make_create_update_list(diff):
-    modifications = diff.groupby([app_variables.COURSE_ID])
+    modifications = diff.groupby([project_variables.COURSE_ID])
     update_list = []
     create_list = []
     for key in modifications.groups:
@@ -56,16 +57,16 @@ def _extract_courses(columns, data_length, diff, new_data):
     exam_time_list = []
     class_time_list = []
     for i in range(data_length):
-        course_code = new_data.iloc[i].loc[app_variables.COURSE_ID]
+        course_code = new_data.iloc[i].loc[project_variables.COURSE_ID]
         course = get_or_create.get_course(course_code=course_code)
         for col in columns:
             old_val = diff.iloc[i].loc[col].loc['self']
             new_val = diff.iloc[i].loc[col].loc['other']
             if pd.isna(old_val) and pd.isna(new_val):
                 continue
-            if col == app_variables.EXAM_TIME_PLACE:
+            if col == project_variables.EXAM_TIME_PLACE:
                 exam_time_list.append(new_data.iloc[i])
-            elif col == app_variables.COURSE_TIME_PLACE:
+            elif col == project_variables.COURSE_TIME_PLACE:
                 class_time_list.append(new_data.iloc[i])
             else:
                 course = _update_column(course=course, column=col, value=new_val)
@@ -76,30 +77,30 @@ def _extract_courses(columns, data_length, diff, new_data):
 
 
 def _remove_additional_columns(columns):
-    if app_variables.EXAM_TIME_PLACE in columns:
-        columns.remove(app_variables.EXAM_TIME_PLACE)
-    if app_variables.COURSE_TIME_PLACE in columns:
-        columns.remove(app_variables.COURSE_TIME_PLACE)
+    if project_variables.EXAM_TIME_PLACE in columns:
+        columns.remove(project_variables.EXAM_TIME_PLACE)
+    if project_variables.COURSE_TIME_PLACE in columns:
+        columns.remove(project_variables.COURSE_TIME_PLACE)
     return columns
 
 
 def _update_column(course: Course, column: str, value):
-    if column == app_variables.CAPACITY:
+    if column == project_variables.CAPACITY:
         course.capacity = value
-    elif column == app_variables.REGISTERED_COUNT:
+    elif column == project_variables.REGISTERED_COUNT:
         course.registered_count = value
-    elif column == app_variables.WAITING_COUNT:
+    elif column == project_variables.WAITING_COUNT:
         course.waiting_count = value
-    elif column == app_variables.SEX:
+    elif column == project_variables.SEX:
         course.sex = value
-    elif column == app_variables.TEACHER:
+    elif column == project_variables.TEACHER:
         course.teacher = Teacher.objects.get(name=value)
-    elif column == app_variables.REGISTRATION_LIMIT:
+    elif column == project_variables.REGISTRATION_LIMIT:
         course.registration_limit = value
-    elif column == app_variables.PRESENTATION_TYPE:
+    elif column == project_variables.PRESENTATION_TYPE:
         course.presentation_type = clean_data.determine_presentation_type(value)
-    elif column == app_variables.GUEST_ABLE:
+    elif column == project_variables.GUEST_ABLE:
         course.guest_able = clean_data.determine_true_false(value)
-    elif column == app_variables.DESCRIPTION:
+    elif column == project_variables.DESCRIPTION:
         course.description = value
     return course

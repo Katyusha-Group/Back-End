@@ -1,13 +1,13 @@
-from university.scripts import app_variables
+from utils import project_variables
 
 course_field_mapper = {
-    app_variables.CAPACITY: 'capacity',
-    app_variables.REGISTERED_COUNT: 'registered_count',
-    app_variables.WAITING_COUNT: 'waiting_count',
-    app_variables.SEX: 'sex',
-    app_variables.TEACHER: 'teacher',
-    app_variables.REGISTRATION_LIMIT: 'registration_limit',
-    app_variables.PRESENTATION_TYPE: 'presentation_type',
-    app_variables.GUEST_ABLE: 'guest_able',
-    app_variables.DESCRIPTION: 'description',
+    project_variables.CAPACITY: 'capacity',
+    project_variables.REGISTERED_COUNT: 'registered_count',
+    project_variables.WAITING_COUNT: 'waiting_count',
+    project_variables.SEX: 'sex',
+    project_variables.TEACHER: 'teacher',
+    project_variables.REGISTRATION_LIMIT: 'registration_limit',
+    project_variables.PRESENTATION_TYPE: 'presentation_type',
+    project_variables.GUEST_ABLE: 'guest_able',
+    project_variables.DESCRIPTION: 'description',
 }
