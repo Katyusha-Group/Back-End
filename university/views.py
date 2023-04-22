@@ -105,3 +105,47 @@ class CourseViewSet(ModelViewSet):
         return Response(status=status.HTTP_200_OK,
                         data={'unit_count': sum([course.base_course.total_unit for course in course_data]),
                               'data': courses.data})
+
+
+
+
+
+class CourseGroupListView(ModelViewSet):
+    serializer_class = MyCourseSerializer
+
+    def get_queryset(self):
+        base_course_id = self.kwargs['base_course_id']
+
+        try:
+            courses = Course.objects.filter(base_course_id=base_course_id)
+
+            return courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()
+
+        except TypeError:
+            if self.action != 'my_exams' and self.action != 'my_courses' and self.action != 'my_summary':
+                raise ValidationError(detail='Enter course_number as query string in the url.')
+
+        except courses.DoesNotExist:
+            raise ValidationError(detail='No course with this base_course_id in database.')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

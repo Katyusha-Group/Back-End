@@ -166,4 +166,3 @@ class SummaryCourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = ['complete_course_number', 'name', 'total_unit']
 
-

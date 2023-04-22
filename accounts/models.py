@@ -7,6 +7,7 @@ from django.utils import timezone
 import secrets
 # improt random
 import random
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 
@@ -34,10 +35,11 @@ class Verification(models.Model):
     email = models.EmailField()
     timestamp = models.DateTimeField(default=datetime.datetime.now)
 
-    def send_verification_email(self):
+    def send_verification_email(self, token):
         subject = 'Verify your email'
-        message = f'Your verification code is {self.code}'
-        send_mail(subject='Verify your email', message=f'Your verification code is {self.code}', from_email='asd@asd.asd',
+
+        message = f'Your verification code is {self.code} \n  http://katyushaiust.ir/accounts/activation-confirm/{token}/'
+        send_mail(subject='Verify your email', message=message, from_email='asd@asd.asd',
                   recipient_list=[self.email], fail_silently=False)
 
 
