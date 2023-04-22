@@ -65,20 +65,6 @@ class SignUpView(APIView):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
 
-    def put(self, request):
-        email = request.data.get('email')
-        code = request.data.get('code')
-
-        if not email or not code:
-            return Response({'message': 'Email and code are required'}, status=status.HTTP_400_BAD_REQUEST)
-        verification = Verifications.objects.filter(email=email, code=code).first()
-        if not verification:
-            return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
-        if not verification.is_valid:
-            verification.delete()
-            return Response({'message': 'Code is expired'}, status=status.HTTP_400_BAD_REQUEST)
-        verification.verify_email()
-        return Response({'message': 'Email verified successfully'}, status=status.HTTP_200_OK)
 
 
 class LoginView(TokenObtainPairView):
@@ -90,7 +76,6 @@ class LoginView(TokenObtainPairView):
         user = serializer.validated_data['user']
         # token, created = Token.objects.get_or_create(user=user)
         token = self.generate_jwt_token(user.id)
-
         login(request, user)
         return Response({'token': token,
                          'user_id': user.id,
@@ -103,13 +88,18 @@ class LoginView(TokenObtainPairView):
         exp_time = datetime.utcnow() + timedelta(days=7)
 
         # Define the payload of the token
-        payload = {
-            'user_id': user_id,
-            'exp': exp_time
-        }
+        # payload = {
+        #     'user_id': user_id,
+        #     'exp': exp_time
+        # }
 
         # Generate the token using the JWT package and your Django SECRET_KEY setting
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        # token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        refresh = RefreshToken.for_user(User.objects.get(id = user_id))
+        token = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
 
         # Return the token as a string
         return token
