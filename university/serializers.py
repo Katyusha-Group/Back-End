@@ -166,3 +166,25 @@ class SummaryCourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = ['complete_course_number', 'name', 'total_unit']
 
+
+
+
+
+class CourseGroupSerializer(serializers.ModelSerializer):
+    exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
+    course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
+    teacher = TeacherSerializer(read_only=True)
+    name = serializers.CharField(source='base_course.name', read_only=True)
+    complete_course_number = serializers.SerializerMethodField(read_only=True)
+    group_number = serializers.CharField(source='class_gp', read_only=True)
+
+    def get_complete_course_number(self, obj: Course):
+        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+
+
+    class Meta:
+        model = Course
+        fields = ['complete_course_number', 'name', 'base_course_id','group_number','capacity',
+                  'registered_count', 'waiting_count', 'exam_times',
+                  'course_times', 'teacher']
+
