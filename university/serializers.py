@@ -167,9 +167,6 @@ class SummaryCourseSerializer(serializers.ModelSerializer):
         fields = ['complete_course_number', 'name', 'total_unit']
 
 
-
-
-
 class CourseGroupSerializer(serializers.ModelSerializer):
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
@@ -181,10 +178,8 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
 
-
     class Meta:
         model = Course
-        fields = ['complete_course_number', 'name', 'base_course_id','group_number','capacity',
+        fields = ['complete_course_number', 'name', 'base_course_id', 'group_number', 'capacity',
                   'registered_count', 'waiting_count', 'exam_times',
                   'course_times', 'teacher']
-

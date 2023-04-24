@@ -53,8 +53,12 @@ def get_data_from_allowed_departments(data):
             try:
                 department_name, is_able_str = part.split('-')
                 department = Department.objects.filter(name=department_name.strip()).first()
-                is_able = True if is_able_str == 'True' else False
-                allowed_departments.append(AllowedDepartment(department=department, is_able=is_able, course=course))
+                if is_able_str == 'True':
+                    allowed_departments.append(AllowedDepartment(department=department, course=course))
+                else:
+                    for department in Department.objects.exclude(department_number=department.department_number).all():
+                        allowed_departments.append(AllowedDepartment(department=department, course=course))
             except ValueError:
-                pass
+                for department in Department.objects.all():
+                    allowed_departments.append(AllowedDepartment(department=department, course=course))
     return allowed_departments

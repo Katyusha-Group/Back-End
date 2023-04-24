@@ -165,7 +165,6 @@ class CourseTimePlace(models.Model):
 class AllowedDepartment(models.Model):
     department = models.ForeignKey(to=Department, on_delete=models.CASCADE, verbose_name='دانشکده',
                                    related_name='allowed_departments')
-    is_able = models.BooleanField(verbose_name='مجاز یا غیرمجاز')
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس',
                                related_name='allowed_departments')
 
