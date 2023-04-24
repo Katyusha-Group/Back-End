@@ -4,8 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import GenericAPIView, ListAPIView, UpdateAPIView
-from rest_framework.mixins import ListModelMixin, UpdateModelMixin
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -25,7 +24,7 @@ class DepartmentListView(ListAPIView):
         user_id = self.request.user.id
         user = get_user_model().objects.get(id=user_id)
         return Department.objects.filter(
-            department_number__in=app_variables.GENERAL_DEPARTMENTS + [
+            department_number__in=project_variables.GENERAL_DEPARTMENTS + [
                 user.department.department_number]).prefetch_related('base_courses__courses')
 
 

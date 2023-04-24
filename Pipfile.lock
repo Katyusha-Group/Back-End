@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4264f6090bdfde4179f9743a4873782fa6f67383b953d2a0d357cc9659530784"
+            "sha256": "f483363d27ac2d8e3573825b25a38aa1783ff4e59600862ffb9c7b2c6b8b9e19"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -375,11 +375,11 @@
         },
         "importlib-metadata": {
             "hashes": [
-                "sha256:63ace321e24167d12fbb176b6015f4dbe06868c54a2af4f15849586afb9027fd",
-                "sha256:eb1a7933041f0f85c94cd130258df3fb0dec060ad8c1c9318892ef4192c47ce1"
+                "sha256:b986d197242e4e9960a12743a6ec5a9fc8b3d7054612d90489452170785c98a5",
+                "sha256:cd4687a8df60d9aefd424ed9364a8f29def203a9482ec8eb8e8070ef06075f89"
             ],
             "index": "pypi",
-            "version": "==6.4.1"
+            "version": "==6.5.1"
         },
         "inflection": {
             "hashes": [
@@ -795,6 +795,14 @@
             ],
             "index": "pypi",
             "version": "==1.4.0"
+        },
+        "persiantools": {
+            "hashes": [
+                "sha256:bef45f0bebf0d9e74caed6b28908de2f929eb256f6ad4018477c38b0dcf4a330",
+                "sha256:ce28a1b015064d984546b435f68aeab03f2db7070e6690e326d64be3cedb8931"
+            ],
+            "index": "pypi",
+            "version": "==3.0.1"
         },
         "pillow": {
             "hashes": [
@@ -1224,11 +1232,11 @@
         },
         "selenium": {
             "hashes": [
-                "sha256:28430ac54a54fa59ad1f5392a1b89b169fe3ab2c2ccd1a9a10b6fe74f36cd6da",
-                "sha256:61cda3a304f82637162bc155cae7bf88fdb04c115fa2cb1c1c2e1358fcd19a9f"
+                "sha256:478fae77cdfaec32adb1e68d59632c8c191f920535282abcaa2d1a3d98655624",
+                "sha256:4c19e6aac202719373108d53a5a8e9336ba8d2b25822ca32ae6ff37acbabbdbe"
             ],
             "index": "pypi",
-            "version": "==4.8.3"
+            "version": "==4.9.0"
         },
         "six": {
             "hashes": [
@@ -1263,11 +1271,11 @@
         },
         "sqlparse": {
             "hashes": [
-                "sha256:0323c0ec29cd52bceabc1b4d9d579e311f3e4961b98d174201d5622a23b85e34",
-                "sha256:69ca804846bb114d2ec380e4360a8a340db83f0ccf3afceeb1404df028f57268"
+                "sha256:5430a4fe2ac7d0f93e66f1efc6e1338a41884b7ddf2a350cedd20ccc4d9d28f3",
+                "sha256:d446183e84b8349fa3061f0fe7f06ca94ba65b426946ffebe6e3e8295332420c"
             ],
             "markers": "python_version >= '3.5'",
-            "version": "==0.4.3"
+            "version": "==0.4.4"
         },
         "swagger-spec-validator": {
             "hashes": [

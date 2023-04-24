@@ -4,7 +4,7 @@ from django_jalali.db import models as jmodels
 from django.conf import settings
 
 from university import managers
-from university.scripts import app_variables
+from utils import project_variables
 
 
 # Create your models here.
@@ -21,7 +21,7 @@ class Semester(models.Model):
 
 
 class Department(models.Model):
-    department_number = models.SmallIntegerField(primary_key=True,verbose_name= 'کد دانشکده')
+    department_number = models.SmallIntegerField(primary_key=True, verbose_name='کد دانشکده')
     name = models.CharField(max_length=255, unique=True, verbose_name='نام دانشکده')
 
     def __str__(self):
@@ -67,6 +67,11 @@ class BaseCourse(models.Model):
 
 class Teacher(models.Model):
     name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
+    email_address = models.CharField(max_length=255, verbose_name='ایمیل', null=True, blank=True)
+    lms_id = models.IntegerField(verbose_name='شماره استاد در سامانه LMS', null=True, blank=True)
+    teacher_image_url = models.CharField(max_length=255, verbose_name='آدرس تصویر استاد', null=True, blank=True)
+    teacher_image = models.ImageField(upload_to='images/teachers_image/', verbose_name='تصویر استاد',
+                                      default='images/teachers_image/default.png', blank=True)
 
     class Meta:
         indexes = [
@@ -81,16 +86,16 @@ class Teacher(models.Model):
 
 class Course(models.Model):
     SEX_CHOICES = (
-        ('M', app_variables.MAN),
-        ('F', app_variables.WOMAN),
-        ('B', app_variables.BOTH_SEX),
+        ('M', project_variables.MAN),
+        ('F', project_variables.WOMAN),
+        ('B', project_variables.BOTH_SEX),
     )
 
     PRESENTATION_TYPE_CHOICES = (
-        ('N', app_variables.NORMAL),
-        ('E', app_variables.ELECTRONIC),
-        ('B', app_variables.BOTH_PRESENTATION_TYPE),
-        ('A', app_variables.ARCHIVE),
+        ('N', project_variables.NORMAL),
+        ('E', project_variables.ELECTRONIC),
+        ('B', project_variables.BOTH_PRESENTATION_TYPE),
+        ('A', project_variables.ARCHIVE),
     )
 
     objects = managers.SignalSenderManager()
@@ -135,11 +140,11 @@ class ExamTimePlace(models.Model):
 
 
 class CourseTimePlace(models.Model):
-    DAYS_CHOICES = [(app_variables.SAT_NUMBER, app_variables.SAT),
-                    (app_variables.SUN_NUMBER, app_variables.SUN),
-                    (app_variables.MON_NUMBER, app_variables.MON),
-                    (app_variables.TUE_NUMBER, app_variables.TUE),
-                    (app_variables.WED_NUMBER, app_variables.WED), ]
+    DAYS_CHOICES = [(project_variables.SAT_NUMBER, project_variables.SAT),
+                    (project_variables.SUN_NUMBER, project_variables.SUN),
+                    (project_variables.MON_NUMBER, project_variables.MON),
+                    (project_variables.TUE_NUMBER, project_variables.TUE),
+                    (project_variables.WED_NUMBER, project_variables.WED), ]
 
     objects = managers.SignalSenderManager()
 

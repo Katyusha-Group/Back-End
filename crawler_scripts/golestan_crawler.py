@@ -2,14 +2,14 @@ from selenium.webdriver.common.by import By
 
 from captcha_reader.captchaSolver import CaptchaSolver
 from crawler_scripts.selenium_crawler import SeleniumCrawler
-from crawler_scripts.excel_creator import ExcelCreator
+from utils.excel_handler import ExcelHandler
 import time
 
 
 class GolestanCrawler(SeleniumCrawler):
     AUTHENTICATION_URL = 'https://golestan.iust.ac.ir/forms/authenticateuser/main.htm'
     FORM_NUMBER = 2
-    EXCEL_NAME = 'new_golestan_courses.xlsx'
+    EXCEL_NAME = 'golestan_courses'
 
     def __init__(self):
         super().__init__()
@@ -49,7 +49,7 @@ class GolestanCrawler(SeleniumCrawler):
         time.sleep(3)
         soup = self.get_soup()
         png_url = soup.find('img', {'id': 'imgCaptcha'})['src']
-        img_path = self.image_handler.download(png_url)
+        img_path = self.image_handler.download_captcha(png_url)
         captcha_solver = CaptchaSolver()
         captcha_text = captcha_solver.get_captcha_text(img_path)
         self.image_handler.delete(img_path)
@@ -101,6 +101,7 @@ class GolestanCrawler(SeleniumCrawler):
 
     def extract_courses(self):
         time.sleep(2)
+        excel_handler = ExcelHandler()
         self.driver.switch_to.default_content()
         soup = self.get_soup()
         courses = []
@@ -109,11 +110,12 @@ class GolestanCrawler(SeleniumCrawler):
             cols = row.find_all('td')
             cols = [ele.text.strip() for ele in cols]
             if cols:
+                cols[13] = excel_handler.make_name_correct(cols[13])
                 courses.append(cols)
-        courses[0][1] = 'کد دانشكده درس'
-        courses[0][3] = 'کد گروه آموزشي درس'
-        excel_creator = ExcelCreator(courses, self.EXCEL_NAME)
-        excel_creator.create_excel()
+        courses[0][1] = 'كد دانشكده درس'
+        courses[0][3] = 'كد گروه آموزشی درس'
+        courses[0][13] = 'نام استاد'
+        excel_handler.create_excel(data=courses, file_name=self.EXCEL_NAME)
 
     def get_courses(self, available=True):
         self.go_to_this_term_courses(available)

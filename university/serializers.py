@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse
-from .scripts import app_variables
+from utils import project_variables
 
 
 class SimpleBaseCourseSerializer(serializers.ModelSerializer):
@@ -121,7 +121,7 @@ class ModifyMyCourseSerializer(serializers.Serializer):
                 detail='No course with the given course number was found.'
             )
         if not courses.first().base_course.department.name in \
-               [user.department.name] + app_variables.GENERAL_DEPARTMENTS:
+               [user.department.name] + project_variables.GENERAL_DEPARTMENTS:
             raise serializers.ValidationError(
                 detail='This course can not be added, due to its department incompatibility with allowed departments',
             )
