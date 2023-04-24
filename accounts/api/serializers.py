@@ -18,9 +18,9 @@ class VerificationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         email = validated_data['email']
-
+        token = self.context.get('token')
         verification = Verification.objects.create(email=email)
-        verification.send_verification_email()
+        verification.send_verification_email(token)
         return verification
 
 
@@ -163,3 +163,6 @@ class ActivationResendSerializer(serializers.Serializer):
         return attrs
 
 
+
+class ActivationConfirmSerializer(serializers.Serializer):
+    verification_code = serializers.CharField(max_length=4, min_length=4)

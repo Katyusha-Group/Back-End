@@ -9,8 +9,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from university.models import Course, Department, Semester, ExamTimePlace
-from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, MyCourseSerializer
-from utils import project_variables
+from university.serializers import DepartmentSerializer, SemesterSerializer, SimpleCourseSerializer, \
+    ModifyMyCourseSerializer, CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, MyCourseSerializer, \
+    CourseGroupSerializer
+from university.scripts import app_variables
 
 
 class DepartmentListView(ListAPIView):
@@ -103,3 +105,54 @@ class CourseViewSet(ModelViewSet):
         return Response(status=status.HTTP_200_OK,
                         data={'unit_count': sum([course.base_course.total_unit for course in course_data]),
                               'data': courses.data})
+
+
+
+
+
+class CourseGroupListView(ModelViewSet):
+    serializer_class = CourseGroupSerializer
+    permission_classes = [IsAuthenticated]
+
+
+    def get_queryset(self):
+        base_course_id = self.kwargs['base_course_id']
+        if base_course_id is None:
+            raise ValidationError({'detail': 'Enter course_number as query string in the url.'},)
+        elif base_course_id.isdigit() is True:
+            base_course_id = int(base_course_id)
+        else:
+            raise ValidationError({'detail': 'Enter course_number as query number in the url.'},)
+
+
+        courses = Course.objects.filter(base_course_id=base_course_id)
+        if courses.exists():
+            return courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()
+        else:
+            raise ValidationError({'detail': 'No course with this course_number in database.'},)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
