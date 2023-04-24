@@ -12,13 +12,13 @@ from utils.image_handler import ImageHandler
 
 class SeleniumCrawler:
     def __init__(self):
-        # self.options = webdriver.ChromeOptions()
-        # self.options.add_argument('--headless')
-        # self.options.add_argument('--disable-gpu')
-        # self.options.add_argument('--no-sandbox')
-        # self.options.add_experimental_option("detach", True)
-        # self.driver = webdriver.Chrome(options=self.options)
-        self.driver = webdriver.Chrome(ChromeDriverManager().install())
+        self.options = webdriver.ChromeOptions()
+        self.options.add_argument('--headless')
+        self.options.add_argument('--disable-gpu')
+        self.options.add_argument('--no-sandbox')
+        self.options.add_experimental_option("detach", True)
+        self.driver = webdriver.Chrome(options=self.options)
+        # self.driver = webdriver.Chrome(ChromeDriverManager().install())
         # self.driver = webdriver.Chrome()
         self.image_handler = ImageHandler(os.path.abspath(os.path.join(__file__, os.pardir)) + '/captcha_images/')
 

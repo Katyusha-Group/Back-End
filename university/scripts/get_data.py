@@ -1,6 +1,6 @@
 import pandas as pd
 
-from university.models import CourseTimePlace, ExamTimePlace
+from university.models import CourseTimePlace, ExamTimePlace, Department, AllowedDepartment
 from university.scripts import get_or_create, clean_data
 from utils import project_variables
 
@@ -39,3 +39,22 @@ def get_data_from_exam_time(data):
         except:
             pass
     return exams
+
+
+def get_data_from_allowed_departments(data):
+    if data.empty:
+        return
+    df = pd.DataFrame(data=data, columns=[project_variables.ALLOWED_DEPARTMENTS, project_variables.COURSE_ID])
+    allowed_departments = []
+    for row in df.values:
+        parts = row[0].split(',')
+        course = get_or_create.get_course(course_code=row[1])
+        for part in parts:
+            try:
+                department_name, is_able_str = part.split('-')
+                department = Department.objects.filter(name=department_name.strip()).first()
+                is_able = True if is_able_str == 'True' else False
+                allowed_departments.append(AllowedDepartment(department=department, is_able=is_able, course=course))
+            except ValueError:
+                pass
+    return allowed_departments

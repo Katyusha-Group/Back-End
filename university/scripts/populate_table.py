@@ -5,7 +5,7 @@ from django.core.files import File
 from django.core.management import CommandError
 
 from university.models import Semester, Department, CourseStudyingGP, BaseCourse, Teacher, Course, CourseTimePlace, \
-    ExamTimePlace
+    ExamTimePlace, AllowedDepartment
 from university.scripts import clean_data, get_data
 from utils import project_variables
 
@@ -19,6 +19,7 @@ def populate_all_tables(golestan_data, teachers_data):
     populate_course(golestan_data, False)
     populate_course_class_time(golestan_data, False)
     populate_exam_time(golestan_data, False)
+    populate_allowed_departments(golestan_data, False)
 
 
 def populate_semester(data, ignore_conflicts=True):
@@ -119,3 +120,9 @@ def populate_exam_time(data, ignore_conflicts=True):
     exams = get_data.get_data_from_exam_time(data=data)
     if exams:
         ExamTimePlace.objects.bulk_create(exams, ignore_conflicts=ignore_conflicts)
+
+
+def populate_allowed_departments(data, ignore_conflicts=True):
+    allowed_department = get_data.get_data_from_allowed_departments(data=data)
+    if allowed_department:
+        AllowedDepartment.objects.bulk_create(allowed_department, ignore_conflicts=ignore_conflicts)

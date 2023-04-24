@@ -28,6 +28,7 @@ PRESENTATION_TYPE = 'نحوه ارائه درس'
 EMERGENCY_DELETION = 'امکان حذف اضطراری'
 GUEST_ABLE = 'امکان اخذ توسط مهمان'
 DESCRIPTION = 'توضیحات'
+ALLOWED_DEPARTMENTS = 'محدودیت دانشکده ها'
 
 # days:
 SAT = 'شنبه'
@@ -70,4 +71,3 @@ GENERAL_DEPARTMENTS = [
     28,
     90,
 ]
-

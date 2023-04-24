@@ -31,7 +31,7 @@ class GolestanCrawler(SeleniumCrawler):
     def switch_to_child_window(self, window_title):
         for window_handle in self.driver.window_handles:
             self.driver.switch_to.window(window_handle)
-            if window_title in self.driver.title:
+            if window_title == window_handle:
                 print('Found the child window')
                 return True
         return False
