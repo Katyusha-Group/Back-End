@@ -12,7 +12,7 @@ from university.models import Course, Department, Semester, ExamTimePlace
 from university.serializers import DepartmentSerializer, SemesterSerializer, SimpleCourseSerializer, \
     ModifyMyCourseSerializer, CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, MyCourseSerializer, \
     CourseGroupSerializer
-from university.scripts import app_variables
+from utils import project_variables
 
 
 class DepartmentListView(ListAPIView):
@@ -107,52 +107,21 @@ class CourseViewSet(ModelViewSet):
                               'data': courses.data})
 
 
-
-
-
 class CourseGroupListView(ModelViewSet):
     serializer_class = CourseGroupSerializer
     permission_classes = [IsAuthenticated]
 
-
     def get_queryset(self):
         base_course_id = self.kwargs['base_course_id']
         if base_course_id is None:
-            raise ValidationError({'detail': 'Enter course_number as query string in the url.'},)
+            raise ValidationError({'detail': 'Enter course_number as query string in the url.'}, )
         elif base_course_id.isdigit() is True:
             base_course_id = int(base_course_id)
         else:
-            raise ValidationError({'detail': 'Enter course_number as query number in the url.'},)
-
+            raise ValidationError({'detail': 'Enter course_number as query number in the url.'}, )
 
         courses = Course.objects.filter(base_course_id=base_course_id)
         if courses.exists():
             return courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()
         else:
-            raise ValidationError({'detail': 'No course with this course_number in database.'},)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            raise ValidationError({'detail': 'No course with this course_number in database.'}, )
