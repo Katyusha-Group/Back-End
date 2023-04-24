@@ -9,8 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from university.models import Course, Department, Semester, ExamTimePlace
-from university.serializers import DepartmentSerializer, SemesterSerializer, SimpleCourseSerializer, \
-    ModifyMyCourseSerializer, CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, MyCourseSerializer, \
+from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
+    CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, MyCourseSerializer, \
     CourseGroupSerializer
 from utils import project_variables
 
