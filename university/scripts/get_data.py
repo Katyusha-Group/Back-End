@@ -46,19 +46,21 @@ def get_data_from_allowed_departments(data):
         return
     df = pd.DataFrame(data=data, columns=[project_variables.ALLOWED_DEPARTMENTS, project_variables.COURSE_ID])
     allowed_departments = []
+    department_all = Department.objects.get(department_number=0)
     for row in df.values:
-        parts = row[0].split(',')
+        parts = row[0].strip().split(',')
         course = get_or_create.get_course(course_code=row[1])
-        for part in parts:
-            try:
-                department_name, is_able_str = part.split('-')
-                department = Department.objects.filter(name=department_name.strip()).first()
-                if is_able_str == 'True':
+        part = parts[0]
+        try:
+            department_name, is_able_str = part.strip().split('-')
+            department = Department.objects.filter(name=department_name.strip()).first()
+            if is_able_str == 'True':
+                allowed_departments.append(AllowedDepartment(department=department, course=course))
+            else:
+                for department in Department.objects.exclude(department_number=department.department_number).all():
                     allowed_departments.append(AllowedDepartment(department=department, course=course))
-                else:
-                    for department in Department.objects.exclude(department_number=department.department_number).all():
-                        allowed_departments.append(AllowedDepartment(department=department, course=course))
-            except ValueError:
-                for department in Department.objects.all():
-                    allowed_departments.append(AllowedDepartment(department=department, course=course))
+        except ValueError:
+            for department in Department.objects.all():
+                allowed_departments.append(AllowedDepartment(department=department, course=course))
+        allowed_departments.append(AllowedDepartment(department=department_all, course=course))
     return allowed_departments

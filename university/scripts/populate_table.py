@@ -40,6 +40,7 @@ def populate_department(data, ignore_conflicts=True):
             [Department(department_number=dp_id, name=dp_name) for dp_id, dp_name in departments],
             ignore_conflicts=ignore_conflicts
         )
+        Department.objects.create(department_number=0, name='تمام دانشکده ها')
     except Exception as ex:
         raise CommandError(ex)
 

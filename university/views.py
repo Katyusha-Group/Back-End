@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Q, F, Count
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
@@ -8,10 +8,10 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from university.models import Course, Department, Semester, ExamTimePlace
+from university.models import Course, Department, Semester, ExamTimePlace, AllowedDepartment
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
     CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, MyCourseSerializer, \
-    CourseGroupSerializer
+    CourseGroupSerializer, SimpleBaseCourseSerializer
 from utils import project_variables
 
 
@@ -20,12 +20,33 @@ class DepartmentListView(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = DepartmentSerializer
 
+    def get_serializer_context(self):
+        return {'user_id': self.request.user.id}
+
     def get_queryset(self):
-        user_id = self.request.user.id
-        user = get_user_model().objects.get(id=user_id)
-        return Department.objects.filter(
-            department_number__in=project_variables.GENERAL_DEPARTMENTS + [
-                user.department.department_number]).prefetch_related('base_courses__courses')
+        return Department.objects.prefetch_related('allowed_departments__course__base_course').all()
+
+
+class AllDepartmentsListView(ListAPIView):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAuthenticated]
+    serializer_class = DepartmentSerializer
+
+    def get_serializer_context(self):
+        return {'user_id': self.request.user.id}
+
+    def get_queryset(self):
+        return Department.objects.prefetch_related('allowed_departments__course__base_course').all()
+
+    def get(self, request, *args, **kwargs):
+        all_courses = SimpleBaseCourseSerializer(AllowedDepartment.objects
+                                                 .filter(department_id=0)
+                                                 .annotate(course_number=F('course__base_course__course_number'))
+                                                 .annotate(name=F('course__base_course__name'))
+                                                 .values('course_number', 'name')
+                                                 .annotate(group_count=Count('course_number'))
+                                                 .order_by(), many=True)
+        return Response(data={'id': '0', 'name': 'تمام دانشکده ها', 'base_courses': all_courses.data})
 
 
 class SemesterViewSet(ModelViewSet):
