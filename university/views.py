@@ -30,10 +30,10 @@ class DepartmentListView(ListAPIView):
 class AllDepartmentsListView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, *args, **kwargs):
         all_courses = SimpleBaseCourseSerializer(AllowedDepartment.objects
-                                                 .filter(department_id=0)
+                                                 .filter(department_id=0, course__sex__in=[request.user.gender, 'B'])
                                                  .annotate(course_number=F('course__base_course__course_number'))
                                                  .annotate(name=F('course__base_course__name'))
                                                  .values('course_number', 'name')

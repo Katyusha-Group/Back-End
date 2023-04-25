@@ -22,7 +22,8 @@ class DepartmentSerializer(serializers.ModelSerializer):
         user_id = self.context.get('user_id')
         user = get_user_model().objects.get(id=user_id)
         allowed_courses = (BaseCourse.objects.filter(department=obj)
-                           .filter(courses__allowed_departments__department=user.department)
+                           .filter(courses__allowed_departments__department=user.department,
+                                   courses__sex__in=[user.gender, 'B'])
                            .values('course_number', 'name')
                            .annotate(group_count=Count('course_number'))
                            .order_by())
