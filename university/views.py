@@ -69,12 +69,17 @@ class CourseViewSet(ModelViewSet):
 
     def get_queryset(self):
         base_course = self.request.query_params.get('course_number', None)
+        allowed_only = self.request.query_params.get('allowed_only', False)
         user_id = self.request.user.id
         user = get_user_model().objects.get(id=user_id)
         try:
             base_course = int(base_course)
-            courses = (Course.objects.filter(Q(sex=user.gender) | Q(sex='B'))
-                       .filter(base_course=base_course))
+            if allowed_only:
+                courses = (Course.objects.filter(Q(sex=user.gender) | Q(sex='B'))
+                           .filter(base_course=base_course, allowed_departments__department=user.department))
+            else:
+                courses = (Course.objects.filter(Q(sex=user.gender) | Q(sex='B'))
+                           .filter(base_course=base_course))
             if not courses.exists():
                 raise ValidationError(detail='No course with this course_number in database.')
             else:
