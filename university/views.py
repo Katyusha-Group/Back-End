@@ -30,14 +30,7 @@ class DepartmentListView(ListAPIView):
 class AllDepartmentsListView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
-    serializer_class = DepartmentSerializer
-
-    def get_serializer_context(self):
-        return {'user_id': self.request.user.id}
-
-    def get_queryset(self):
-        return Department.objects.prefetch_related('allowed_departments__course__base_course').all()
-
+    
     def get(self, request, *args, **kwargs):
         all_courses = SimpleBaseCourseSerializer(AllowedDepartment.objects
                                                  .filter(department_id=0)
