@@ -1,24 +1,35 @@
+from itertools import chain
+
 from django.contrib.auth import get_user_model
+from django.db.models import Count, F
 from rest_framework import serializers
 
-from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse
+from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse, AllowedDepartment
 from utils import project_variables
 
 
-class SimpleBaseCourseSerializer(serializers.ModelSerializer):
-    group_count = serializers.SerializerMethodField(read_only=True)
-
-    def get_group_count(self, obj: BaseCourse):
-        return obj.courses.count()
-
-    class Meta:
-        model = BaseCourse
-        fields = ['course_number', 'name', 'group_count']
+class SimpleBaseCourseSerializer(serializers.Serializer):
+    course_number = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    group_count = serializers.IntegerField(read_only=True)
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='department_number', read_only=True)
-    base_courses = SimpleBaseCourseSerializer(many=True, read_only=True)
+    base_courses = serializers.SerializerMethodField(read_only=True)
+
+    def get_base_courses(self, obj: Department):
+        user_id = self.context.get('user_id')
+        user = get_user_model().objects.get(id=user_id)
+        allowed_courses = (BaseCourse.objects.filter(department=obj)
+                           .filter(courses__allowed_departments__department=user.department,
+                                   courses__sex__in=[user.gender, 'B'])
+                           .values('course_number', 'name')
+                           .annotate(group_count=Count('course_number'))
+                           .order_by())
+        serializer = SimpleBaseCourseSerializer(data=allowed_courses, many=True, context=self.context)
+        serializer.is_valid()
+        return serializer.data
 
     class Meta:
         model = Department
@@ -167,9 +178,6 @@ class SummaryCourseSerializer(serializers.ModelSerializer):
         fields = ['complete_course_number', 'name', 'total_unit']
 
 
-
-
-
 class CourseGroupSerializer(serializers.ModelSerializer):
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
@@ -181,10 +189,8 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
 
-
     class Meta:
         model = Course
-        fields = ['complete_course_number', 'name', 'base_course_id','group_number','capacity',
+        fields = ['complete_course_number', 'name', 'base_course_id', 'group_number', 'capacity',
                   'registered_count', 'waiting_count', 'exam_times',
                   'course_times', 'teacher']
-

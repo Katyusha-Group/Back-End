@@ -136,3 +136,6 @@ dmypy.json
 
 # test_crawler.py file
 /crawler_scripts/test_crawler.py
+
+# media
+/media/

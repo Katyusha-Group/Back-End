@@ -160,3 +160,17 @@ class CourseTimePlace(models.Model):
     class Meta:
         verbose_name = 'زمان و مکان کلاس'
         verbose_name_plural = 'زمان و مکان کلاس ها'
+
+
+class AllowedDepartment(models.Model):
+    department = models.ForeignKey(to=Department, on_delete=models.CASCADE, verbose_name='دانشکده',
+                                   related_name='allowed_departments')
+    course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس',
+                               related_name='allowed_departments')
+
+    def __str__(self):
+        return str(self.course.base_course_id) + ' ' + str(self.department_id) + ' ' + str(self.is_able)
+
+    class Meta:
+        verbose_name = 'دانشکدۀ مجاز و غیر مجاز'
+        verbose_name_plural = 'دانشکده های مجاز و غیر مجاز'
