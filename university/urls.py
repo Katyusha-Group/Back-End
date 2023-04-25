@@ -12,6 +12,7 @@ router.register(r'courses', viewset=views.CourseViewSet, basename='courses')
 urlpatterns = [
     path('', include(router.urls)),
     path('departments/', views.DepartmentListView.as_view(), name='departments'),
+    path('departments/names', views.SignupDepartmentListView.as_view(), name='department_names'),
     path('departments/all', views.AllDepartmentsListView.as_view(), name='all_departments'),
     path('coursegroups/<base_course_id>', views.CourseGroupListView.as_view({'get': 'list'}), name='coursegroups'),
     # path('cou/', include(other_router.urls)),
