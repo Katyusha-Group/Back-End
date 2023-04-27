@@ -221,12 +221,19 @@ class AllCourseDepartment(APIView):
         # return 2 course with same user_deparment
         all_courses = Course.objects.filter(base_course__department_id=user_department_id)
         courses_list = []
+        count_courses_in_same_time = {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5':0, '6': 0, '7': 0}
+
+
         for course in all_courses:
             for day in range(6):
                 if course.course_times.filter(day=day).exists():
                     start_time_str = str(course.course_times.all().values_list('start_time', flat=True)[0])
                     end_time_str = str(course.course_times.all().values_list('end_time', flat=True)[0])
                     time_format = self.time_edit(start_time_str, end_time_str)
+                    count_courses_in_same_time[str(time_format)] += 1
                     courses_list.append({**AllCourseDepartmentSerializer(course).data, 'day': day, 'time': time_format})
-           
+
+        for course in courses_list:
+            course['count'] = count_courses_in_same_time[str(course['time'])]
+
         return Response(courses_list)
