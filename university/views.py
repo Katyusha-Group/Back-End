@@ -72,8 +72,6 @@ class CourseViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'my_courses' and self.request.method == 'PUT':
             return ModifyMyCourseSerializer
-        elif self.action == 'my_courses' and self.request.method == 'GET':
-            return MyCourseSerializer
         elif self.action == 'my_exams' and self.request.method == 'GET':
             return CourseExamTimeSerializer
         elif self.action == 'my_summary' and self.request.method == 'GET':
@@ -94,7 +92,7 @@ class CourseViewSet(ModelViewSet):
                 courses = (Course.objects.filter(Q(sex=user.gender) | Q(sex='B'))
                            .filter(base_course=base_course))
             if not courses.exists():
-                raise ValidationError(detail='No course with this course_number in database.')
+                raise ValidationError(detail='No course with this course_number exists in database.')
             else:
                 return courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()
         except TypeError:
@@ -105,7 +103,7 @@ class CourseViewSet(ModelViewSet):
     def my_courses(self, request):
         student = get_user_model().objects.get(id=request.user.id)
         if request.method == 'GET':
-            courses = MyCourseSerializer(
+            courses = CourseSerializer(
                 (student.courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()),
                 many=True
             )
