@@ -237,6 +237,9 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
     group_number = serializers.CharField(source='class_gp', read_only=True)
+    added_to_calendar_count = serializers.SerializerMethodField(read_only=True)
+    color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
+    color_code = serializers.SerializerMethodField(read_only=True)
 
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
@@ -244,6 +247,24 @@ class CourseGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['complete_course_number', 'name', 'base_course_id', 'group_number', 'capacity',
+        fields = ['complete_course_number', 'added_to_calendar_count','name', 'base_course_id', 'group_number', 'capacity',
                   'registered_count', 'waiting_count', 'exam_times',
-                  'course_times', 'teacher']
+                  'course_times', 'teacher', 'color_intensity_percentage', 'color_code']
+
+    def get_color_intensity_percentage(self, obj):
+        '''
+        Color intensity percentage = ((Remaining capacity - Number of people on the waiting list) / (Total capacity + Number of people on the waiting list + (1.2 * Number of people who want to take the course))) * 100
+        '''
+
+
+        color_intensity_percentage = ((((obj.capacity - obj.registered_count) - obj.waiting_count) * 100)/ (obj.capacity + obj.waiting_count + (1.2 * self.get_added_to_calendar_count(obj))) )
+        return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
+
+    def get_added_to_calendar_count(self, obj):
+        base_course_id = self.get_complete_course_number(obj)
+        course_id_major, group_number = base_course_id.split('_')
+        courses = Course.objects.filter(base_course_id=course_id_major, class_gp=group_number)
+        return courses.first().students.count()
+
+    def get_color_code(self, obj):
+        return 'None'

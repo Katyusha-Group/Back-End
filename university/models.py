@@ -176,3 +176,11 @@ class AllowedDepartment(models.Model):
         verbose_name_plural = 'دانشکده های مجاز و غیر مجاز'
 
 
+class ColorDepartment(models.Model):
+    department_name = models.ForeignKey(to=Department, on_delete=models.CASCADE, verbose_name='دانشکده', related_name='color_departments')
+    color_code = models.CharField(max_length=4, verbose_name='کد رنگ')
+    percantage_of_black = models.PositiveSmallIntegerField(verbose_name='درصد سیاهی')
+
+
+    def __str__(self):
+        return self.department_name
