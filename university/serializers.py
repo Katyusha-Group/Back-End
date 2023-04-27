@@ -16,9 +16,12 @@ class SimpleBaseCourseSerializer(serializers.Serializer):
 
 
 class SimpleDepartmentSerializer(serializers.ModelSerializer):
+    value = serializers.IntegerField(source='department_number', read_only=True)
+    label = serializers.CharField(source='name', read_only=True)
+
     class Meta:
         model = Department
-        fields = ['department_number', 'name']
+        fields = ['label', 'value']
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -203,31 +206,26 @@ class CourseGroupSerializer(serializers.ModelSerializer):
                   'course_times', 'teacher']
 
 
-
 class StudentCountSerializer(serializers.Serializer):
     count = serializers.IntegerField()
 
+
 class AllCourseDepartmentSerializer(serializers.ModelSerializer):
-
     name = serializers.CharField(source='base_course.name', read_only=True)
-
-
 
     class Meta:
         model = BaseCourse
-        fields = ['name' ]
+        fields = ['name']
 
 
 class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='base_course.name', read_only=True)
+
     class Meta:
         model = Course
-        fields = ('name' ,'id', 'class_gp', 'capacity',
+        fields = ('name', 'id', 'class_gp', 'capacity',
                   'registered_count', 'waiting_count', 'guest_able',
                   'registration_limit', 'description', 'sex', 'presentation_type', 'base_course', 'teacher')
-
-
-
 
 
 class CourseGroupSerializer(serializers.ModelSerializer):
@@ -240,7 +238,6 @@ class CourseGroupSerializer(serializers.ModelSerializer):
 
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
-
 
     class Meta:
         model = Course
