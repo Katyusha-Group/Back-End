@@ -15,6 +15,12 @@ class SimpleBaseCourseSerializer(serializers.Serializer):
     group_count = serializers.IntegerField(read_only=True)
 
 
+class SimpleDepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Department
+        fields = ['department_number', 'name']
+
+
 class DepartmentSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='department_number', read_only=True)
     base_courses = serializers.SerializerMethodField(read_only=True)

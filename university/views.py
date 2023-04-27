@@ -13,10 +13,19 @@ from rest_framework.viewsets import ModelViewSet
 from university.models import Course, Department, Semester, ExamTimePlace, AllowedDepartment
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
     CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, MyCourseSerializer, \
-    CourseGroupSerializer, SimpleBaseCourseSerializer, AllCourseDepartmentSerializer
+    CourseGroupSerializer, SimpleBaseCourseSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer
 from rest_framework.views import APIView
 from .models import BaseCourse
 from utils import project_variables
+
+
+class SignupDepartmentListView(ListAPIView):
+    http_method_names = ['get', 'head', 'options']
+    serializer_class = SimpleDepartmentSerializer
+    permission_classes = []
+
+    def get_queryset(self):
+        return Department.objects.filter(department_number__gt=0).all()
 
 
 class DepartmentListView(ListAPIView):
