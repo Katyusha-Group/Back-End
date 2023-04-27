@@ -129,19 +129,19 @@ class ModifyMyCourseSerializer(serializers.Serializer):
     complete_course_number = serializers.CharField()
 
     def validate(self, attrs):
-        user_id = self.context['user_id']
-        user = get_user_model().objects.get(id=user_id)
+        # user_id = self.context['user_id']
+        # user = get_user_model().objects.get(id=user_id)
         course_number, class_gp = attrs['complete_course_number'].split('_')
         courses = Course.objects.filter(class_gp=class_gp, base_course_id=course_number)
         if not courses.exists():
             raise serializers.ValidationError(
                 detail='No course with the given course number was found.'
             )
-        if not courses.first().base_course.department.name in \
-               [user.department.name] + project_variables.GENERAL_DEPARTMENTS:
-            raise serializers.ValidationError(
-                detail='This course can not be added, due to its department incompatibility with allowed departments',
-            )
+        # if not courses.first().base_course.department.name in \
+        #        [user.department.name] + project_variables.GENERAL_DEPARTMENTS:
+        #     raise serializers.ValidationError(
+        #         detail='This course can not be added, due to its department incompatibility with allowed departments',
+        #     )
         return attrs
 
     def save(self, **kwargs):
