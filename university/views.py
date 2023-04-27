@@ -1,5 +1,3 @@
-import json
-
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F, Count
 from django_filters.rest_framework import DjangoFilterBackend
@@ -157,6 +155,7 @@ class CourseGroupListView(ModelViewSet):
             return courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()
         else:
             raise ValidationError({'detail': 'No course with this course_number in database.'}, )
+
 
 
 
