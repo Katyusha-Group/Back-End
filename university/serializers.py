@@ -6,6 +6,7 @@ from rest_framework import serializers
 
 from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse, AllowedDepartment
 from utils import project_variables
+from rest_framework.serializers import SerializerMethodField
 
 
 class SimpleBaseCourseSerializer(serializers.Serializer):
@@ -188,6 +189,52 @@ class CourseGroupSerializer(serializers.ModelSerializer):
 
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+
+    class Meta:
+        model = Course
+        fields = ['complete_course_number', 'name', 'base_course_id', 'group_number', 'capacity',
+                  'registered_count', 'waiting_count', 'exam_times',
+                  'course_times', 'teacher']
+
+
+
+class StudentCountSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+
+class AllCourseDepartmentSerializer(serializers.ModelSerializer):
+
+    name = serializers.CharField(source='base_course.name', read_only=True)
+
+
+
+    class Meta:
+        model = BaseCourse
+        fields = ['name' ]
+
+
+class AllCourseDepartmentSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='base_course.name', read_only=True)
+    class Meta:
+        model = Course
+        fields = ('name' ,'id', 'class_gp', 'capacity',
+                  'registered_count', 'waiting_count', 'guest_able',
+                  'registration_limit', 'description', 'sex', 'presentation_type', 'base_course', 'teacher')
+
+
+
+
+
+class CourseGroupSerializer(serializers.ModelSerializer):
+    exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
+    course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
+    teacher = TeacherSerializer(read_only=True)
+    name = serializers.CharField(source='base_course.name', read_only=True)
+    complete_course_number = serializers.SerializerMethodField(read_only=True)
+    group_number = serializers.CharField(source='class_gp', read_only=True)
+
+    def get_complete_course_number(self, obj: Course):
+        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+
 
     class Meta:
         model = Course

@@ -174,3 +174,5 @@ class AllowedDepartment(models.Model):
     class Meta:
         verbose_name = 'دانشکدۀ مجاز و غیر مجاز'
         verbose_name_plural = 'دانشکده های مجاز و غیر مجاز'
+
+

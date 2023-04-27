@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F, Count
 from django_filters.rest_framework import DjangoFilterBackend
@@ -11,7 +13,9 @@ from rest_framework.viewsets import ModelViewSet
 from university.models import Course, Department, Semester, ExamTimePlace, AllowedDepartment
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
     CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, MyCourseSerializer, \
-    CourseGroupSerializer, SimpleBaseCourseSerializer
+    CourseGroupSerializer, SimpleBaseCourseSerializer, AllCourseDepartmentSerializer
+from rest_framework.views import APIView
+from .models import BaseCourse
 from utils import project_variables
 
 
@@ -144,3 +148,119 @@ class CourseGroupListView(ModelViewSet):
             return courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()
         else:
             raise ValidationError({'detail': 'No course with this course_number in database.'}, )
+
+
+
+
+class CourseStudentCountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs ):
+        course_id = kwargs['base_course_id']
+        if course_id is None:
+            raise ValidationError({'detail': 'Enter course_number as query string in the url.'}, )
+        else:
+            if '_' in course_id:
+                course_id_major, group_number = course_id.split('_')
+                if course_id_major.isdigit() is True:
+                    course_id_major = int(course_id_major)
+                else:
+                    raise ValidationError({'detail': 'course_number must be in integer format.'})
+                if group_number.isdigit() is True:
+                    group_number =f'0{int(group_number)}'
+                else:
+                    raise ValidationError({'detail': 'group_number must be in integer format.'})
+            else:
+                raise ValidationError({'detail': 'course_number must be in this format: course_number-group_number'})
+
+        courses = Course.objects.filter(base_course_id=course_id_major, class_gp=group_number)
+        if courses.exists():
+            return Response(data={'count': courses.first().students.count()})
+        else:
+            raise ValidationError({'detail': 'No course with this course_number in database.'}, )
+
+
+class AllCourseDepartment(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def time_edit(start, end):
+        start = int(((str(start)))[:2])
+
+        if start == 7:
+            return 0
+        elif start == 9:
+            return 1
+        elif start == 10:
+            return 2
+        elif start == 13:
+            return 3
+        elif start == 15:
+            return 4
+        elif start == 16:
+            return 5
+        elif start == 18:
+            return 6
+        else:
+            return 7
+
+
+    def get(self, request, *args, **kwargs):
+        user_department_id = self.request.user.department_id
+        all_courses = Course.objects.filter(base_course__department_id=user_department_id)
+        courses_list = []
+        for course in all_courses:
+
+            if course.course_times.filter(day=0).exists():
+
+                start_time_str = str(course.course_times.all().values_list('start_time', flat=True)[0])
+                end_time_str = str(course.course_times.all().values_list('end_time', flat=True)[0])
+                time_format = self.time_edit(start_time_str, end_time_str)
+
+
+                courses_list.append({**AllCourseDepartmentSerializer(course).data, 'day': 0, 'time' : time_format} )
+
+
+
+            elif course.course_times.filter(day=1).exists():
+                start_time_str = str(course.course_times.all().values_list('start_time', flat=True)[0])
+                end_time_str = str(course.course_times.all().values_list('end_time', flat=True)[0])
+                time_format = self.time_edit(start_time_str, end_time_str)
+
+
+                courses_list.append({**AllCourseDepartmentSerializer(course).data, 'day': 1, 'time' : time_format})
+
+
+            elif course.course_times.filter(day=2).exists():
+                start_time_str = str(course.course_times.all().values_list('start_time', flat=True)[0])
+                end_time_str = str(course.course_times.all().values_list('end_time', flat=True)[0])
+                time_format = self.time_edit(start_time_str, end_time_str)
+
+                courses_list.append({**AllCourseDepartmentSerializer(course).data, 'day':2, 'time' : time_format})
+
+
+            elif course.course_times.filter(day=3).exists():
+                start_time_str = str(course.course_times.all().values_list('start_time', flat=True)[0])
+                end_time_str = str(course.course_times.all().values_list('end_time', flat=True)[0])
+                time_format = self.time_edit(start_time_str, end_time_str)
+
+                courses_list.append({**AllCourseDepartmentSerializer(course).data, 'day': 3, 'time' : time_format})
+
+
+            elif course.course_times.filter(day=4).exists():
+                start_time_str = str(course.course_times.all().values_list('start_time', flat=True)[0])
+                end_time_str = str(course.course_times.all().values_list('end_time', flat=True)[0])
+                time_format = self.time_edit(start_time_str, end_time_str)
+
+                courses_list.append({**AllCourseDepartmentSerializer(course).data, 'day': 4, 'time' : time_format})
+
+
+            elif course.course_times.filter(day=5).exists():
+                start_time_str = str(course.course_times.all().values_list('start_time', flat=True)[0])
+                end_time_str = str(course.course_times.all().values_list('end_time', flat=True)[0])
+                time_format = self.time_edit(start_time_str, end_time_str)
+
+                courses_list.append({**AllCourseDepartmentSerializer(course).data, 'day': 5, 'time' : time_format})
+
+
+        return Response(courses_list)
