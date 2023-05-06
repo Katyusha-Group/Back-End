@@ -1,8 +1,10 @@
+import random
+
 from rest_framework import generics
 from rest_framework.response import Response
 from .serializers import *
 from .serializers import LoginSerializer
-from accounts.models import User, Verification
+from accounts.models import User
 from django.contrib.sites.shortcuts import get_current_site  # for email
 from django.urls import reverse  # for email
 from django.conf import settings
@@ -14,7 +16,7 @@ from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from mail_templated import EmailMessage
-from mail_templated import send_mail
+from django.core.mail import send_mail
 from .utils import EmailThread
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -34,32 +36,47 @@ class SignUpView(APIView):
     authentication_classes = []
 
     def post(self, request):
-        # print user
-
-        serializer = SignUpSerializer(data=request.data, context={'request': request})
+        serializer = SignUpSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
 
         # validate password
         try:
             validate_password(request.data['password1'])
         except exception.ValidationError as e:
             return Response({"password": e.messages}, status=400)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
         email = serializer.validated_data['email']
 
-        # --------- send email ---------
-        user_obj = get_object_or_404(User, email=email)
-        token = self.get_token_for_user(user_obj)
-        serializer_act = VerificationSerializer(data=request.data, context={'token': token})
-        serializer_act.is_valid(raise_exception=True)
-        verification = serializer_act.save()
 
-        # ------------------------------
+        verification_code = str(random.randint(1000, 9999))
+
+        # Save user
+        user = User.objects.create(
+            department=validated_data['department'],
+            username=validated_data['email'],
+            email=validated_data['email'],
+            gender=validated_data['gender'],
+            password=make_password(validated_data['password1']),
+            verification_code=verification_code,
+        )
+        token = self.get_token_for_user(user)
+        #
+        subject = 'Verify your email'
+        message = f'Your verification code is {verification_code}. Please enter this code in the verification page to complete your registration.'
+        from_email = 'noreply@example.com'
+        recipient_list = [user.email]
+        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+
         return Response({
-            "user": {"department": user.department.name, "email": email,
-                     "gender": user.gender},
-            "message": "User created successfully. Please check your email to activate your account. ",
-        }, status=201)
+                "user": {"department": user.department.name, "email": email,
+                         "gender": user.gender},
+                "message": "User created successfully. Please check your email to activate your account. ",
+                "code": verification_code,
+                "url": f'http://katyushaiust.ir/accounts/activation-confirm/{token}'
+
+            }, status=201)
+
+
 
     def get_token_for_user(self, user):
         refresh = RefreshToken.for_user(user)
@@ -150,8 +167,6 @@ class ChangePasswordView(generics.GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# class ConfirmEmailView():
-#     pass
 
 
 class ActivationConfirmView(GenericAPIView):
@@ -159,18 +174,14 @@ class ActivationConfirmView(GenericAPIView):
     permission_classes = []
 
     def post(self, request, token):
-        # if not self.is_valid_token(token):
-        #     return Response({'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        self.is_valid_token(token)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = self.get_user_from_token(token)
-        try:
-            user = Verification.objects.get(email=user)
-        except Verification.DoesNotExist:
-            return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if request.data.get('verification_code') != user.code:
+
+        if request.data.get('verification_code') != user.verification_code:
             return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
 
         user_obj = get_object_or_404(User, email=user.email)
@@ -189,8 +200,6 @@ class ActivationConfirmView(GenericAPIView):
         user = User.objects.filter(id=payload['user_id']).first()
         return user
 
-    import jwt
-    from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 
     @staticmethod
     def is_valid_token(token):
@@ -210,7 +219,7 @@ class ActivationConfirmView(GenericAPIView):
         try:
             decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
         except:
-            return Response({'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Invalid URL'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'message': 'Please enter code verification'}, status=status.HTTP_200_OK)
 
 

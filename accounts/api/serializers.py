@@ -9,19 +9,6 @@ from django.core import exceptions as exception
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
-class VerificationSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True)
-
-    class Meta:
-        model = Verification
-        fields = ('email',)
-
-    def create(self, validated_data):
-        email = validated_data['email']
-        token = self.context.get('token')
-        verification = Verification.objects.create(email=email)
-        verification.send_verification_email(token)
-        return verification
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -50,17 +37,7 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Email already exists.")
         return value
 
-    def create(self, validated_data):
-        user = User.objects.create(
-            department=validated_data['department'],
-            username=validated_data['email'],
-            email=validated_data['email'],
-            gender=validated_data['gender'],
-            password=make_password(validated_data['password1'])
-        )
 
-        user.save()
-        return user
 
 
 class LoginSerializer(serializers.Serializer):

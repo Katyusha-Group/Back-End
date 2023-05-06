@@ -25,37 +25,8 @@ class User(AbstractUser):
     is_email_verified = models.BooleanField(default=False)
     department = models.ForeignKey(to=Department, on_delete=models.DO_NOTHING)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
+    verification_code = models.CharField(max_length=4, null=True, blank=True)
 
     def __str__(self):
         return self.email
-
-
-class Verification(models.Model):
-    code = models.CharField(max_length=4)
-    email = models.EmailField()
-    timestamp = models.DateTimeField(default=datetime.datetime.now)
-
-    def send_verification_email(self, token):
-        subject = 'Verify your email'
-
-        message = f'Your verification code is {self.code} \n  http://katyushaiust.ir/accounts/activation-confirm/{token}/'
-        send_mail(subject='Verify your email', message=message, from_email='asd@asd.asd',
-                  recipient_list=[self.email], fail_silently=False)
-
-
-    def is_valid(self):
-        return (timezone.now() - self.timestamp).total_seconds() <= 3600
-
-    def verify_email(self):
-        user = User.objects.get(email=self.email)
-        user.is_email_verified = True
-        user.save()
-        self.delete()
-
-    def save(self, *args, **kwargs):
-        if not self.code:
-            self.code = str(random.randint(1000, 9999))
-        super().save(*args, **kwargs)
-
-
 
