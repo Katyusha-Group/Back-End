@@ -13,7 +13,8 @@ from rest_framework.viewsets import ModelViewSet
 from university.models import Course, Department, Semester, ExamTimePlace, AllowedDepartment
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
     CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, MyCourseSerializer, \
-    CourseGroupSerializer, SimpleBaseCourseSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer
+    CourseGroupSerializer, SimpleBaseCourseSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer, \
+    AllDepartmentSerializer
 from rest_framework.views import APIView
 from .models import BaseCourse
 from utils import project_variables
@@ -43,16 +44,13 @@ class DepartmentListView(ListAPIView):
 class AllDepartmentsListView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
+    serializer_class = AllDepartmentSerializer
 
-    def get(self, request, *args, **kwargs):
-        all_courses = SimpleBaseCourseSerializer(AllowedDepartment.objects
-                                                 .filter(department_id=0, course__sex__in=[request.user.gender, 'B'])
-                                                 .annotate(course_number=F('course__base_course__course_number'))
-                                                 .annotate(name=F('course__base_course__name'))
-                                                 .values('course_number', 'name')
-                                                 .annotate(group_count=Count('course_number'))
-                                                 .order_by(), many=True)
-        return Response(data={'id': '0', 'name': 'تمام دانشکده ها', 'base_courses': all_courses.data})
+    def get_serializer_context(self):
+        return {'user_id': self.request.user.id}
+
+    def get_queryset(self):
+        return Department.objects.prefetch_related('allowed_departments__course__base_course').all()
 
 
 class SemesterViewSet(ModelViewSet):
@@ -158,15 +156,10 @@ class CourseGroupListView(ModelViewSet):
             raise ValidationError({'detail': 'No course with this course_number in database.'}, )
 
 
-
-
-
-
-
 class CourseStudentCountView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs ):
+    def get(self, request, *args, **kwargs):
         course_id = kwargs['base_course_id']
         if course_id is None:
             raise ValidationError({'detail': 'Enter course_number as query string in the url.'}, )
@@ -178,7 +171,7 @@ class CourseStudentCountView(APIView):
                 else:
                     raise ValidationError({'detail': 'course_number must be in integer format.'})
                 if group_number.isdigit() is True:
-                    group_number =f'0{int(group_number)}'
+                    group_number = f'0{int(group_number)}'
                 else:
                     raise ValidationError({'detail': 'group_number must be in integer format.'})
             else:
@@ -215,20 +208,19 @@ class AllCourseDepartment(APIView):
         else:
             return 7
 
-
     def get(self, request, *args, **kwargs):
         user_department_id = self.request.user.department_id
         # return 2 course with same user_deparment
         all_courses = Course.objects.filter(base_course__department_id=user_department_id)
         courses_list = []
-        count_courses_in_same_time_same_day = { '0': {'0' : 0, '1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0, '6': 0, '7': 0},
-                                                '1' : {'0' : 0, '1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0, '6': 0, '7': 0},
-                                                '2' : {'0' : 0, '1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0, '6': 0, '7': 0},
-                                                '3' : {'0' : 0, '1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0, '6': 0, '7': 0},
-                                                '4' : {'0' : 0, '1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0, '6': 0, '7': 0},
-                                                '5' : {'0' : 0, '1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0, '6': 0, '7': 0},
-                                                '6' : {'0' : 0, '1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0, '6': 0, '7': 0},
-                                                }
+        count_courses_in_same_time_same_day = {'0': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
+                                               '1': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
+                                               '2': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
+                                               '3': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
+                                               '4': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
+                                               '5': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
+                                               '6': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
+                                               }
 
         for course in all_courses:
             for day in range(6):

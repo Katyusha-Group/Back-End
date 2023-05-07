@@ -46,7 +46,6 @@ def get_data_from_allowed_departments(data):
         return
     df = pd.DataFrame(data=data, columns=[project_variables.ALLOWED_DEPARTMENTS, project_variables.COURSE_ID])
     allowed_departments = []
-    department_all = Department.objects.get(department_number=0)
     for row in df.values:
         parts = row[0].strip().split(',')
         course = get_or_create.get_course(course_code=row[1])
@@ -62,5 +61,4 @@ def get_data_from_allowed_departments(data):
         except ValueError:
             for department in Department.objects.all():
                 allowed_departments.append(AllowedDepartment(department=department, course=course))
-        allowed_departments.append(AllowedDepartment(department=department_all, course=course))
     return allowed_departments

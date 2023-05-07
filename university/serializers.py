@@ -24,6 +24,27 @@ class SimpleDepartmentSerializer(serializers.ModelSerializer):
         fields = ['label', 'value']
 
 
+class AllDepartmentSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='department_number', read_only=True)
+    base_courses = serializers.SerializerMethodField(read_only=True)
+
+    def get_base_courses(self, obj: Department):
+        user_id = self.context.get('user_id')
+        user = get_user_model().objects.get(id=user_id)
+        allowed_courses = (BaseCourse.objects.filter(department=obj)
+                           .filter(courses__sex__in=[user.gender, 'B'])
+                           .values('course_number', 'name')
+                           .annotate(group_count=Count('course_number'))
+                           .order_by())
+        serializer = SimpleBaseCourseSerializer(data=allowed_courses, many=True, context=self.context)
+        serializer.is_valid()
+        return serializer.data
+
+    class Meta:
+        model = Department
+        fields = ['id', 'name', 'base_courses']
+
+
 class DepartmentSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='department_number', read_only=True)
     base_courses = serializers.SerializerMethodField(read_only=True)
