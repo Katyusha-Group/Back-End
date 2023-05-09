@@ -219,7 +219,7 @@ class AllCourseDepartment(APIView):
     def get(self, request, *args, **kwargs):
         user_department_id = self.request.user.department_id
         # return 2 course with same user_deparment
-        all_courses = Course.objects.filter(base_course__department_id=user_department_id)
+        all_courses = Course.objects.filter(base_course__department_id=user_department_id, )
         courses_list = []
         count_courses_in_same_time_same_day = { '0': {'0' : 0, '1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0, '6': 0, '7': 0},
                                                 '1' : {'0' : 0, '1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0, '6': 0, '7': 0},
@@ -229,6 +229,7 @@ class AllCourseDepartment(APIView):
                                                 '5' : {'0' : 0, '1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0, '6': 0, '7': 0},
                                                 '6' : {'0' : 0, '1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0, '6': 0, '7': 0},
                                                 }
+
 
         for course in all_courses:
             for day in range(6):
@@ -244,3 +245,5 @@ class AllCourseDepartment(APIView):
             course['count'] = count_courses_in_same_time_same_day[str(course['day'])][str(course['time'])]
 
         return Response(courses_list)
+
+
