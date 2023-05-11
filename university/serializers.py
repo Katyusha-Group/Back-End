@@ -126,7 +126,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['complete_course_number', 'name', 'total_unit',
+        fields = ['complete_course_number', 'name', 'class_gp', 'total_unit',
                   'practical_unit', 'capacity', 'registered_count',
                   'waiting_count', 'sex', 'guest_able', 'emergency_deletion',
                   'registration_limit', 'description', 'presentation_type',
