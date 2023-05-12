@@ -1,10 +1,12 @@
 from rest_framework import serializers
 
 from custom_config.models import Cart, CartItem
+
 from university.models import Course
 from university.serializers import SimpleCourseSerializer
 
 from custom_config.scripts.get_item_price import get_item_price
+from university.scripts.get_or_create import get_course
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -41,24 +43,26 @@ class UpdateCartItemSerializer(serializers.ModelSerializer):
 
 
 class AddCartItemSerializer(serializers.ModelSerializer):
-    course_id = serializers.IntegerField(write_only=True)
+    complete_course_number = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        course_id = attrs['course_id']
+        complete_course_number = attrs['complete_course_number']
+        base_course_id, class_gp = complete_course_number.split('_')
         contain_telegram = attrs['contain_telegram']
         contain_sms = attrs['contain_sms']
         contain_email = attrs['contain_email']
-        # if not self.context['request'].user.courses.filter(id=course_id).exists():
-        #     raise serializers.ValidationError('You have not chosen this course yet.')
-        if not Course.objects.filter(id=course_id).exists():
+        if not Course.objects.filter(base_course_id=base_course_id, class_gp=class_gp).exists():
             raise serializers.ValidationError('This course does not exist.')
         if not contain_email and not contain_sms and not contain_telegram:
             raise serializers.ValidationError('You must choose at least one notification method.')
+        course_id = get_course(course_code=complete_course_number).id
+        attrs['course_id'] = course_id
         return attrs
 
     def save(self, **kwargs):
         cart_id = self.context['cart_id']
-        course_id = self.validated_data['course_id']
+        complete_course_number = self.validated_data['complete_course_number']
+        course_id = get_course(course_code=complete_course_number).id
         contain_telegram = self.validated_data['contain_telegram']
         contain_sms = self.validated_data['contain_sms']
         contain_email = self.validated_data['contain_email']
@@ -72,6 +76,8 @@ class AddCartItemSerializer(serializers.ModelSerializer):
             cart_item.save()
             self.instance = cart_item
         except CartItem.DoesNotExist:
+            if 'complete_course_number' in self.validated_data:
+                del self.validated_data['complete_course_number']
             self.instance = CartItem.objects.create(
                 cart_id=cart_id, **self.validated_data)
 
@@ -79,7 +85,7 @@ class AddCartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CartItem
-        fields = ['id', 'course_id', 'contain_telegram', 'contain_sms', 'contain_email']
+        fields = ['id', 'complete_course_number', 'contain_telegram', 'contain_sms', 'contain_email']
 
 
 class CartSerializer(serializers.ModelSerializer):
