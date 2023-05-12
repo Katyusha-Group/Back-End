@@ -26,7 +26,7 @@ class CartItemViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return AddCartItemSerializer
-        if self.request.method == 'PUT':
+        if self.request.method == 'PATCH':
             return UpdateCartItemSerializer
         return CartItemSerializer
 
@@ -49,8 +49,8 @@ class OrderViewSet(ModelViewSet):
         serializer = CreateOrderSerializer(data=request.data, context={'user_id': request.user.id})
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
-        serializer = OrderSerializer(data=order)
-        return Response(serializer, status=status.HTTP_201_CREATED)
+        serializer = OrderSerializer(order)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
