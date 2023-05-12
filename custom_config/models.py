@@ -1,4 +1,9 @@
+from uuid import uuid4
+
+from django.conf import settings
 from django.db import models
+
+from university.models import Course
 
 
 class ModelTracker(models.Model):
@@ -38,3 +43,21 @@ class FieldTracker(models.Model):
     class Meta:
         verbose_name = 'تغییرات ستون'
         verbose_name_plural = 'تغییر ستون ها'
+
+
+class Cart(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    contain_telegram = models.BooleanField(default=False)
+    contain_sms = models.BooleanField(default=False)
+    contain_email = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = [['cart', 'course']]
+
+
