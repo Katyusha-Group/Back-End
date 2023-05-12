@@ -19,4 +19,5 @@ urlpatterns = [
     path('course_student_count/<base_course_id>', views.CourseStudentCountView.as_view(), name='course_student_count'),
     path('allcoursesdepartment/', views.AllCourseDepartment.as_view(), name='allcoursedepartment'),
     path('allcourses-based-department/<int:department_id>', views.All.as_view(), name='all'),
+    path('abc/', views.abc, name='abc'),
 ]

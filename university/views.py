@@ -291,3 +291,12 @@ class All(APIView):
             course['count'] = count_courses_in_same_time_same_day[str(course['day'])][str(course['time'])]
 
         return Response(courses_list)
+
+
+def abc(request):
+    # import render
+    from django.shortcuts import render
+    qqq = BaseCourse.objects.filter(course_number__in= Course.objects.values('base_course'))
+    query = Course.objects.filter(pk__lt=10).select_related('base_course')
+
+    return render(request, 'hello.html', {'query': qqq})
