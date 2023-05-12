@@ -1,6 +1,8 @@
+from django.db import transaction
+
 from rest_framework import serializers
 
-from custom_config.models import Cart, CartItem
+from custom_config.models import Cart, CartItem, Order, OrderItem
 
 from university.models import Course
 from university.serializers import SimpleCourseSerializer
@@ -99,3 +101,50 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ['id', 'items', 'total_price']
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    course = SimpleCourseSerializer(read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'unit_price']
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'placed_at', 'payment_status', 'user', 'items']
+
+
+class CreateOrderSerializer(serializers.Serializer):
+    cart_id = serializers.UUIDField(write_only=True)
+
+    def validate_cart_id(self, value):
+        if not Cart.objects.filter(id=value).exists():
+            raise serializers.ValidationError('This cart does not exist.')
+        if Cart.objects.get(id=value).items.count() == 0:
+            raise serializers.ValidationError('This cart is empty.')
+        return value
+
+    def save(self, **kwargs):
+        with transaction.atomic():
+            user_id = self.context['user_id']
+            cart_id = self.validated_data['cart_id']
+            cart = Cart.objects.get(id=cart_id)
+            order = Order.objects.create(user_id=user_id)
+            order_items = [
+                OrderItem(
+                    order=order,
+                    course=item.course,
+                    contain_telegram=item.contain_telegram,
+                    contain_sms=item.contain_sms,
+                    contain_email=item.contain_email,
+                    unit_price=get_item_price(item)
+                ) for item in cart.items.select_related('course').all()
+            ]
+            OrderItem.objects.bulk_create(order_items)
+            cart.delete()
+            return order
