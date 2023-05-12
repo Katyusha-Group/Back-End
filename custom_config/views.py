@@ -4,11 +4,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin, DestroyModelMixin
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from custom_config.models import Cart, CartItem, Order
 from custom_config.serializers import CartSerializer, CartItemSerializer, \
-    AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer
+    AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer
 
 
 # Create your views here.
@@ -19,7 +19,7 @@ class CartViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, Gener
 
 
 class CartItemViewSet(ModelViewSet):
-    http_method_names = ['get', 'post', 'put', 'delete', 'options', 'head']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
@@ -37,8 +37,12 @@ class CartItemViewSet(ModelViewSet):
 
 
 class OrderViewSet(ModelViewSet):
-    http_method_names = ['get', 'post', 'put', 'delete', 'options', 'head']
-    permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+
+    def get_permissions(self):
+        if self.request.method in ['PATCH', 'DELETE']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
         serializer = CreateOrderSerializer(data=request.data, context={'user_id': request.user.id})
@@ -50,6 +54,8 @@ class OrderViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return CreateOrderSerializer
+        if self.request.method == 'PATCH':
+            return UpdateOrderSerializer
         return OrderSerializer
 
     def get_queryset(self):
