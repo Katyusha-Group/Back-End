@@ -1,10 +1,14 @@
+from django.db import transaction
+
 from rest_framework import serializers
 
-from custom_config.models import Cart, CartItem
+from custom_config.models import Cart, CartItem, Order, OrderItem
+
 from university.models import Course
 from university.serializers import SimpleCourseSerializer
 
 from custom_config.scripts.get_item_price import get_item_price
+from university.scripts.get_or_create import get_course
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -41,24 +45,26 @@ class UpdateCartItemSerializer(serializers.ModelSerializer):
 
 
 class AddCartItemSerializer(serializers.ModelSerializer):
-    course_id = serializers.IntegerField(write_only=True)
+    complete_course_number = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        course_id = attrs['course_id']
+        complete_course_number = attrs['complete_course_number']
+        base_course_id, class_gp = complete_course_number.split('_')
         contain_telegram = attrs['contain_telegram']
         contain_sms = attrs['contain_sms']
         contain_email = attrs['contain_email']
-        # if not self.context['request'].user.courses.filter(id=course_id).exists():
-        #     raise serializers.ValidationError('You have not chosen this course yet.')
-        if not Course.objects.filter(id=course_id).exists():
+        if not Course.objects.filter(base_course_id=base_course_id, class_gp=class_gp).exists():
             raise serializers.ValidationError('This course does not exist.')
         if not contain_email and not contain_sms and not contain_telegram:
             raise serializers.ValidationError('You must choose at least one notification method.')
+        course_id = get_course(course_code=complete_course_number).id
+        attrs['course_id'] = course_id
         return attrs
 
     def save(self, **kwargs):
         cart_id = self.context['cart_id']
-        course_id = self.validated_data['course_id']
+        complete_course_number = self.validated_data['complete_course_number']
+        course_id = get_course(course_code=complete_course_number).id
         contain_telegram = self.validated_data['contain_telegram']
         contain_sms = self.validated_data['contain_sms']
         contain_email = self.validated_data['contain_email']
@@ -72,6 +78,8 @@ class AddCartItemSerializer(serializers.ModelSerializer):
             cart_item.save()
             self.instance = cart_item
         except CartItem.DoesNotExist:
+            if 'complete_course_number' in self.validated_data:
+                del self.validated_data['complete_course_number']
             self.instance = CartItem.objects.create(
                 cart_id=cart_id, **self.validated_data)
 
@@ -79,17 +87,78 @@ class AddCartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CartItem
-        fields = ['id', 'course_id', 'contain_telegram', 'contain_sms', 'contain_email']
+        fields = ['id', 'complete_course_number', 'contain_telegram', 'contain_sms', 'contain_email']
 
 
 class CartSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(read_only=True)
     items = CartItemSerializer(many=True, read_only=True)
     total_price = serializers.SerializerMethodField(read_only=True)
+    total_number = serializers.SerializerMethodField(read_only=True)
+
+    def get_total_number(self, obj: Cart):
+        return obj.items.count()
 
     def get_total_price(self, obj: Cart):
         return sum([get_item_price(item) for item in obj.items.all()])
 
     class Meta:
         model = Cart
-        fields = ['id', 'items', 'total_price']
+        fields = ['id', 'items', 'total_price', 'total_number']
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    course = SimpleCourseSerializer(read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'unit_price']
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+    total_number = serializers.SerializerMethodField(read_only=True)
+
+    def get_total_number(self, obj: Cart):
+        return obj.items.count()
+
+    class Meta:
+        model = Order
+        fields = ['id', 'placed_at', 'payment_status', 'user', 'items', 'total_number']
+
+
+class CreateOrderSerializer(serializers.Serializer):
+    cart_id = serializers.UUIDField(write_only=True)
+
+    def validate_cart_id(self, value):
+        if not Cart.objects.filter(id=value).exists():
+            raise serializers.ValidationError('This cart does not exist.')
+        if Cart.objects.get(id=value).items.count() == 0:
+            raise serializers.ValidationError('This cart is empty.')
+        return value
+
+    def save(self, **kwargs):
+        with transaction.atomic():
+            user_id = self.context['user_id']
+            cart_id = self.validated_data['cart_id']
+            cart = Cart.objects.get(id=cart_id)
+            order = Order.objects.create(user_id=user_id)
+            order_items = [
+                OrderItem(
+                    order=order,
+                    course=item.course,
+                    contain_telegram=item.contain_telegram,
+                    contain_sms=item.contain_sms,
+                    contain_email=item.contain_email,
+                    unit_price=get_item_price(item)
+                ) for item in cart.items.select_related('course').all()
+            ]
+            OrderItem.objects.bulk_create(order_items)
+            cart.delete()
+            return order
+
+
+class UpdateOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['payment_status']
