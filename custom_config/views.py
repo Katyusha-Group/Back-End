@@ -18,11 +18,6 @@ class CartViewSet(ModelViewSet):
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_permissions(self):
-        if self.action == 'list':
-            return [IsAdminUser()]
-        return [IsAuthenticated()]
-
 
 class CartItemViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']

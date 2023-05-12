@@ -222,7 +222,6 @@ class AllCourseDepartment(APIView):
                                                '6': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
                                                }
 
-
         for course in all_courses:
             for day in range(6):
                 if course.course_times.filter(day=day).exists():
@@ -263,7 +262,7 @@ class All(APIView):
         else:
             return 7
 
-    def get(self, request, department_id,*args, **kwargs):
+    def get(self, request, department_id, *args, **kwargs):
         # return 2 course with same user_deparment
         all_courses = Course.objects.filter(base_course__department_id=department_id, )
         courses_list = []
@@ -275,7 +274,6 @@ class All(APIView):
                                                '5': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
                                                '6': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
                                                }
-
 
         for course in all_courses:
             for day in range(6):
