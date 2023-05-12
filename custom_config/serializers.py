@@ -94,13 +94,17 @@ class CartSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(read_only=True)
     items = CartItemSerializer(many=True, read_only=True)
     total_price = serializers.SerializerMethodField(read_only=True)
+    total_number = serializers.SerializerMethodField(read_only=True)
+
+    def get_total_number(self, obj: Cart):
+        return obj.items.count()
 
     def get_total_price(self, obj: Cart):
         return sum([get_item_price(item) for item in obj.items.all()])
 
     class Meta:
         model = Cart
-        fields = ['id', 'items', 'total_price']
+        fields = ['id', 'items', 'total_price', 'total_number']
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -113,10 +117,14 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    total_number = serializers.SerializerMethodField(read_only=True)
+
+    def get_total_number(self, obj: Cart):
+        return obj.items.count()
 
     class Meta:
         model = Order
-        fields = ['id', 'placed_at', 'payment_status', 'user', 'items']
+        fields = ['id', 'placed_at', 'payment_status', 'user', 'items', 'total_number']
 
 
 class CreateOrderSerializer(serializers.Serializer):

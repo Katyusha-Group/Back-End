@@ -12,10 +12,16 @@ from custom_config.serializers import CartSerializer, CartItemSerializer, \
 
 
 # Create your views here.
-class CartViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, GenericViewSet):
+class CartViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'delete', 'options', 'head']
     queryset = Cart.objects.prefetch_related('items', 'items__course').all()
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == 'list':
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
 
 
 class CartItemViewSet(ModelViewSet):
@@ -49,7 +55,7 @@ class OrderViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
         serializer = OrderSerializer(data=order)
-        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer, status=status.HTTP_201_CREATED)
 
     def get_serializer_class(self):
         if self.request.method == 'POST':

@@ -58,8 +58,8 @@ class Cart(models.Model):
 
 
 class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='cart_items')
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='cart_items')
     contain_telegram = models.BooleanField(default=False)
     contain_sms = models.BooleanField(default=False)
     contain_email = models.BooleanField(default=False)
