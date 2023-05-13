@@ -245,6 +245,7 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
     teacher = TeacherSerializer(read_only=True)
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
+    exam_times = SimpleExamTimePlaceSerializer(many=True ,read_only=True)
 
     def get_color_intensity_percentage(self, obj):
         '''
@@ -268,7 +269,7 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
         model = Course
         fields = ('name', 'id', 'class_gp', 'capacity', 'complete_course_number',
                   'registered_count', 'waiting_count', 'guest_able','course_times', 'color_intensity_percentage',
-                  'registration_limit', 'description', 'sex', 'presentation_type', 'base_course', 'teacher')
+                  'registration_limit', 'description', 'sex', 'presentation_type', 'base_course', 'teacher', 'exam_times')
 
 
 
