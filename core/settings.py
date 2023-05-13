@@ -248,3 +248,4 @@ EMAIL_USE_TLS = True
 # CRONJOBS = [
 #     ('*/1 * * * *', 'university.cron.watch_golestan', '>> /home/katyusha1/project/cron.log'),
 # ]
+

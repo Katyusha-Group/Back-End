@@ -7,12 +7,12 @@ import os
 
 from persiantools import characters
 
-from . import project_variables
-from django.conf import settings
+# from . import project_variables
+# from django.conf import settings
 
 
 class ExcelHandler:
-    DIR = os.path.join(settings.BASE_DIR, project_variables.DATA_DIRECTORY_NAME)
+    DIR = "../data/"
 
     def __init__(self):
         self.create_path()
