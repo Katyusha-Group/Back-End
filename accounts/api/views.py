@@ -72,7 +72,8 @@ class SignUpView(APIView):
                          "gender": user.gender},
                 "message": "User created successfully. Please check your email to activate your account. ",
                 "code": verification_code,
-                "url": f'http://katyushaiust.ir/accounts/activation-confirm/{token}'
+                "url": f'http://katyushaiust.ir/accounts/activation-confirm/{token}',
+                "token": token,
 
             }, status=201)
 
