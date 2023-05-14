@@ -5,14 +5,13 @@ import openpyxl
 import pandas as pd
 import os
 
-from persiantools import characters
+from persiantools import characters, digits
 
-from . import project_variables
 from django.conf import settings
 
 
 class ExcelHandler:
-    DIR = os.path.join(settings.BASE_DIR, project_variables.DATA_DIRECTORY_NAME)
+    DIR = "../data/"
 
     def __init__(self):
         self.create_path()
@@ -40,8 +39,11 @@ class ExcelHandler:
         worksheet = workbook.active
         for row in worksheet.iter_rows():
             for cell in row:
-                if cell.value is not None and type(cell.value) == str:
-                    cell.value = characters.ar_to_fa(cell.value)
+                if cell.value is not None:
+                    if type(cell.value) == str:
+                        cell.value = characters.ar_to_fa(cell.value)
+                    elif type(cell.value) == int:
+                        cell.value = digits.fa_to_en(cell.value)
         workbook.save(path)
 
     @staticmethod
