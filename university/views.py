@@ -289,3 +289,11 @@ class All(APIView):
             course['count'] = count_courses_in_same_time_same_day[str(course['day'])][str(course['time'])]
 
         return Response(courses_list)
+
+
+
+# def ABC(request):
+#     # IMPORT RENDER
+#     from django.shortcuts import render
+#
+#     return render(request, 'test.html')

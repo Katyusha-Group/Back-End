@@ -241,12 +241,36 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
 
 class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='base_course.name', read_only=True)
+    complete_course_number = serializers.SerializerMethodField(read_only=True)
+    course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
+    teacher = TeacherSerializer(read_only=True)
+    color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
+    exam_times = SimpleExamTimePlaceSerializer(many=True ,read_only=True)
+
+    def get_color_intensity_percentage(self, obj):
+        '''
+        Color intensity percentage = ((Remaining capacity - Number of people on the waiting list) / (Total capacity + Number of people on the waiting list + (1.2 * Number of people who want to take the course))) * 100
+        '''
+
+        color_intensity_percentage = ((((obj.capacity - obj.registered_count) - obj.waiting_count) * 100) / (
+                    obj.capacity + obj.waiting_count + (1.2 * self.get_added_to_calendar_count(obj))))
+        return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
+
+    def get_complete_course_number(self, obj: Course):
+        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+
+    def get_added_to_calendar_count(self, obj):
+        base_course_id = self.get_complete_course_number(obj)
+        course_id_major, group_number = base_course_id.split('_')
+        courses = Course.objects.filter(base_course_id=course_id_major, class_gp=group_number)
+        return courses.first().students.count()
 
     class Meta:
         model = Course
-        fields = ('name', 'id', 'class_gp', 'capacity',
-                  'registered_count', 'waiting_count', 'guest_able',
-                  'registration_limit', 'description', 'sex', 'presentation_type', 'base_course', 'teacher')
+        fields = ('name', 'id', 'class_gp', 'capacity', 'complete_course_number',
+                  'registered_count', 'waiting_count', 'guest_able','course_times', 'color_intensity_percentage',
+                  'registration_limit', 'description', 'sex', 'presentation_type', 'base_course', 'teacher', 'exam_times')
+
 
 
 class CourseGroupSerializer(serializers.ModelSerializer):

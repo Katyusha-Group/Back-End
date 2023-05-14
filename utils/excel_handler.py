@@ -11,7 +11,7 @@ from utils import project_variables
 
 
 class ExcelHandler:
-    DIR = os.path.join(settings.BASE_DIR, project_variables.DATA_DIRECTORY_NAME)
+    DIR = "../data/"
 
     def __init__(self):
         self.create_path()
