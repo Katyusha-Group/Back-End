@@ -42,12 +42,14 @@ class ExcelHandler:
                 if cell.value is not None:
                     if type(cell.value) == str:
                         cell.value = characters.ar_to_fa(cell.value)
-                    elif type(cell.value) == int:
-                        cell.value = digits.fa_to_en(cell.value)
+                        if not cell.value.isalpha():
+                            cell.value = digits.fa_to_en(cell.value)
         workbook.save(path)
 
     @staticmethod
-    def make_name_correct(name):
+    def make_name_correct(name: str):
+        if name.isspace() or name == '':
+            return name
         if 'سيد' in name:
             if 'سيد ' not in name:
                 name = name.replace('سيد', 'سيد ')

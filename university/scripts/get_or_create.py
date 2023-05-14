@@ -4,7 +4,7 @@ from university.models import BaseCourse, Teacher, Department, Semester, CourseS
 
 
 def get_base_course(**kwargs):
-    return BaseCourse.objects.filter(course_number=kwargs['course_number']).first()
+    return BaseCourse.objects.filter(course_number=kwargs['course_number'], semester=kwargs['semester']).first()
 
 
 def get_department(**kwargs):
@@ -21,9 +21,8 @@ def get_course_studying_gp(**kwargs):
 
 def get_course(**kwargs):
     course_number, class_gp = clean_data.get_course_code(entry=kwargs['course_code'])
-    return Course.objects.filter(base_course_id=course_number, class_gp=class_gp).first()
-
-
+    return Course.objects.filter(base_course_id=course_number, class_gp=class_gp,
+                                   semester_id=kwargs['semester']).first()
 # def create_base_course(**kwargs):
 #     course_number = clean_data.get_course_code(kwargs['course_code'])[0]
 #     emergency_deletion = clean_data.determine_true_false(kwargs['emergency_deletion'])

@@ -18,14 +18,20 @@ class Command(BaseCommand):
         # get the path of Excel file
         path = Path(os.path.basename(__file__))
         path = Path(path.parent.absolute())
-        golestan_excel_path = (
-            os.path.join(path, project_variables.DATA_DIRECTORY_NAME, project_variables.GOLESTAN_EXCEL_FILE))
+        path = os.path.join(path, project_variables.DATA_DIRECTORY_NAME)
+        files = [filename for filename in os.listdir(path) if
+                 filename.startswith(project_variables.GOLESTAN_COURSES)]
+        # golestan_excel_path = (
+        #     os.path.join(path, project_variables.DATA_DIRECTORY_NAME, project_variables.GOLESTAN_EXCEL_FILE))
         teachers_excel_path = (
-            os.path.join(path, project_variables.DATA_DIRECTORY_NAME, project_variables.TEACHERS_EXCEL_FILE))
-        golestan_data = pd.read_excel(golestan_excel_path)
-        golestan_data = extract_limitation_data(golestan_data)
+            os.path.join(path, project_variables.TEACHERS_EXCEL_FILE))
         teachers_data = pd.read_excel(teachers_excel_path)
-        # start populating
-        pre = time.time()
-        populate_table.populate_all_tables(golestan_data, teachers_data)
-        print(time.time() - pre)
+        for file in files:
+            print(file)
+            file = os.path.join(path, file)
+            golestan_data = pd.read_excel(file)
+            golestan_data = extract_limitation_data(golestan_data)
+            # start populating
+            pre = time.time()
+            populate_table.populate_all_tables(golestan_data, teachers_data)
+            print(time.time() - pre)

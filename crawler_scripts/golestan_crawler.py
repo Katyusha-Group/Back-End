@@ -114,6 +114,7 @@ class GolestanCrawler(SeleniumCrawler):
         while not is_logged_in and i < 5:
             curr_captcha = next_captcha
             next_captcha = self.get_captcha()
+            time.sleep(1)
             self.fill_input("F51701", curr_captcha)
             if not self.user_login and i == 0:
                 self.driver.find_element(by=By.XPATH, value='//*[@id="dsetting"]/label[5]').click()
@@ -149,7 +150,6 @@ class GolestanCrawler(SeleniumCrawler):
         time.sleep(2)
         excel_handler = ExcelHandler()
         soup = self.get_soup(table.get_attribute('innerHTML'))
-        print(soup.text)
         courses = []
         rows = soup.find_all('tr')
         for row in rows:
@@ -167,16 +167,26 @@ class GolestanCrawler(SeleniumCrawler):
             '/html/body/div[1]/div[6]/table/tbody/tr[2]/td[1]', 10).text.split(':')[1].strip())
         department_id = constants.DEPARTMENTS[department]
         course_studying_group_id = constants.COURSE_STUDYING_GP[course_studying_group]
-        return [department, department_id, course_studying_group, course_studying_group_id]
+        return [department_id, department, course_studying_group_id, course_studying_group]
 
     def get_courses(self, available=True):
         self.go_to_this_term_courses(available)
         time.sleep(2)
-        self.switch_to_inner_frames(self.get_header(self.get_number()))
-        self.driver.switch_to.frame(self.wait_on_find_element_by_xpath('/html/frameset/frame[2]', 10))
-        header_data = self.get_header_data()
-        courses_data = self.extract_courses()
-        data = []
-        for row in courses_data:
-            data.append([str(self.year)], )
-
+        prev_page = 0
+        next_page = 1
+        data = [constants.HEADER]
+        while next_page == 1 or next_page != prev_page:
+            self.switch_to_inner_frames(self.get_header(self.get_number()))
+            self.driver.switch_to.frame(self.wait_on_find_element_by_xpath('/html/frameset/frame[2]', 10))
+            header_data = self.get_header_data()
+            courses_data = self.extract_courses()
+            for row in courses_data:
+                if row[0] != '':
+                    data.append([str(self.year)] + header_data + row)
+            self.switch_to_inner_frames(self.get_commander(self.get_number()))
+            prev_page = next_page
+            next_page = int(
+                self.wait_on_find_element_by_xpath('/html/body/table/tbody/tr/td[4]/input', 10).get_attribute(
+                    "value").strip())
+            self.wait_on_find_element_by_xpath('/html/body/table/tbody/tr/td[5]/input', 10).click()
+        ExcelHandler().create_excel(data=data, file_name=self.EXCEL_NAME + '_' + str(self.year))
