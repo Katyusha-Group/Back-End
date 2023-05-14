@@ -1,5 +1,4 @@
 import glob
-import sys
 
 import openpyxl
 import pandas as pd
@@ -7,11 +6,12 @@ import os
 
 from persiantools import characters, digits
 
-from django.conf import settings
+from core import settings
+from utils import project_variables
 
 
 class ExcelHandler:
-    DIR = "../data/"
+    DIR = os.path.join(settings.BASE_DIR, project_variables.DATA_DIRECTORY_NAME)
 
     def __init__(self):
         self.create_path()
@@ -22,7 +22,7 @@ class ExcelHandler:
     def create_excel(self, data, file_name):
         df = pd.DataFrame(data[1:], columns=data[0])
         df.to_excel(self.get_path(file_name), header=True, index=False)
-        self.replace_arabian_letters_with_persian_letters(file_name=file_name)
+        self.replace_arabian_with_persian(file_name=file_name)
         print("Excel file created successfully")
 
     def concatenate_excel(self, file_name):
@@ -33,7 +33,7 @@ class ExcelHandler:
         result.to_excel(self.get_path(file_name), index=False)
         print("Excel file created successfully")
 
-    def replace_arabian_letters_with_persian_letters(self, file_name):
+    def replace_arabian_with_persian(self, file_name):
         path = self.get_path(file_name)
         workbook = openpyxl.load_workbook(path)
         worksheet = workbook.active

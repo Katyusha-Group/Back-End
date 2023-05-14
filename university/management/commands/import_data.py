@@ -21,8 +21,6 @@ class Command(BaseCommand):
         path = os.path.join(path, project_variables.DATA_DIRECTORY_NAME)
         files = [filename for filename in os.listdir(path) if
                  filename.startswith(project_variables.GOLESTAN_COURSES)]
-        # golestan_excel_path = (
-        #     os.path.join(path, project_variables.DATA_DIRECTORY_NAME, project_variables.GOLESTAN_EXCEL_FILE))
         teachers_excel_path = (
             os.path.join(path, project_variables.TEACHERS_EXCEL_FILE))
         teachers_data = pd.read_excel(teachers_excel_path)
