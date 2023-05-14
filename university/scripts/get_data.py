@@ -56,13 +56,14 @@ def get_data_from_allowed_departments(data):
         try:
             department_name, is_able_str = part.strip().split('-')
             department = Department.objects.filter(name=department_name.strip()).first()
+            if department is None:
+                print(department_name)
             if is_able_str == 'True':
                 allowed_departments.append(AllowedDepartment(department=department, course=course))
             else:
-                print(part)
                 for dp in Department.objects.exclude(department_number=department.department_number).all():
                     allowed_departments.append(AllowedDepartment(department=dp, course=course))
-        except ValueError:
+        except:
             for department in Department.objects.all():
                 allowed_departments.append(AllowedDepartment(department=department, course=course))
     return allowed_departments
