@@ -1,6 +1,7 @@
 GOLESTAN_EXCEL_FILE_NAME = 'golestan_courses'
 NEW_GOLESTAN_EXCEL_FILE_NAME = 'new_golestan_courses'
 GOLESTAN_EXCEL_FILE = 'golestan_courses.xlsx'
+GOLESTAN_COURSES = 'golestan_courses'
 NEW_GOLESTAN_EXCEL_FILE = 'new_golestan_courses.xlsx'
 DATA_DIRECTORY_NAME = 'data'
 DATA_DIRECTORY = './data/'

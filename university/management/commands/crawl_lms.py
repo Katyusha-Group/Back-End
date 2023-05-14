@@ -35,6 +35,6 @@ class Command(BaseCommand):
         for i in range(10):
             threads[i].join()
 
-        ExcelHandler().replace_arabian_letters_with_persian_letters('teachers_info')
+        ExcelHandler().replace_arabian_with_persian('teachers_info')
 
         print(time.time() - pre)

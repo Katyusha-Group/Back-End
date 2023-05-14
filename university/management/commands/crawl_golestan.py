@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         pre = time.time()
-        crawler = GolestanCrawler()
+        crawler = GolestanCrawler(user_login=False)
         is_login = crawler.login()
         if is_login:
             crawler.get_courses()

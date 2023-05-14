@@ -8,10 +8,11 @@ from utils import project_variables
 def get_data_from_course_time(data):
     if data.empty:
         return
-    df = pd.DataFrame(data=data, columns=[project_variables.COURSE_TIME_PLACE, project_variables.COURSE_ID])
+    df = pd.DataFrame(data=data, columns=[project_variables.COURSE_TIME_PLACE, project_variables.COURSE_ID,
+                                          project_variables.SEMESTER])
     class_times = []
     for row in df.values:
-        course = get_or_create.get_course(course_code=row[1])
+        course = get_or_create.get_course(course_code=row[1], semester=row[2])
         try:
             prep_data = clean_data.prepare_data_for_course_time_place(row[0])
             for pres in prep_data:
@@ -26,10 +27,11 @@ def get_data_from_course_time(data):
 def get_data_from_exam_time(data):
     if data.empty:
         return
-    df = pd.DataFrame(data=data, columns=[project_variables.EXAM_TIME_PLACE, project_variables.COURSE_ID])
+    df = pd.DataFrame(data=data, columns=[project_variables.EXAM_TIME_PLACE, project_variables.COURSE_ID,
+                                          project_variables.SEMESTER])
     exams = []
     for row in df.values:
-        course = get_or_create.get_course(course_code=row[1])
+        course = get_or_create.get_course(course_code=row[1], semester=row[2])
         try:
             exam_data = row[0].split()
             date = str.join('-', exam_data[1].split('/'))
@@ -44,21 +46,24 @@ def get_data_from_exam_time(data):
 def get_data_from_allowed_departments(data):
     if data.empty:
         return
-    df = pd.DataFrame(data=data, columns=[project_variables.ALLOWED_DEPARTMENTS, project_variables.COURSE_ID])
+    df = pd.DataFrame(data=data, columns=[project_variables.ALLOWED_DEPARTMENTS, project_variables.COURSE_ID,
+                      project_variables.SEMESTER])
     allowed_departments = []
     for row in df.values:
         parts = row[0].strip().split(',')
-        course = get_or_create.get_course(course_code=row[1])
+        course = get_or_create.get_course(semester=row[2], course_code=row[1])
         part = parts[0]
         try:
             department_name, is_able_str = part.strip().split('-')
             department = Department.objects.filter(name=department_name.strip()).first()
+            if department is None:
+                print(department_name)
             if is_able_str == 'True':
                 allowed_departments.append(AllowedDepartment(department=department, course=course))
             else:
-                for department in Department.objects.exclude(department_number=department.department_number).all():
-                    allowed_departments.append(AllowedDepartment(department=department, course=course))
-        except ValueError:
+                for dp in Department.objects.exclude(department_number=department.department_number).all():
+                    allowed_departments.append(AllowedDepartment(department=dp, course=course))
+        except:
             for department in Department.objects.all():
                 allowed_departments.append(AllowedDepartment(department=department, course=course))
     return allowed_departments
