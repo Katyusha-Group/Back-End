@@ -47,9 +47,11 @@ def get_data_from_allowed_departments(data):
     if data.empty:
         return
     df = pd.DataFrame(data=data, columns=[project_variables.ALLOWED_DEPARTMENTS, project_variables.COURSE_ID,
-                      project_variables.SEMESTER])
+                                          project_variables.SEMESTER])
     allowed_departments = []
     for row in df.values:
+        if row[2] != project_variables.CURRENT_SEMESTER:
+            continue
         parts = row[0].strip().split(',')
         course = get_or_create.get_course(semester=row[2], course_code=row[1])
         part = parts[0]

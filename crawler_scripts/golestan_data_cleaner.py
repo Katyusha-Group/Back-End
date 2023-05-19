@@ -14,15 +14,16 @@ def extract_limitation_data(df: pd.DataFrame):
             limits = ''
             for part in limit_parts:
                 if 'دانشکده' in part:
-                    flag = ''
                     if 'غیرمجاز' in part:
                         temp = part.strip(' ').strip('غیرمجاز برای دانشکده').strip(' ')
                         flag = 'False'
                     else:
                         temp = part.strip(' ').strip('دانشکده').strip(' ')
                         flag = 'True'
-                    if 'واح' in temp or 'آموزش' in temp or 'واحـ' in temp or 'ار' in temp:
+                    if 'واح' in temp or 'آموزش' in temp or 'واحـ' in temp or 'فنی' in temp:
                         continue
+                    if 'ار' in temp:
+                        temp = 'مهندسی معماری'
                     if 'برق' in temp:
                         temp = 'مهندسی برق'
                     if 'راه' in temp:

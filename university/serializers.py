@@ -1,12 +1,8 @@
-from itertools import chain
-
-from django.contrib.auth import get_user_model
-from django.db.models import Count, F
+from django.db.models import Count, Q
 from rest_framework import serializers
 
-from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse, AllowedDepartment
+from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse
 from utils import project_variables
-from rest_framework.serializers import SerializerMethodField
 
 
 class SimpleBaseCourseSerializer(serializers.Serializer):
@@ -24,41 +20,27 @@ class SimpleDepartmentSerializer(serializers.ModelSerializer):
         fields = ['label', 'value']
 
 
-class AllDepartmentSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='department_number', read_only=True)
-    base_courses = serializers.SerializerMethodField(read_only=True)
-
-    def get_base_courses(self, obj: Department):
-        user_id = self.context.get('user_id')
-        user = get_user_model().objects.get(id=user_id)
-        allowed_courses = (BaseCourse.objects.filter(department=obj)
-                           .filter(courses__sex__in=[user.gender, 'B'])
-                           .values('course_number', 'name')
-                           .annotate(group_count=Count('course_number'))
-                           .order_by())
-        serializer = SimpleBaseCourseSerializer(data=allowed_courses, many=True, context=self.context)
-        serializer.is_valid()
-        return serializer.data
-
-    class Meta:
-        model = Department
-        fields = ['id', 'name', 'base_courses']
-
-
 class DepartmentSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='department_number', read_only=True)
     base_courses = serializers.SerializerMethodField(read_only=True)
 
     def get_base_courses(self, obj: Department):
-        user_id = self.context.get('user_id')
-        user = get_user_model().objects.get(id=user_id)
-        allowed_courses = (BaseCourse.objects.filter(department=obj)
-                           .filter(courses__allowed_departments__department=user.department,
-                                   courses__sex__in=[user.gender, 'B'])
-                           .values('course_number', 'name')
-                           .annotate(group_count=Count('course_number'))
-                           .order_by())
-        serializer = SimpleBaseCourseSerializer(data=allowed_courses, many=True, context=self.context)
+        user = self.context.get('user')
+        if self.context['api'] == 'allowed':
+            courses = BaseCourse.objects.filter(
+                Q(courses__allowed_departments__department=user.department) & Q(department__exact=obj) & Q(
+                    courses__semester_id__exact=project_variables.CURRENT_SEMESTER) & Q(
+                    courses__sex__in=[user.gender, 'B']))
+        else:
+            courses = BaseCourse.objects.filter(
+                Q(department__exact=obj) & Q(courses__semester_id__exact=project_variables.CURRENT_SEMESTER) & Q(
+                    courses__sex__in=[user.gender, 'B']))
+        courses = (
+            courses
+            .values('course_number', 'name')
+            .annotate(group_count=Count('course_number'))
+            .order_by())
+        serializer = SimpleBaseCourseSerializer(data=courses, many=True, context=self.context)
         serializer.is_valid()
         return serializer.data
 
@@ -245,7 +227,7 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
     teacher = TeacherSerializer(read_only=True)
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
-    exam_times = SimpleExamTimePlaceSerializer(many=True ,read_only=True)
+    exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
 
     def get_color_intensity_percentage(self, obj):
         '''
@@ -253,7 +235,7 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
         '''
 
         color_intensity_percentage = ((((obj.capacity - obj.registered_count) - obj.waiting_count) * 100) / (
-                    obj.capacity + obj.waiting_count + (1.2 * self.get_added_to_calendar_count(obj))))
+                obj.capacity + obj.waiting_count + (1.2 * self.get_added_to_calendar_count(obj))))
         return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
 
     def get_complete_course_number(self, obj: Course):
@@ -268,9 +250,9 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ('name', 'id', 'class_gp', 'capacity', 'complete_course_number',
-                  'registered_count', 'waiting_count', 'guest_able','course_times', 'color_intensity_percentage',
-                  'registration_limit', 'description', 'sex', 'presentation_type', 'base_course', 'teacher', 'exam_times')
-
+                  'registered_count', 'waiting_count', 'guest_able', 'course_times', 'color_intensity_percentage',
+                  'registration_limit', 'description', 'sex', 'presentation_type', 'base_course', 'teacher',
+                  'exam_times')
 
 
 class CourseGroupSerializer(serializers.ModelSerializer):
@@ -284,13 +266,13 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
     color_code = serializers.SerializerMethodField(read_only=True)
 
-
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
 
     class Meta:
         model = Course
-        fields = ['complete_course_number', 'added_to_calendar_count','name', 'base_course_id', 'group_number', 'capacity',
+        fields = ['complete_course_number', 'added_to_calendar_count', 'name', 'base_course_id', 'group_number',
+                  'capacity',
                   'registered_count', 'waiting_count', 'exam_times',
                   'course_times', 'teacher', 'color_intensity_percentage', 'color_code']
 
@@ -299,8 +281,8 @@ class CourseGroupSerializer(serializers.ModelSerializer):
         Color intensity percentage = ((Remaining capacity - Number of people on the waiting list) / (Total capacity + Number of people on the waiting list + (1.2 * Number of people who want to take the course))) * 100
         '''
 
-
-        color_intensity_percentage = ((((obj.capacity - obj.registered_count) - obj.waiting_count) * 100)/ (obj.capacity + obj.waiting_count + (1.2 * self.get_added_to_calendar_count(obj))) )
+        color_intensity_percentage = ((((obj.capacity - obj.registered_count) - obj.waiting_count) * 100) / (
+                obj.capacity + obj.waiting_count + (1.2 * self.get_added_to_calendar_count(obj))))
         return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
 
     def get_added_to_calendar_count(self, obj):
@@ -311,4 +293,3 @@ class CourseGroupSerializer(serializers.ModelSerializer):
 
     def get_color_code(self, obj):
         return 'None'
-

@@ -147,7 +147,6 @@ class GolestanCrawler(SeleniumCrawler):
 
     def extract_courses(self):
         table = self.wait_on_find_element_by_xpath('/html/body/div[1]/div[13]/table', 10)
-        time.sleep(2)
         excel_handler = ExcelHandler()
         soup = self.get_soup(table.get_attribute('innerHTML'))
         courses = []
@@ -156,7 +155,8 @@ class GolestanCrawler(SeleniumCrawler):
             cols = row.find_all('td')
             cols = [ele.text.strip() for ele in cols]
             if cols:
-                cols[13] = excel_handler.make_name_correct(cols[13])
+                cols[8] = excel_handler.make_name_correct(cols[8])
+                cols[2] = cols[2].replace('/', '.')
                 courses.append(cols)
         return courses
 
