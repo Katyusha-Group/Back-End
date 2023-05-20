@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'accounts',
     'university',
     'custom_config',
+    'botapp',
 ]
 
 MIDDLEWARE = [
