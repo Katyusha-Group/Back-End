@@ -65,9 +65,17 @@ def populate_teacher(golestan_data, teachers_data, ignore_conflicts=True):
     names = pd.DataFrame({'name': names})
     df = pd.merge(names, teachers_data, on='name', how='left').values
     Teacher.objects.bulk_create([Teacher(name=row[0],
+                                         golestan_name=row[0],
                                          email_address=row[1],
                                          lms_id=int(row[3]) if not pd.isna(row[3]) else None,
                                          teacher_image_url=row[2],
+                                         teacher_lms_image=File(
+                                             file=open(f'./data/teachers_images/{int(row[3])}.png',
+                                                       'rb'),
+                                             name=str(int(row[3])) + '.png') if not pd.isna(
+                                             row[3]) and os.path.isfile(
+                                             f'./data/teachers_images/{int(row[3])}.png')
+                                         else 'images/teachers_image/default.png',
                                          teacher_image=File(
                                              file=open(f'./data/teachers_images/{int(row[3])}.png',
                                                        'rb'),
