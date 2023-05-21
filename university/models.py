@@ -65,11 +65,14 @@ class BaseCourse(models.Model):
 
 class Teacher(models.Model):
     name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
+    golestan_name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
     email_address = models.CharField(max_length=255, verbose_name='ایمیل', null=True, blank=True)
     lms_id = models.IntegerField(verbose_name='شماره استاد در سامانه LMS', null=True, blank=True)
     teacher_image_url = models.CharField(max_length=255, verbose_name='آدرس تصویر استاد', null=True, blank=True)
     teacher_image = models.ImageField(upload_to='images/teachers_image/', verbose_name='تصویر استاد',
                                       default='images/teachers_image/default.png', blank=True)
+    teacher_lms_image = models.ImageField(upload_to='images/teachers_image/', verbose_name='تصویر استاد',
+                                          default='images/teachers_image/default.png', blank=True)
 
     class Meta:
         indexes = [
@@ -174,5 +177,3 @@ class AllowedDepartment(models.Model):
     class Meta:
         verbose_name = 'دانشکدۀ مجاز و غیر مجاز'
         verbose_name_plural = 'دانشکده های مجاز و غیر مجاز'
-
-
