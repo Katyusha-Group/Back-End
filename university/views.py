@@ -8,10 +8,10 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from university.models import Course, Department, Semester, ExamTimePlace
+from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
     CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, \
-    CourseGroupSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer
+    CourseGroupSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer, TimelineSerializer
 from rest_framework.views import APIView
 from utils import project_variables
 
@@ -125,6 +125,15 @@ class CourseViewSet(ModelViewSet):
         return Response(status=status.HTTP_200_OK,
                         data={'unit_count': sum([course.base_course.total_unit for course in course_data]),
                               'data': courses.data})
+
+
+class TimelineViewSet(ListAPIView):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAuthenticated]
+    serializer_class = TimelineSerializer
+
+    def get_queryset(self):
+        return BaseCourse.objects.filter(course_number=self.kwargs['course_number']).all()
 
 
 class CourseGroupListView(ModelViewSet):

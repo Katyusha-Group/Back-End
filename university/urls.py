@@ -14,10 +14,10 @@ urlpatterns = [
     path('departments/', views.DepartmentListView.as_view(), name='departments'),
     path('departments/names', views.SignupDepartmentListView.as_view(), name='department_names'),
     path('departments/all', views.AllDepartmentsListView.as_view(), name='all_departments'),
+    path('timeline/<int:course_number>', views.TimelineViewSet.as_view(), name='timeline'),
     path('coursegroups/<base_course_id>', views.CourseGroupListView.as_view({'get': 'list'}), name='coursegroups'),
     # path('cou/', include(other_router.urls)),
     path('course_student_count/<base_course_id>', views.CourseStudentCountView.as_view(), name='course_student_count'),
     path('allcoursesdepartment/', views.AllCourseDepartment.as_view(), name='allcoursedepartment'),
     path('allcourses-based-department/<int:department_id>', views.All.as_view(), name='all'),
-
 ]

@@ -191,6 +191,28 @@ class SummaryCourseSerializer(serializers.ModelSerializer):
         fields = ['complete_course_number', 'name', 'total_unit']
 
 
+class TeacherTimeLineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Teacher
+        fields = ['name']
+
+
+class CourseTimeLineSerializer(serializers.ModelSerializer):
+    teacher = TeacherTimeLineSerializer(read_only=True)
+
+    class Meta:
+        model = Course
+        fields = ['semester', 'teacher', 'capacity', 'registered_count']
+
+
+class TimelineSerializer(serializers.ModelSerializer):
+    courses = CourseTimeLineSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = BaseCourse
+        fields = ['course_number', 'name', 'courses']
+
+
 class CourseGroupSerializer(serializers.ModelSerializer):
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
