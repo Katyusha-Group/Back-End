@@ -113,7 +113,7 @@ class Course(models.Model):
                                 related_name='courses')
     students = models.ManyToManyField(to=settings.AUTH_USER_MODEL, related_name='courses')
     semester = models.ForeignKey(to=Semester, on_delete=models.PROTECT, verbose_name='ترم ارائه',
-                                 related_name='base_courses')
+                                 related_name='courses')
 
     def __str__(self):
         return str(self.base_course) + '_' + str(self.class_gp)
