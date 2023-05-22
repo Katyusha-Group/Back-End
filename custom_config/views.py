@@ -138,12 +138,17 @@ class TeacherReviewViewSet(BaseVoteReviewViewSet):
         self.modification_serializer = ModifyTeacherReviewSerializer
         self.show_serializer = TeacherReviewSerializer
 
-    http_method_names = ['get', 'post', 'delete', 'options', 'head']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' or self.request.method == 'PATCH':
             return self.modification_serializer
         return self.show_serializer
+
+    def get_permissions(self):
+        if self.request.method in ['DELETE', 'PATCH']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
 
     def list(self, request, *args, **kwargs):
         data = self.objects.filter(teacher=self.get_teacher()).all()
