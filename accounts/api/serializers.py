@@ -141,6 +141,8 @@ class ActivationConfirmSerializer(serializers.Serializer):
 
 
 class SimpleUserSerializer(serializers.ModelSerializer):
+    user_email = serializers.CharField(source='email')
+
     class Meta:
         model = User
-        fields = ['email']
+        fields = ['user_email']

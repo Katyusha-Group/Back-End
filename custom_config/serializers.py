@@ -5,7 +5,7 @@ from rest_framework import serializers
 from accounts.api.serializers import SimpleUserSerializer
 from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview
 
-from university.models import Course
+from university.models import Course, Teacher
 from university.serializers import SimpleCourseSerializer
 
 from custom_config.scripts.get_item_price import get_item_price
@@ -167,8 +167,43 @@ class UpdateOrderSerializer(serializers.ModelSerializer):
 
 
 class TeacherReviewSerializer(serializers.ModelSerializer):
-    user = SimpleUserSerializer()
+    user = SimpleUserSerializer(read_only=True)
+
+    def to_representation(self, obj):
+        representation = super().to_representation(obj)
+        user_representation = representation.pop('user')
+        for key in user_representation:
+            representation[key] = user_representation[key]
+        if self.context.get('is_admin'):
+            return representation
+        representation.pop('id')
+        return representation
 
     class Meta:
         model = TeacherReview
-        fields = ['user', 'vote', 'text']
+        fields = ['id', 'user', 'vote', 'text']
+
+
+class ModifyTeacherReviewSerializer(serializers.ModelSerializer):
+    def validate_vote(self, value):
+        if value > 1 or value < -1:
+            raise serializers.ValidationError('You must send a vote between -1 and 1.')
+        return value
+
+    def save(self, **kwargs):
+        user = self.context.get('user')
+        teacher = self.context.get('teacher')
+        vote = self.validated_data['vote']
+        text = self.validated_data['text']
+
+        teacher_review, _ = TeacherReview.objects.get_or_create(user=user, teacher=teacher)
+        teacher_review.vote = vote
+        if text is not None or text != '':
+            teacher_review.text = text
+        teacher_review.save()
+        self.instance = teacher_review
+        return self.instance
+
+    class Meta:
+        model = TeacherReview
+        fields = ['vote', 'text']

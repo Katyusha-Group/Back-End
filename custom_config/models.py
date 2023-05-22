@@ -117,7 +117,7 @@ class OrderItem(models.Model):
 class TeacherReview(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_review')
-    vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)])
+    vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)], default=0)
     text = models.TextField(null=True, blank=True)
 
 

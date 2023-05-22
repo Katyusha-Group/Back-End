@@ -6,9 +6,11 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin, DestroyModelMixin
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
-from custom_config.models import Cart, CartItem, Order
+from custom_config.models import Cart, CartItem, Order, TeacherReview
 from custom_config.serializers import CartSerializer, CartItemSerializer, \
-    AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer
+    AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, \
+    ModifyTeacherReviewSerializer, TeacherReviewSerializer
+from university.models import Teacher
 
 
 # Create your views here.
@@ -63,3 +65,32 @@ class OrderViewSet(ModelViewSet):
         if self.request.user.is_staff:
             return Order.objects.all()
         return Order.objects.filter(user_id=self.request.user.id)
+
+
+class TeacherReviewViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
+    permission_classes = [IsAuthenticated]
+
+    def get_teacher(self):
+        teacher_pk = self.kwargs['teacher_pk']
+        teacher = Teacher.objects.get(pk=teacher_pk)
+        return teacher
+
+    def create(self, request, *args, **kwargs):
+        context = {'teacher': self.get_teacher(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
+        serializer = ModifyTeacherReviewSerializer(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+        review = serializer.save()
+        serializer = TeacherReviewSerializer(review)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST' or self.request.method == 'PATCH':
+            return ModifyTeacherReviewSerializer
+        return TeacherReviewSerializer
+
+    def get_serializer_context(self):
+        return {'teacher': self.get_teacher(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
+
+    def get_queryset(self):
+        return TeacherReview.objects.filter(teacher=self.get_teacher()).all()
