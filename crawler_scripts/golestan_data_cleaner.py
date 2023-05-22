@@ -1,3 +1,5 @@
+import codecs
+
 import pandas as pd
 from utils import project_variables
 
@@ -12,29 +14,36 @@ def extract_limitation_data(df: pd.DataFrame):
             limits = ''
             for part in limit_parts:
                 if 'دانشکده' in part:
-                    flag = ''
                     if 'غیرمجاز' in part:
                         temp = part.strip(' ').strip('غیرمجاز برای دانشکده').strip(' ')
                         flag = 'False'
                     else:
                         temp = part.strip(' ').strip('دانشکده').strip(' ')
                         flag = 'True'
+                    if 'واح' in temp or 'آموزش' in temp or 'واحـ' in temp or 'فنی' in temp:
+                        continue
+                    if 'ار' in temp:
+                        temp = 'مهندسی معماری'
+                    if 'برق' in temp:
+                        temp = 'مهندسی برق'
                     if 'راه' in temp:
-                        temp = 'مهندسی راه  آهن'
-                    if 'فیزی' in temp:
+                        temp = 'مهندسی راه آهن'
+                    elif 'فیزی' in temp:
                         temp = 'فیزیک'
-                    if 'مکانی' in temp:
+                    elif 'مکانی' in temp:
                         temp = 'مهندسی مکانیک'
-                    if 'عمر' in temp:
+                    elif 'عمر' in temp:
                         temp = 'مهندسی عمران'
-                    if 'ض' in temp:
-                        temp = 'ریاضی'
-                    if 'مدیریت' in temp:
+                    elif 'ض' in temp:
+                        temp = 'ریاضی و علوم کامپیوتر'
+                    elif 'مدیریت' in temp:
                         temp = 'مدیریت، اقتصاد و مهندسی پیشرفت'
-                    if 'شیمی' in temp:
+                    elif 'شیمی' in temp:
                         temp = 'مهندسی شیمی، نفت و گاز'
-                    if 'دماو' in temp:
-                        temp = 'واحد دماوند'
+                    elif 'مواد' in temp:
+                        temp = 'مهندسی مواد و متالورژی'
+                    elif 'صنایع' in temp:
+                        temp = 'مهندسی صنایع'
                     if temp not in limits:
                         limits += temp + '-' + flag + ','
         except AttributeError:

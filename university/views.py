@@ -1,7 +1,5 @@
-import json
-
 from django.contrib.auth import get_user_model
-from django.db.models import Q, F, Count
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
@@ -10,13 +8,11 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from university.models import Course, Department, Semester, ExamTimePlace, AllowedDepartment
+from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
-    CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, MyCourseSerializer, \
-    CourseGroupSerializer, SimpleBaseCourseSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer, \
-    AllDepartmentSerializer
+    CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, \
+    CourseGroupSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer, TimelineSerializer
 from rest_framework.views import APIView
-from .models import BaseCourse
 from utils import project_variables
 
 
@@ -33,24 +29,20 @@ class DepartmentListView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
     serializer_class = DepartmentSerializer
+    queryset = Department.objects
 
     def get_serializer_context(self):
-        return {'user_id': self.request.user.id}
-
-    def get_queryset(self):
-        return Department.objects.prefetch_related('allowed_departments__course__base_course').all()
+        return {'user': self.request.user, 'api': 'allowed'}
 
 
 class AllDepartmentsListView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
-    serializer_class = AllDepartmentSerializer
+    serializer_class = DepartmentSerializer
+    queryset = Department.objects.prefetch_related('allowed_departments__course__base_course')
 
     def get_serializer_context(self):
-        return {'user_id': self.request.user.id}
-
-    def get_queryset(self):
-        return Department.objects.prefetch_related('allowed_departments__course__base_course').all()
+        return {'user': self.request.user, 'api': 'all'}
 
 
 class SemesterViewSet(ModelViewSet):
@@ -81,14 +73,14 @@ class CourseViewSet(ModelViewSet):
         allowed_only = self.request.query_params.get('allowed_only', False)
         user_id = self.request.user.id
         user = get_user_model().objects.get(id=user_id)
+        courses = Course.objects.filter(semester_id=project_variables.CURRENT_SEMESTER).filter(
+            Q(sex=user.gender) | Q(sex='B'))
         try:
             base_course = int(base_course)
             if allowed_only:
-                courses = (Course.objects.filter(Q(sex=user.gender) | Q(sex='B'))
-                           .filter(base_course=base_course, allowed_departments__department=user.department))
+                courses = courses.filter(base_course=base_course, allowed_departments__department=user.department)
             else:
-                courses = (Course.objects.filter(Q(sex=user.gender) | Q(sex='B'))
-                           .filter(base_course=base_course))
+                courses = courses.filter(base_course=base_course)
             if not courses.exists():
                 raise ValidationError(detail='No course with this course_number exists in database.')
             else:
@@ -133,6 +125,15 @@ class CourseViewSet(ModelViewSet):
         return Response(status=status.HTTP_200_OK,
                         data={'unit_count': sum([course.base_course.total_unit for course in course_data]),
                               'data': courses.data})
+
+
+class TimelineViewSet(ListAPIView):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAuthenticated]
+    serializer_class = TimelineSerializer
+
+    def get_queryset(self):
+        return BaseCourse.objects.filter(course_number=self.kwargs['course_number']).all()
 
 
 class CourseGroupListView(ModelViewSet):
@@ -289,8 +290,6 @@ class All(APIView):
             course['count'] = count_courses_in_same_time_same_day[str(course['day'])][str(course['time'])]
 
         return Response(courses_list)
-
-
 
 # def ABC(request):
 #     # IMPORT RENDER

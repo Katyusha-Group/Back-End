@@ -58,7 +58,7 @@ def _extract_courses(columns, data_length, diff, new_data):
     class_time_list = []
     for i in range(data_length):
         course_code = new_data.iloc[i].loc[project_variables.COURSE_ID]
-        course = get_or_create.get_course(course_code=course_code)
+        course = get_or_create.get_course(course_code=course_code, semester=project_variables.CURRENT_SEMESTER)
         for col in columns:
             old_val = diff.iloc[i].loc[col].loc['self']
             new_val = diff.iloc[i].loc[col].loc['other']

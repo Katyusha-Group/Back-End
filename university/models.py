@@ -47,11 +47,9 @@ class CourseStudyingGP(models.Model):
 class BaseCourse(models.Model):
     course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس', db_index=True)
     name = models.CharField(max_length=255, verbose_name='نام درس')
-    total_unit = models.SmallIntegerField(validators=[MinValueValidator(1)], verbose_name='کل واحد')
-    practical_unit = models.PositiveSmallIntegerField(verbose_name='واحد های عملی')
+    total_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='کل واحد')
+    practical_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='واحد های عملی')
     emergency_deletion = models.BooleanField(verbose_name='حذف اضطراری')
-    semester = models.ForeignKey(to=Semester, on_delete=models.PROTECT, verbose_name='ترم ارائه',
-                                 related_name='base_courses')
     department = models.ForeignKey(to=Department, on_delete=models.PROTECT, verbose_name='دانشکده درس',
                                    related_name='base_courses')
     course_studying_gp = models.ForeignKey(to=CourseStudyingGP, on_delete=models.PROTECT,
@@ -67,11 +65,14 @@ class BaseCourse(models.Model):
 
 class Teacher(models.Model):
     name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
+    golestan_name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
     email_address = models.CharField(max_length=255, verbose_name='ایمیل', null=True, blank=True)
     lms_id = models.IntegerField(verbose_name='شماره استاد در سامانه LMS', null=True, blank=True)
     teacher_image_url = models.CharField(max_length=255, verbose_name='آدرس تصویر استاد', null=True, blank=True)
     teacher_image = models.ImageField(upload_to='images/teachers_image/', verbose_name='تصویر استاد',
                                       default='images/teachers_image/default.png', blank=True)
+    teacher_lms_image = models.ImageField(upload_to='images/teachers_image/', verbose_name='تصویر استاد',
+                                          default='images/teachers_image/default.png', blank=True)
 
     class Meta:
         indexes = [
@@ -101,11 +102,11 @@ class Course(models.Model):
     objects = managers.SignalSenderManager()
 
     class_gp = models.CharField(max_length=2, verbose_name='گروه درس')
-    capacity = models.PositiveSmallIntegerField(verbose_name='ظرفیت')
-    registered_count = models.PositiveSmallIntegerField(verbose_name='تعداد ثبت نام شده ها')
-    waiting_count = models.PositiveSmallIntegerField(verbose_name='تعداد افراد حاضر در لیست انتظار')
+    capacity = models.SmallIntegerField(verbose_name='ظرفیت')
+    registered_count = models.SmallIntegerField(verbose_name='تعداد ثبت نام شده ها')
+    waiting_count = models.SmallIntegerField(verbose_name='تعداد افراد حاضر در لیست انتظار')
     guest_able = models.BooleanField(verbose_name='قابل اخذ توسط مهمان')
-    registration_limit = models.CharField(max_length=1000, verbose_name='محدودیت اخذ')
+    registration_limit = models.CharField(max_length=2000, verbose_name='محدودیت اخذ')
     description = models.CharField(max_length=400, verbose_name='توضیحات')
     sex = models.CharField(choices=SEX_CHOICES, max_length=1, verbose_name='جنسیت')
     presentation_type = models.CharField(choices=PRESENTATION_TYPE_CHOICES, max_length=1, verbose_name='نحوه ارائه درس')
@@ -114,6 +115,8 @@ class Course(models.Model):
     teacher = models.ForeignKey(to=Teacher, on_delete=models.DO_NOTHING, verbose_name='استاد درس',
                                 related_name='courses')
     students = models.ManyToManyField(to=settings.AUTH_USER_MODEL, related_name='courses')
+    semester = models.ForeignKey(to=Semester, on_delete=models.PROTECT, verbose_name='ترم ارائه',
+                                 related_name='courses')
 
     def __str__(self):
         return str(self.base_course) + '_' + str(self.class_gp)
@@ -174,5 +177,3 @@ class AllowedDepartment(models.Model):
     class Meta:
         verbose_name = 'دانشکدۀ مجاز و غیر مجاز'
         verbose_name_plural = 'دانشکده های مجاز و غیر مجاز'
-
-

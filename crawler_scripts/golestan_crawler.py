@@ -1,28 +1,55 @@
+import time
+
 from selenium.webdriver.common.by import By
 
 from captcha_reader.captchaSolver import CaptchaSolver
 from crawler_scripts.selenium_crawler import SeleniumCrawler
 from utils.excel_handler import ExcelHandler
-import time
+import constants
 
 
 class GolestanCrawler(SeleniumCrawler):
     AUTHENTICATION_URL = 'https://golestan.iust.ac.ir/forms/authenticateuser/main.htm'
-    FORM_NUMBER = 2
     EXCEL_NAME = 'golestan_courses'
 
-    def __init__(self):
+    def __init__(self, user_login, username=None, password=None, year=4012):
         super().__init__()
         self.driver.get(self.AUTHENTICATION_URL)
+        self.user_login = user_login
+        self.set_user_login(user_login)
+        self.username = username
+        self.password = password
+        self.year = year
+
+    def set_user_login(self, user_login):
+        self.user_login = user_login
+
+    def set_username(self, username):
+        self.username = username
+
+    def set_password(self, password):
+        self.password = password
+
+    def get_number(self):
+        return 3 if self.user_login else 2
 
     def switch_to_inner_frames(self, frames):
         self.driver.switch_to.default_content()
         for frame in frames:
-            self.driver.switch_to.frame(frame)
+            element = self.wait_on_find_element_by_name(frame, 5)
+            self.driver.switch_to.frame(element)
 
     @staticmethod
     def get_form_body(number):
         return ['Faci' + str(number), 'Master', 'Form_Body']
+
+    @staticmethod
+    def get_header(number):
+        return ['Faci' + str(number), 'Master', 'Header']
+
+    @staticmethod
+    def get_master(number):
+        return ['Faci' + str(number), 'Master']
 
     @staticmethod
     def get_commander(number):
@@ -30,8 +57,8 @@ class GolestanCrawler(SeleniumCrawler):
 
     def switch_to_child_window(self, window_title):
         for window_handle in self.driver.window_handles:
-            self.driver.switch_to.window(window_handle)
             if window_title == window_handle:
+                self.driver.switch_to.window(window_handle)
                 print('Found the child window')
                 return True
         return False
@@ -46,8 +73,8 @@ class GolestanCrawler(SeleniumCrawler):
                 self.driver.close()
 
     def get_captcha(self):
-        time.sleep(3)
-        soup = self.get_soup()
+        time.sleep(1)
+        soup = self.get_soup(self.driver.page_source)
         png_url = soup.find('img', {'id': 'imgCaptcha'})['src']
         img_path = self.image_handler.download_captcha(png_url)
         captcha_solver = CaptchaSolver()
@@ -56,27 +83,40 @@ class GolestanCrawler(SeleniumCrawler):
         return captcha_text
 
     def verify_login(self) -> bool:
-        time.sleep(3)
+        time.sleep(1)
         logged_in = self.driver.find_elements(by=By.ID, value='_mt_usr')
         return len(logged_in) > 0
 
     def login(self) -> bool:
         """Login to Golestan Account. if login was done successfully we'll return True. else False will be returned"""
-        time.sleep(2)
+        if self.user_login:
+            return self.login_user()
+        else:
+            return self.login_admin()
+
+    def login_user(self):
+        self.switch_to_inner_frames(self.get_form_body(1))
+        self.fill_input("F80351", self.username)
+        self.fill_input("F80401", self.password)
+        is_logged_in = self.pass_captcha()
+        return is_logged_in
+
+    def login_admin(self) -> bool:
         self.switch_to_inner_frames(self.get_form_body(1))
         is_logged_in = self.pass_captcha()
         return is_logged_in
 
     def pass_captcha(self):
-        time.sleep(1)
+        time.sleep(3)
         i = 0
         next_captcha = 'a'
         is_logged_in = False
         while not is_logged_in and i < 5:
             curr_captcha = next_captcha
             next_captcha = self.get_captcha()
+            time.sleep(1)
             self.fill_input("F51701", curr_captcha)
-            if i == 0:
+            if not self.user_login and i == 0:
                 self.driver.find_element(by=By.XPATH, value='//*[@id="dsetting"]/label[5]').click()
             else:
                 self.click_on_button("btnLog")
@@ -85,45 +125,68 @@ class GolestanCrawler(SeleniumCrawler):
         return is_logged_in
 
     def go_to_102(self):
-        time.sleep(2)
         self.switch_to_inner_frames(self.get_form_body(2))
         self.fill_input("F20851", "102")
         self.click_on_button("OK")
 
     def go_to_this_term_courses(self, available=True):
+        if self.user_login:
+            self.go_to_102()
+        self.switch_to_inner_frames(self.get_form_body(self.get_number()))
+        frame = (self.wait_on_find_element_by_xpath('/html/body/div[1]/div[2]/table', 10))
+        element = frame.find_element(by=By.ID, value='GF07754_0')
+        element.clear()
+        element.send_keys(self.year)
+        element = frame.find_element(by=By.ID, value='GF665530_0')
+        element.clear()
+        element.send_keys(4)
+        time.sleep(2)
         self.driver.switch_to.default_content()
-        time.sleep(1)
-        self.switch_to_inner_frames(self.get_form_body(self.FORM_NUMBER))
-        self.fill_input('GF10956_0', int(available))
-        self.fill_input('GF665530_0', 4)
-        self.switch_to_inner_frames(self.get_commander(self.FORM_NUMBER))
+        self.switch_to_inner_frames(self.get_commander(self.get_number()))
         self.click_on_button("IM16_ViewRep")
 
     def extract_courses(self):
-        time.sleep(2)
+        table = self.wait_on_find_element_by_xpath('/html/body/div[1]/div[13]/table', 10)
         excel_handler = ExcelHandler()
-        self.driver.switch_to.default_content()
-        soup = self.get_soup()
+        soup = self.get_soup(table.get_attribute('innerHTML'))
         courses = []
         rows = soup.find_all('tr')
         for row in rows:
             cols = row.find_all('td')
             cols = [ele.text.strip() for ele in cols]
             if cols:
-                cols[13] = excel_handler.make_name_correct(cols[13])
+                cols[8] = excel_handler.make_name_correct(cols[8])
+                cols[2] = cols[2].replace('/', '.')
                 courses.append(cols)
-        courses[0][1] = 'كد دانشكده درس'
-        courses[0][3] = 'كد گروه آموزشی درس'
-        courses[0][13] = 'نام استاد'
-        excel_handler.create_excel(data=courses, file_name=self.EXCEL_NAME)
+        return courses
+
+    def get_header_data(self):
+        course_studying_group = self.wait_on_find_element_by_xpath(
+            '/html/body/div[1]/div[6]/table/tbody/tr[1]/td[5]', 10).text.split(':')[1].strip()
+        department = (self.wait_on_find_element_by_xpath(
+            '/html/body/div[1]/div[6]/table/tbody/tr[2]/td[1]', 10).text.split(':')[1].strip())
+        department_id = constants.DEPARTMENTS[department]
+        course_studying_group_id = constants.COURSE_STUDYING_GP[course_studying_group]
+        return [department_id, department, course_studying_group_id, course_studying_group]
 
     def get_courses(self, available=True):
         self.go_to_this_term_courses(available)
-        time.sleep(1)
-        self.switch_to_inner_frames(frames=self.get_commander(self.FORM_NUMBER))
-        self.remove_disable_attr('ExToEx', 20)
-        self.click_on_button('ExToEx')
-        self.switch_to_child_window(window_title=self.driver.window_handles[1])
-        self.extract_courses()
-        self.close_all_windows(parent_window_handle=self.driver.window_handles[0])
-        self.switch_to_parent_window(parent_window_handle=self.driver.window_handles[0])
+        time.sleep(2)
+        prev_page = 0
+        next_page = 1
+        data = [constants.HEADER]
+        while next_page == 1 or next_page != prev_page:
+            self.switch_to_inner_frames(self.get_header(self.get_number()))
+            self.driver.switch_to.frame(self.wait_on_find_element_by_xpath('/html/frameset/frame[2]', 10))
+            header_data = self.get_header_data()
+            courses_data = self.extract_courses()
+            for row in courses_data:
+                if row[0] != '':
+                    data.append([str(self.year)] + header_data + row)
+            self.switch_to_inner_frames(self.get_commander(self.get_number()))
+            prev_page = next_page
+            next_page = int(
+                self.wait_on_find_element_by_xpath('/html/body/table/tbody/tr/td[4]/input', 10).get_attribute(
+                    "value").strip())
+            self.wait_on_find_element_by_xpath('/html/body/table/tbody/tr/td[5]/input', 10).click()
+        ExcelHandler().create_excel(data=data, file_name=self.EXCEL_NAME + '_' + str(self.year))

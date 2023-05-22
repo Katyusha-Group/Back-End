@@ -9,6 +9,7 @@ from university.serializers import SimpleCourseSerializer
 
 from custom_config.scripts.get_item_price import get_item_price
 from university.scripts.get_or_create import get_course
+from utils import project_variables
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -57,14 +58,14 @@ class AddCartItemSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('This course does not exist.')
         if not contain_email and not contain_sms and not contain_telegram:
             raise serializers.ValidationError('You must choose at least one notification method.')
-        course_id = get_course(course_code=complete_course_number).id
+        course_id = get_course(course_code=complete_course_number, semester=project_variables.CURRENT_SEMESTER).id
         attrs['course_id'] = course_id
         return attrs
 
     def save(self, **kwargs):
         cart_id = self.context['cart_id']
         complete_course_number = self.validated_data['complete_course_number']
-        course_id = get_course(course_code=complete_course_number).id
+        course_id = get_course(course_code=complete_course_number, semester=project_variables.CURRENT_SEMESTER).id
         contain_telegram = self.validated_data['contain_telegram']
         contain_sms = self.validated_data['contain_sms']
         contain_email = self.validated_data['contain_email']

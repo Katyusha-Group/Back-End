@@ -15,7 +15,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         path = Path(os.path.basename(__file__))
         path = Path(path.parent.absolute())
-        path = os.path.join(path, project_variables.DATA_DIRECTORY_NAME, project_variables.GOLESTAN_EXCEL_FILE)
+        path = os.path.join(path, project_variables.DATA_DIRECTORY_NAME, project_variables.ALL_GOLESTAN_EXCEL_FILE)
         event_handler = ExcelHandler(path)
         observer = Observer()
         observer.schedule(event_handler, path=project_variables.DATA_DIRECTORY)
