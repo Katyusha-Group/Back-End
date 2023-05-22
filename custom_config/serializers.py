@@ -2,7 +2,8 @@ from django.db import transaction
 
 from rest_framework import serializers
 
-from custom_config.models import Cart, CartItem, Order, OrderItem
+from accounts.api.serializers import SimpleUserSerializer
+from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview
 
 from university.models import Course
 from university.serializers import SimpleCourseSerializer
@@ -163,3 +164,11 @@ class UpdateOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['payment_status']
+
+
+class TeacherReviewSerializer(serializers.ModelSerializer):
+    user = SimpleUserSerializer()
+
+    class Meta:
+        model = TeacherReview
+        fields = ['user', 'vote', 'text']
