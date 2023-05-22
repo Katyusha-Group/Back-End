@@ -115,13 +115,18 @@ class OrderItem(models.Model):
 
 
 class TeacherReview(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_reviews')
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_review')
-    vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)], default=0)
     text = models.TextField(null=True, blank=True)
 
 
+class TeacherVote(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_votes')
+    vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)], default=0)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_votes')
+
+
 class ReviewVote(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)])
-    review = models.ForeignKey(TeacherReview, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews_votes')
+    vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)], default=0)
+    review = models.ForeignKey(TeacherReview, on_delete=models.CASCADE, related_name='votes')

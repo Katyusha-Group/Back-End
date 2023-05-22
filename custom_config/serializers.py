@@ -3,7 +3,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from accounts.api.serializers import SimpleUserSerializer
-from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview
+from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote
 
 from university.models import Course, Teacher
 from university.serializers import SimpleCourseSerializer
@@ -166,9 +166,7 @@ class UpdateOrderSerializer(serializers.ModelSerializer):
         fields = ['payment_status']
 
 
-class TeacherReviewSerializer(serializers.ModelSerializer):
-    user = SimpleUserSerializer(read_only=True)
-
+class BaseFlatteningSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         representation = super().to_representation(obj)
         user_representation = representation.pop('user')
@@ -179,12 +177,16 @@ class TeacherReviewSerializer(serializers.ModelSerializer):
         representation.pop('id')
         return representation
 
+
+class TeacherVoteSerializer(BaseFlatteningSerializer):
+    user = SimpleUserSerializer(read_only=True)
+
     class Meta:
-        model = TeacherReview
-        fields = ['id', 'user', 'vote', 'text']
+        model = TeacherVote
+        fields = ['id', 'user', 'vote', ]
 
 
-class ModifyTeacherReviewSerializer(serializers.ModelSerializer):
+class ModifyTeacherVoteSerializer(serializers.ModelSerializer):
     def validate_vote(self, value):
         if value > 1 or value < -1:
             raise serializers.ValidationError('You must send a vote between -1 and 1.')
@@ -194,16 +196,73 @@ class ModifyTeacherReviewSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         teacher = self.context.get('teacher')
         vote = self.validated_data['vote']
+
+        teacher_vote, _ = TeacherVote.objects.get_or_create(user=user, teacher=teacher)
+        teacher_vote.vote = vote
+        teacher_vote.save()
+        self.instance = teacher_vote
+        return self.instance
+
+    class Meta:
+        model = TeacherVote
+        fields = ['vote', ]
+
+
+class TeacherReviewSerializer(BaseFlatteningSerializer):
+    user = SimpleUserSerializer(read_only=True)
+
+    class Meta:
+        model = TeacherReview
+        fields = ['id', 'user', 'text', ]
+
+
+class ModifyTeacherReviewSerializer(serializers.ModelSerializer):
+    def validate_text(self, value):
+        if value is None or len(value) == 0:
+            raise serializers.ValidationError('You need to fill in the text of review.')
+        return value
+
+    def save(self, **kwargs):
+        user = self.context.get('user')
+        teacher = self.context.get('teacher')
         text = self.validated_data['text']
 
-        teacher_review, _ = TeacherReview.objects.get_or_create(user=user, teacher=teacher)
-        teacher_review.vote = vote
-        if text is not None or text != '':
-            teacher_review.text = text
+        teacher_review = TeacherReview.objects.create(user=user, teacher=teacher)
+        teacher_review.text = text
         teacher_review.save()
         self.instance = teacher_review
         return self.instance
 
     class Meta:
         model = TeacherReview
-        fields = ['vote', 'text']
+        fields = ['text', ]
+
+
+class ReviewVoteSerializer(BaseFlatteningSerializer):
+    user = SimpleUserSerializer(read_only=True)
+
+    class Meta:
+        model = ReviewVote
+        fields = ['id', 'user', 'vote', ]
+
+
+class ModifyReviewVoteSerializer(serializers.ModelSerializer):
+    def validate_vote(self, value):
+        if value > 1 or value < -1:
+            raise serializers.ValidationError('You must send a vote between -1 and 1.')
+        return value
+
+    def save(self, **kwargs):
+        user = self.context.get('user')
+        review = self.context.get('review')
+        vote = self.validated_data['vote']
+
+        review_vote, _ = ReviewVote.objects.get_or_create(user=user, review=review)
+        review_vote.vote = vote
+        review_vote.save()
+        self.instance = review_vote
+        return self.instance
+
+    class Meta:
+        model = ReviewVote
+        fields = ['vote', ]
