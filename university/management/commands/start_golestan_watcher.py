@@ -15,14 +15,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         path = Path(os.path.basename(__file__))
         path = Path(path.parent.absolute())
-        path = os.path.join(path, project_variables.DATA_DIRECTORY_NAME, project_variables.ALL_GOLESTAN_EXCEL_FILE)
-        event_handler = ExcelHandler(path)
+        suffix = '_' + str(project_variables.CURRENT_SEMESTER) + '.xlsx'
+        old_file_name = project_variables.NEW_GOLESTAN_EXCEL_FILE_NAME + suffix
+        new_file_name = project_variables.NEW_GOLESTAN_EXCEL_FILE_NAME + suffix
+        old_path = os.path.join(path, project_variables.DATA_DIRECTORY_NAME, old_file_name)
+        new_path = os.path.join(path, project_variables.DATA_DIRECTORY_NAME, new_file_name)
+        event_handler = ExcelHandler(old_path, new_path)
         observer = Observer()
         observer.schedule(event_handler, path=project_variables.DATA_DIRECTORY)
         observer.start()
         try:
             while True:
-                time.sleep(1)
+                time.sleep(60)
         except KeyboardInterrupt:
             observer.stop()
         observer.join()

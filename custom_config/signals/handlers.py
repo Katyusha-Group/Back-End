@@ -1,12 +1,13 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from university.models import Course, ExamTimePlace, CourseTimePlace
+from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment
 from custom_config.models import ModelTracker, FieldTracker
 
 
 @receiver(post_save, sender=ExamTimePlace)
 @receiver(post_save, sender=CourseTimePlace)
 @receiver(post_save, sender=Course)
+@receiver(post_save, sender=AllowedDepartment)
 def create_c_log(sender, **kwargs):
     if kwargs['created']:
         ModelTracker.objects.create(
@@ -29,8 +30,10 @@ def create_u_log(sender, **kwargs):
 
         fields_list = []
 
-        if 'fields' in kwargs:
-            for field in kwargs['fields']:
+        if 'update_fields' in kwargs:
+            for field in kwargs['update_fields']:
+                if field == 'teacher':
+                    field = 'teacher_id'
                 fields_list.append(FieldTracker(
                     field=field,
                     value=kwargs['instance'].__dict__[field],

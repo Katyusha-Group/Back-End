@@ -4,22 +4,23 @@ import pandas as pd
 from django.core.files import File
 from django.core.management import CommandError
 
+from crawler_scripts.golestan_data_cleaner import extract_limitation_data
 from university.models import Semester, Department, CourseStudyingGP, BaseCourse, Teacher, Course, CourseTimePlace, \
     ExamTimePlace, AllowedDepartment
 from university.scripts import clean_data, get_data, get_or_create
 from utils import project_variables
 
 
-def populate_all_tables(golestan_data, teachers_data):
+def populate_all_tables(golestan_data, teachers_data, is_initial):
     populate_semester(golestan_data)
     populate_department(golestan_data)
     populate_gp_studying(golestan_data)
     populate_base_course(golestan_data)
     populate_teacher(golestan_data, teachers_data)
     populate_course(golestan_data, False)
-    populate_course_class_time(golestan_data, False)
-    populate_exam_time(golestan_data, False)
-    populate_allowed_departments(golestan_data, False)
+    populate_course_class_time(golestan_data, False, is_initial)
+    populate_exam_time(golestan_data, False, is_initial)
+    populate_allowed_departments(golestan_data, False, is_initial)
 
 
 def populate_semester(data, ignore_conflicts=True):
@@ -105,19 +106,36 @@ def populate_course(data, ignore_conflicts=True):
         ignore_conflicts=ignore_conflicts)
 
 
-def populate_course_class_time(data, ignore_conflicts=True):
+def populate_course_class_time(data, ignore_conflicts=True, is_initial=True):
     class_times = get_data.get_data_from_course_time(data=data)
     if class_times:
-        CourseTimePlace.objects.bulk_create(class_times, ignore_conflicts=ignore_conflicts)
+        if is_initial:
+            CourseTimePlace.objects.bulk_create(class_times, ignore_conflicts=ignore_conflicts)
+        else:
+            for class_time in class_times:
+                CourseTimePlace.objects.create(day=class_time.day, start_time=class_time.start_time,
+                                               end_time=class_time.end_time, course=class_time.course,
+                                               place=class_time.place)
 
 
-def populate_exam_time(data, ignore_conflicts=True):
+def populate_exam_time(data, ignore_conflicts=True, is_initial=True):
     exams = get_data.get_data_from_exam_time(data=data)
     if exams:
-        ExamTimePlace.objects.bulk_create(exams, ignore_conflicts=ignore_conflicts)
+        if is_initial:
+            ExamTimePlace.objects.bulk_create(exams, ignore_conflicts=ignore_conflicts)
+        else:
+            for exam in exams:
+                ExamTimePlace.objects.create(date=exam.date, start_time=exam.start_time,
+                                             end_time=exam.end_time, course=exam.course)
 
 
-def populate_allowed_departments(data, ignore_conflicts=True):
-    allowed_department = get_data.get_data_from_allowed_departments(data=data)
-    if allowed_department:
-        AllowedDepartment.objects.bulk_create(allowed_department, ignore_conflicts=ignore_conflicts)
+def populate_allowed_departments(data, ignore_conflicts=True, is_initial=True):
+    data = extract_limitation_data(data)
+    allowed_departments = get_data.get_data_from_allowed_departments(data=data)
+    if allowed_departments:
+        if is_initial:
+            AllowedDepartment.objects.bulk_create(allowed_departments, ignore_conflicts=ignore_conflicts)
+        else:
+            for allowed_department in allowed_departments:
+                AllowedDepartment.objects.create(department=allowed_department.department,
+                                                 course=allowed_department.course)
