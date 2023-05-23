@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse
 from utils import project_variables
+from .scripts.get_or_create import get_course
 
 
 class SimpleBaseCourseSerializer(serializers.Serializer):
@@ -153,8 +154,8 @@ class ModifyMyCourseSerializer(serializers.Serializer):
 
     def save(self, **kwargs):
         user = kwargs['student']
-        course_number, class_gp = self.validated_data['complete_course_number'].split('_')
-        course = Course.objects.get(class_gp=class_gp, base_course_id=course_number)
+        course = get_course(course_code=self.validated_data['complete_course_number'],
+                            semester=project_variables.CURRENT_SEMESTER)
         if course in user.courses.all():
             user.courses.remove(course)
             created = False
