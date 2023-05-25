@@ -1,36 +1,36 @@
 import os
 import time
-import shutil
 from pathlib import Path
 
 import pandas as pd
 
-from crawler_scripts.golestan_crawler import GolestanCrawler
-from university.scripts import course_updater, app_variables
+from university.scripts import course_updater
+from utils import project_variables
 
 
 def watch_golestan():
+    pre = time.time()
+
     path = Path(os.path.basename(__file__))
     path = Path(path.parent.absolute())
-    old_path = os.path.join(path, app_variables.DATA_DIRECTORY_NAME, app_variables.EXCEL_FILE)
-    new_path = os.path.join(path, app_variables.DATA_DIRECTORY_NAME, app_variables.NEW_EXCEL_FILE)
-    pre_time = time.time()
-    # crawling golestan
-    crawler = GolestanCrawler()
-    is_login = crawler.login()
-    if is_login:
-        crawler.get_courses()
-    else:
-        print(f'could not extract data from golestan')
+    suffix = '_' + str(project_variables.CURRENT_SEMESTER) + '.xlsx'
+    old_file_name = project_variables.NEW_GOLESTAN_EXCEL_FILE_NAME + suffix
+    new_file_name = project_variables.NEW_GOLESTAN_EXCEL_FILE_NAME + suffix
+    old_file = os.path.join(path, project_variables.DATA_DIRECTORY_NAME, old_file_name)
+    new_file = os.path.join(path, project_variables.DATA_DIRECTORY_NAME, new_file_name)
 
-    # comparing old and new data
-    df_old = pd.read_excel(old_path)
-    df_new = pd.read_excel(new_path)
-    diff = pd.concat([df_old, df_new]).drop_duplicates(keep=False)
+    df = pd.read_excel(old_file)
+    df_new = pd.read_excel(new_file)
+    diff = pd.concat([df, df_new]).drop_duplicates(keep=False)
     if not diff.empty:
         create_list, update_list = course_updater.make_create_update_list(diff)
         course_updater.create(data=create_list)
         course_updater.update(data=update_list)
-        shutil.copy2(new_path, old_path)
+        df = df_new
+        df.to_excel(old_file, index=False)
+        print('Excel file updated successfully')
+    else:
+        print('Excel file is up to date')
 
-    print(f'watch_golestan took {time.time() - pre_time} seconds')
+    post = time.time()
+    print('Time elapsed: ' + str(post - pre) + ' seconds')

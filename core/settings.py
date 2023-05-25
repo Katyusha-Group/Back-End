@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'rest_framework_simplejwt',
     'django_jalali',
-    # 'django_crontab',
+    'django_crontab',
     'accounts',
     'university',
     'custom_config',
@@ -245,7 +245,8 @@ EMAIL_HOST_USER = 'katyushaiust@gmail.com'
 EMAIL_HOST_PASSWORD = 'tysifiqazxifzbsi'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-# CRONJOBS = [
-#     ('*/1 * * * *', 'university.cron.watch_golestan', '>> /home/katyusha1/project/cron.log'),
-# ]
+
+CRONJOBS = [
+    ('* * * * *', 'university.cron.watch_golestan'),
+]
 
