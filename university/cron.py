@@ -13,6 +13,7 @@ def watch_golestan():
 
     path = Path(os.path.basename(__file__))
     path = Path(path.parent.absolute())
+    print(os.path.join(path, 'project'))
     suffix = '_' + str(project_variables.CURRENT_SEMESTER) + '.xlsx'
     old_file_name = project_variables.NEW_GOLESTAN_EXCEL_FILE_NAME + suffix
     new_file_name = project_variables.NEW_GOLESTAN_EXCEL_FILE_NAME + suffix

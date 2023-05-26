@@ -247,6 +247,6 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 CRONJOBS = [
-    ('* * * * *', 'university.cron.watch_golestan'),
+    ('30 2 * * *', 'university.cron.watch_golestan'),
 ]
 

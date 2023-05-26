@@ -193,12 +193,22 @@ class SummaryCourseSerializer(serializers.ModelSerializer):
 
 
 class TeacherTimeLineSerializer(serializers.ModelSerializer):
+    teacher_name = serializers.CharField(source='name', read_only=True)
+
     class Meta:
         model = Teacher
-        fields = ['name']
+        fields = ['teacher_name']
 
 
 class CourseTimeLineSerializer(serializers.ModelSerializer):
+    def to_representation(self, obj):
+        representation = super().to_representation(obj)
+        if 'teacher' in representation:
+            teacher_representation = representation.pop('teacher')
+            for sub_key in teacher_representation:
+                representation[sub_key] = teacher_representation[sub_key]
+        return representation
+
     teacher = TeacherTimeLineSerializer(read_only=True)
 
     class Meta:
@@ -207,6 +217,26 @@ class CourseTimeLineSerializer(serializers.ModelSerializer):
 
 
 class TimelineSerializer(serializers.ModelSerializer):
+    def to_representation(self, obj):
+        representation = super().to_representation(obj)
+        representation['data'] = {}
+        if 'courses' in representation:
+            courses_representation = representation.pop('courses')
+            for sub_item in courses_representation:
+                new_data = {}
+                for sub_key in sub_item:
+                    if sub_key == 'semester':
+                        continue
+                    if sub_key in new_data:
+                        new_data[sub_key].append(sub_item[sub_key])
+                    else:
+                        new_data[sub_key] = sub_item[sub_key]
+                if sub_item['semester'] in representation['data']:
+                    representation['data'][sub_item['semester']].append(new_data)
+                else:
+                    representation['data'][sub_item['semester']] = [new_data]
+        return representation
+
     courses = CourseTimeLineSerializer(many=True, read_only=True)
 
     class Meta:
