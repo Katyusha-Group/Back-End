@@ -248,5 +248,9 @@ EMAIL_USE_TLS = True
 
 CRONJOBS = [
     ('30 2 * * *', 'university.cron.watch_golestan'),
+    ('*/5 * * * *', 'custom_config.cron.delete_pending_orders'),
+    ('0 0 * * 6', 'custom_config.cron.delete_failed_orders'),
+    ('0 0 * * *', 'custom_config.cron.delete_expired_orders'),
+    ('0 0 * * *', 'custom_config.cron.delete_expired_carts'),
 ]
 

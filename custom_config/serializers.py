@@ -70,10 +70,8 @@ class AddCartItemSerializer(serializers.ModelSerializer):
         contain_telegram = self.validated_data['contain_telegram']
         contain_sms = self.validated_data['contain_sms']
         contain_email = self.validated_data['contain_email']
-
         try:
-            cart_item = CartItem.objects.get(
-                cart_id=cart_id, course_id=course_id)
+            cart_item = CartItem.objects.get(cart_id=cart_id, course_id=course_id)
             cart_item.contain_telegram = contain_telegram
             cart_item.contain_sms = contain_sms
             cart_item.contain_email = contain_email
@@ -140,10 +138,15 @@ class CreateOrderSerializer(serializers.Serializer):
         return value
 
     def save(self, **kwargs):
+        user_id = self.context['user_id']
+        cart_id = self.validated_data['cart_id']
+        cart = Cart.objects.get(id=cart_id)
+        for item in cart.items.select_related('course').all():
+            if Order.objects.filter(user_id=user_id, items__course=item.course).exists():
+                raise serializers.ValidationError(
+                    'You have already course with with id {}. Delete it  from your cart and try again.'.format(
+                        item.course.id))
         with transaction.atomic():
-            user_id = self.context['user_id']
-            cart_id = self.validated_data['cart_id']
-            cart = Cart.objects.get(id=cart_id)
             order = Order.objects.create(user_id=user_id)
             order_items = [
                 OrderItem(
