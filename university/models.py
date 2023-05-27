@@ -5,6 +5,7 @@ from django.conf import settings
 
 from university import managers
 from utils import project_variables
+from utils.project_variables import day_mapper
 
 
 # Create your models here.
@@ -129,7 +130,7 @@ class Course(models.Model):
                                  related_name='courses')
 
     def __str__(self):
-        return str(self.base_course) + '_' + str(self.class_gp)
+        return str(self.base_course.course_number) + '_' + str(self.class_gp)
 
     class Meta:
         verbose_name = 'درس'
@@ -145,7 +146,7 @@ class ExamTimePlace(models.Model):
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس', related_name='exam_times')
 
     def __str__(self):
-        return str(self.date) + ' ' + str(self.start_time) + ' ' + str(self.end_time)
+        return str(self.date) + ' - ' + str(self.start_time) + ' - ' + str(self.end_time)
 
     class Meta:
         verbose_name = 'تاریخ امتحان'
@@ -168,7 +169,8 @@ class CourseTimePlace(models.Model):
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس', related_name='course_times')
 
     def __str__(self):
-        return str(self.day) + ' ' + str(self.start_time) + ' ' + str(self.end_time) + ' --- ' + self.place
+        return day_mapper[self.day] + ' - ' + str(self.start_time) + ' - ' + str(
+            self.end_time) + ' --- ' + self.place
 
     class Meta:
         verbose_name = 'زمان و مکان کلاس'
@@ -184,7 +186,7 @@ class AllowedDepartment(models.Model):
                                related_name='allowed_departments')
 
     def __str__(self):
-        return str(self.course.base_course_id) + ' ' + str(self.department_id) + ' ' + str(self.is_able)
+        return str(self.course.base_course_id) + ' - ' + str(self.department_id)
 
     class Meta:
         verbose_name = 'دانشکدۀ مجاز و غیر مجاز'
