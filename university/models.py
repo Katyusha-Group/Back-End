@@ -9,6 +9,8 @@ from utils import project_variables
 
 # Create your models here.
 class Semester(models.Model):
+    objects = managers.SignalSenderManager()
+
     year = models.IntegerField(primary_key=True, verbose_name='ترم ارائه درس')
 
     def __str__(self):
@@ -21,6 +23,8 @@ class Semester(models.Model):
 
 
 class Department(models.Model):
+    objects = managers.SignalSenderManager()
+
     department_number = models.SmallIntegerField(primary_key=True, verbose_name='کد دانشکده')
     name = models.CharField(max_length=255, unique=True, verbose_name='نام دانشکده')
 
@@ -33,6 +37,8 @@ class Department(models.Model):
 
 
 class CourseStudyingGP(models.Model):
+    objects = managers.SignalSenderManager()
+
     gp_id = models.IntegerField(verbose_name='کد گروه آموزشی')
     name = models.CharField(max_length=255, unique=True, verbose_name='نام گروه آموزشی')
 
@@ -45,6 +51,8 @@ class CourseStudyingGP(models.Model):
 
 
 class BaseCourse(models.Model):
+    objects = managers.SignalSenderManager()
+
     course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس', db_index=True)
     name = models.CharField(max_length=255, verbose_name='نام درس')
     total_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='کل واحد')
@@ -64,6 +72,8 @@ class BaseCourse(models.Model):
 
 
 class Teacher(models.Model):
+    objects = managers.SignalSenderManager()
+
     name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
     golestan_name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
     email_address = models.CharField(max_length=255, verbose_name='ایمیل', null=True, blank=True)
@@ -166,6 +176,8 @@ class CourseTimePlace(models.Model):
 
 
 class AllowedDepartment(models.Model):
+    objects = managers.SignalSenderManager()
+
     department = models.ForeignKey(to=Department, on_delete=models.CASCADE, verbose_name='دانشکده',
                                    related_name='allowed_departments')
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس',

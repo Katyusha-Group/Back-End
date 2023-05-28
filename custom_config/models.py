@@ -1,9 +1,10 @@
 from uuid import uuid4
 
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
-from university.models import Course
+from university.models import Course, Teacher
 
 
 class ModelTracker(models.Model):
@@ -111,3 +112,21 @@ class OrderItem(models.Model):
     class Meta:
         verbose_name = 'سفارش'
         verbose_name_plural = 'آیتم های سفارش'
+
+
+class TeacherReview(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_reviews')
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_review')
+    text = models.TextField(null=True, blank=True)
+
+
+class TeacherVote(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_votes')
+    vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)], default=0)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_votes')
+
+
+class ReviewVote(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews_votes')
+    vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)], default=0)
+    review = models.ForeignKey(TeacherReview, on_delete=models.CASCADE, related_name='votes')

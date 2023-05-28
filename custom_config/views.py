@@ -1,14 +1,18 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import render
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin, DestroyModelMixin
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
-from custom_config.models import Cart, CartItem, Order
+from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote
 from custom_config.serializers import CartSerializer, CartItemSerializer, \
-    AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer
+    AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, \
+    TeacherVoteSerializer, ModifyTeacherVoteSerializer, ModifyTeacherReviewSerializer, TeacherReviewSerializer, \
+    ModifyReviewVoteSerializer, ReviewVoteSerializer
+from university.models import Teacher
 
 
 # Create your views here.
@@ -63,3 +67,139 @@ class OrderViewSet(ModelViewSet):
         if self.request.user.is_staff:
             return Order.objects.all()
         return Order.objects.filter(user_id=self.request.user.id)
+
+
+class BaseVoteReviewViewSet(ModelViewSet):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.objects = None
+        self.modification_serializer = None
+        self.show_serializer = None
+
+    def get_teacher(self):
+        teacher_pk = self.kwargs.get('teacher_pk')
+        teacher = Teacher.objects.get(pk=teacher_pk)
+        return teacher
+
+    def create(self, request, *args, **kwargs):
+        context = {'teacher': self.get_teacher(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
+        serializer = self.modification_serializer(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+        review = serializer.save()
+        serializer = self.show_serializer(review)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def get_permissions(self):
+        if self.request.method in ['DELETE']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def get_serializer_context(self):
+        return {'teacher': self.get_teacher(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
+
+    def get_queryset(self):
+        return self.objects.filter(teacher=self.get_teacher()).all()
+
+
+class TeacherVoteViewSet(BaseVoteReviewViewSet):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.objects = TeacherVote.objects
+        self.modification_serializer = ModifyTeacherVoteSerializer
+        self.show_serializer = TeacherVoteSerializer
+
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST' or self.request.method == 'PATCH':
+            return self.modification_serializer
+        return self.show_serializer
+
+    def list(self, request, *args, **kwargs):
+        data = self.objects.filter(teacher=self.get_teacher())
+        total_score = sum([entry.vote for entry in data.only('vote')])
+        up_votes = data.filter(vote=1).count()
+        down_votes = data.filter(vote=-1).count()
+        serializer = self.show_serializer(data, many=True)
+        new_data = {
+            'total_count': len(serializer.data),
+            'total_score': total_score,
+            'up_votes': up_votes,
+            'down_votes': down_votes,
+            'data': serializer.data,
+        }
+        return Response(new_data)
+
+
+class TeacherReviewViewSet(BaseVoteReviewViewSet):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.objects = TeacherReview.objects
+        self.modification_serializer = ModifyTeacherReviewSerializer
+        self.show_serializer = TeacherReviewSerializer
+
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST' or self.request.method == 'PATCH':
+            return self.modification_serializer
+        return self.show_serializer
+
+    def get_permissions(self):
+        if self.request.method in ['DELETE', 'PATCH']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def list(self, request, *args, **kwargs):
+        data = self.objects.filter(teacher=self.get_teacher()).all()
+        serializer = self.show_serializer(data, many=True)
+        new_data = {'total_count': len(serializer.data), 'data': serializer.data}
+        return Response(new_data)
+
+
+class ReviewVoteViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST' or self.request.method == 'PATCH':
+            return ModifyReviewVoteSerializer
+        return ReviewVoteSerializer
+
+    def get_review(self):
+        review_pk = self.kwargs.get('teacher_review_pk')
+        review = TeacherReview.objects.get(pk=review_pk)
+        return review
+
+    def create(self, request, *args, **kwargs):
+        context = {'review': self.get_review(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
+        serializer = ModifyReviewVoteSerializer(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+        vote = serializer.save()
+        serializer = ReviewVoteSerializer(vote)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def get_permissions(self):
+        if self.request.method in ['DELETE']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def get_serializer_context(self):
+        return {'review': self.get_review(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
+
+    def get_queryset(self):
+        return ReviewVote.objects.filter(review=self.get_review()).all()
+
+    def list(self, request, *args, **kwargs):
+        data = ReviewVote.objects.filter(review=self.get_review())
+        total_score = sum([entry.vote for entry in data.only('vote')])
+        up_votes = data.filter(vote=1).count()
+        down_votes = data.filter(vote=-1).count()
+        serializer = ReviewVoteSerializer(data, many=True)
+        new_data = {
+            'total_count': len(serializer.data),
+            'total_score': total_score,
+            'up_votes': up_votes,
+            'down_votes': down_votes,
+            'data': serializer.data,
+        }
+        return Response(new_data)

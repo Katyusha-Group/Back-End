@@ -16,6 +16,7 @@ urlpatterns = [
     path('departments/all', views.AllDepartmentsListView.as_view(), name='all_departments'),
     path('timeline/<int:course_number>', views.TimelineViewSet.as_view(), name='timeline'),
     path('coursegroups/<base_course_id>', views.CourseGroupListView.as_view({'get': 'list'}), name='coursegroups'),
+    path('teacher/<int:pk>', views.TeacherProfileRetrieveAPIView.as_view(), name='teacher'),
     # path('cou/', include(other_router.urls)),
     path('course_student_count/<base_course_id>', views.CourseStudentCountView.as_view(), name='course_student_count'),
     path('allcoursesdepartment/', views.AllCourseDepartment.as_view(), name='allcoursedepartment'),

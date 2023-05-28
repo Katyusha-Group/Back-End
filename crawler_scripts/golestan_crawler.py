@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 
 from captcha_reader.captchaSolver import CaptchaSolver
 from crawler_scripts.selenium_crawler import SeleniumCrawler
+from utils import project_variables
 from utils.excel_handler import ExcelHandler
 import constants
 
@@ -189,4 +190,6 @@ class GolestanCrawler(SeleniumCrawler):
                 self.wait_on_find_element_by_xpath('/html/body/table/tbody/tr/td[4]/input', 10).get_attribute(
                     "value").strip())
             self.wait_on_find_element_by_xpath('/html/body/table/tbody/tr/td[5]/input', 10).click()
-        ExcelHandler().create_excel(data=data, file_name=self.EXCEL_NAME + '_' + str(self.year))
+        if self.year == project_variables.CURRENT_SEMESTER:
+            ExcelHandler().create_excel(data=data,
+                                        file_name=project_variables.NEW_GOLESTAN_EXCEL_FILE_NAME + '_' + str(self.year))

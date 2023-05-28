@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'rest_framework_simplejwt',
     'django_jalali',
-    # 'django_crontab',
+    'django_crontab',
     'accounts',
     'university',
     'custom_config',
@@ -246,7 +246,12 @@ EMAIL_HOST_USER = 'katyushaiust@gmail.com'
 EMAIL_HOST_PASSWORD = 'tysifiqazxifzbsi'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-# CRONJOBS = [
-#     ('*/1 * * * *', 'university.cron.watch_golestan', '>> /home/katyusha1/project/cron.log'),
-# ]
+
+CRONJOBS = [
+    ('30 2 * * *', 'university.cron.watch_golestan'),
+    ('*/5 * * * *', 'custom_config.cron.delete_pending_orders'),
+    ('0 0 * * 6', 'custom_config.cron.delete_failed_orders'),
+    ('0 0 * * *', 'custom_config.cron.delete_expired_orders'),
+    ('0 0 * * *', 'custom_config.cron.delete_expired_carts'),
+]
 
