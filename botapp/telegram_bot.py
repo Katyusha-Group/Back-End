@@ -169,6 +169,8 @@ async def get_course_in_my_calender(update: Update, context: ContextTypes.DEFAUL
 #     # get data of user
 #     data_user = requests.get(f"http://
 
+def send_notification_to_user(user_id, changes):
+    pass
 
 
 def main() -> None:
