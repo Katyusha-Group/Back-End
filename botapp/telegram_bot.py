@@ -8,7 +8,6 @@ from telegram.ext import Updater, CommandHandler, PicklePersistence
 logging.basicConfig(level=logging.INFO)
 
 # Create a bot instance
-bot = Bot(token="YOUR_TELEGRAM_BOT_TOKEN")
 
 import logging
 
@@ -74,6 +73,16 @@ DJANGO_SETTINGS_MODULE = 'core.settings'
 from asgiref.sync import sync_to_async
 
 
+
+def send_telegram_notification(course):
+    bot_token = '6182994088:AAFwEqBN16Yvudx85OkkQVpkiNwHmmO3GtY'
+    chat_id = '5066702945'
+    message = f"The capacity of the course '{course.name}' has been changed to {course.capacity}."
+
+    bot = Bot(token=bot_token)
+    bot.send_message(chat_id=chat_id, text=message)
+
+
 def is_user_in_databese(hashed_number, telegram_chat_id):
     try:
         user_telegram = User_telegram.objects.get(hashed_number=hashed_number)
@@ -89,21 +98,20 @@ def is_user_in_databese(hashed_number, telegram_chat_id):
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    hashed_number = context.args[0]
-    logging.info(context.args)
-    create_func = sync_to_async(is_user_in_databese)
+
 
     if context.args:
+        hashed_number = context.args[0]
+        logging.info(context.args)
+        create_func = sync_to_async(is_user_in_databese)
         logging.info("created user")
         logger.info(update.message.chat.id)
 
         user_telegram = await create_func(hashed_number, str(update.message.chat.id))
-
         if user_telegram:
             await update.message.reply_text(
                 f"Hello {update.message.chat.first_name}, welcome to the Katyusha bot.\n"
-                "Please select /my_information to get your information, /quiz to get a Quiz, or /preview"
-                " to generate a preview for your poll."
+                "Please select /my_information to get your information, /get_course_in_my_calender to get Courses that were added to the calendar."
             )
         else:
             await update.message.reply_text(
@@ -111,6 +119,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 "You should first log in to the website and then access the Telegram bot through the link provided by the website in order to utilize the bot's features.\n"
                 "http://katyushaiust.ir/accounts/login/"
             )
+    else:
+        await update.message.reply_text(
+            f"Hello {update.message.chat.first_name}, welcome to the Katyusha bot.\n"
+            "You should first log in to the website and then access the Telegram bot through the link provided by the website in order to utilize the bot's features.\n"
+            "http://katyushaiust.ir/accounts/login/"
+        )
 
 def get_user_id(telegram_chat_id):
     try:
@@ -140,7 +154,20 @@ async def get_course_in_my_calender(update: Update, context: ContextTypes.DEFAUL
     logger.info(data_user)
     formatted_data = json.dumps(data_user, indent=4, ensure_ascii=False)
 
-    await update.message.reply_text(formatted_data)
+    if formatted_data == "[]":
+        await update.message.reply_text(
+            text=f"You have no course in your calendar."
+        )
+    else:
+        await update.message.reply_text(formatted_data)
+
+# send notification to user
+# async def send_notification_to_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+#     """Sends information about the user and its chat."""
+#     user_id = sync_to_async(get_user_id)
+#     user_id_number = await user_id(str(update.message.chat.id))
+#     # get data of user
+#     data_user = requests.get(f"http://
 
 
 

@@ -148,7 +148,6 @@ class CourseGroupListView(ModelViewSet):
             base_course_id = int(base_course_id)
         else:
             raise ValidationError({'detail': 'Enter course_number as query number in the url.'}, )
-        print()
         courses = Course.objects.filter(base_course_id=base_course_id)
 
         if courses.exists():
