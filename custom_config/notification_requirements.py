@@ -2,9 +2,11 @@ import codecs
 
 from django.db import transaction
 from django.db.models import Q, Manager
+from django.core.mail import send_mail
 
+from core.settings import EMAIL_HOST
 from custom_config.models import ModelTracker, OrderItem
-from university.models import Course, AllowedDepartment, CourseTimePlace, ExamTimePlace
+from university.models import Course, AllowedDepartment, CourseTimePlace, ExamTimePlace, Teacher
 from utils.project_variables import course_field_mapper_en_to_fa_notification as course_field_mapper
 
 
@@ -21,7 +23,6 @@ def find_complete_related_orders(course: Course):
 
 
 def find_related_course(course_related: ModelTracker) -> Course | None:
-    print(course_related.model)
     if course_related.model == AllowedDepartment.__name__:
         return AllowedDepartment.objects.filter(pk=course_related.instance_id).first().course
     elif course_related.model == CourseTimePlace.__name__:
@@ -39,11 +40,13 @@ def related_to_course(course_related: ModelTracker) -> Course | None:
 
 
 def prepare_message_field(field):
-    return '----' + course_field_mapper[field.field] + ' : ' + field.value + '\n'
+    if field.field == 'teacher_id':
+        field.value = Teacher.objects.get(pk=field.value).name
+    return course_field_mapper[field.field] + ' : ' + field.value + '\n'
 
 
 def prepare_related_message_field(field):
-    return '----' + course_field_mapper[field.model] + ' : ' + str(field) + '\n'
+    return course_field_mapper[field.model] + ' : ' + str(field) + '\n'
 
 
 def prepare_header_message(course, related, fields=None):
@@ -61,7 +64,12 @@ def prepare_header_message(course, related, fields=None):
 def send_notification_to_user(order_item: OrderItem, message: str):
     if order_item.contain_email:
         print('Sending email to: ' + order_item.order.user.email)
-        # send_email(order_item, message)
+        send_mail(
+            recipient_list=[order_item.order.user.email],
+            subject='تغییر در واحد های گلستان',
+            message=message,
+            from_email=EMAIL_HOST
+        )
     if order_item.contain_sms:
         print('Sending SMS to: ', order_item.order.user)
         # send_sms(order_item, message)
