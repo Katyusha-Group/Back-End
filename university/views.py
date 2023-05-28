@@ -186,6 +186,9 @@ class CourseStudentCountView(APIView):
 
 class AllCourseDepartment(APIView):
     permission_classes = [IsAuthenticated]
+    from .pagination import DefaultPagination
+    pagination_class = DefaultPagination
+
 
     @staticmethod
     def time_edit(start, end):
@@ -228,7 +231,6 @@ class AllCourseDepartment(APIView):
                     start_time_str = str(course.course_times.all().values_list('start_time', flat=True)[0])
                     end_time_str = str(course.course_times.all().values_list('end_time', flat=True)[0])
                     time_format = self.time_edit(start_time_str, end_time_str)
-                    print(day, time_format)
                     count_courses_in_same_time_same_day[str(day)][str(time_format)] += 1
                     courses_list.append({**AllCourseDepartmentSerializer(course).data, 'day': day, 'time': time_format})
 
@@ -239,7 +241,9 @@ class AllCourseDepartment(APIView):
 
 
 class All(APIView):
+    from .pagination import DefaultPagination
     permission_classes = [IsAuthenticated]
+    pagination_class = DefaultPagination
 
     @staticmethod
     def time_edit(start, end):
@@ -281,7 +285,6 @@ class All(APIView):
                     start_time_str = str(course.course_times.all().values_list('start_time', flat=True)[0])
                     end_time_str = str(course.course_times.all().values_list('end_time', flat=True)[0])
                     time_format = self.time_edit(start_time_str, end_time_str)
-                    print(day, time_format)
                     count_courses_in_same_time_same_day[str(day)][str(time_format)] += 1
                     courses_list.append({**AllCourseDepartmentSerializer(course).data, 'day': day, 'time': time_format})
 
@@ -290,8 +293,4 @@ class All(APIView):
 
         return Response(courses_list)
 
-# def ABC(request):
-#     # IMPORT RENDER
-#     from django.shortcuts import render
-#
-#     return render(request, 'test.html')
+
