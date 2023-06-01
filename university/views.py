@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse, Teacher, CourseTimePlace
+from university.scripts.get_or_create import get_course
 from university.scripts.views_scripts import get_user_department, sort_departments_by_user_department
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
     CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, \
@@ -202,9 +203,9 @@ class CourseStudentCountView(APIView):
             else:
                 raise ValidationError({'detail': 'course_number must be in this format: course_number-group_number'})
 
-        courses = Course.objects.filter(base_course_id=course_id_major, class_gp=group_number)
-        if courses.exists():
-            return Response(data={'count': courses.first().students.count()})
+        course = get_course(course_code=course_id, semester=project_variables.CURRENT_SEMESTER)
+        if course is not None:
+            return Response(data={'count': course.students.count()})
         else:
             raise ValidationError({'detail': 'No course with this course_number in database.'}, )
 
