@@ -28,9 +28,9 @@ def create_u_log(sender, **kwargs):
             status='U',
         )
 
-        fields_list = []
-
         if 'update_fields' in kwargs and kwargs['update_fields'] is not None:
+            fields_list = []
+            
             for field in kwargs['update_fields']:
                 if field == 'teacher':
                     field = 'teacher_id'

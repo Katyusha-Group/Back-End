@@ -4,6 +4,7 @@ from django.db import transaction
 from django.db.models import Q, Manager
 from django.core.mail import send_mail
 
+from botapp import telegram_bot
 from core.settings import EMAIL_HOST
 from custom_config.models import ModelTracker, OrderItem
 from university.models import Course, AllowedDepartment, CourseTimePlace, ExamTimePlace, Teacher
@@ -75,7 +76,7 @@ def send_notification_to_user(order_item: OrderItem, message: str):
         # send_sms(order_item, message)
     if order_item.contain_telegram:
         print('Sending Telegram to: ', order_item.order.user)
-        # send_telegram_message(order_item, message)
+        telegram_bot.send_notification_to_user(user=order_item.order.user, message=message)
 
 
 def prepare_and_send_message(course, fields, order_users, related=False):
@@ -88,8 +89,8 @@ def send_notification_for_courses():
     with transaction.atomic():
         untracked_courses = find_untracked_courses()
         for course_instance in untracked_courses:
-            # course_instance.status = 'C'
-            # course_instance.save()
+            course_instance.status = 'C'
+            course_instance.save()
             course = Course.objects.get(id=course_instance.instance_id)
             order_users = find_complete_related_orders(course)
             modified_fields = course_instance.fields.all()
@@ -103,8 +104,8 @@ def send_notification_for_course_related():
         untracked_course_related = find_untracked_course_related()
         pks = {}
         for course_related in untracked_course_related:
-            # course_related.status = 'C'
-            # course_related.save()
+            course_related.status = 'C'
+            course_related.save()
             course = related_to_course(course_related)
             append_or_create_dict(course, course_related, pks)
         for pk in pks:

@@ -114,3 +114,13 @@ day_mapper = {
     TUE_NUMBER: TUE,
     WED_NUMBER: WED,
 }
+
+start_time_mapper = {
+    7: 0,
+    9: 1,
+    10: 2,
+    13: 3,
+    15: 4,
+    16: 5,
+    18: 6,
+}
