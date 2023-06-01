@@ -21,6 +21,6 @@ urlpatterns = [
     # path('cou/', include(other_router.urls)),
     path('course_student_count/<base_course_id>', views.CourseStudentCountView.as_view(), name='course_student_count'),
     path('allcoursesdepartment/', views.AllCourseDepartmentList.as_view(), name='allcoursedepartment'),
-    path('allcoursesdepartment/<int:pk>', views.AllCourseDepartmentList.as_view(),
-         name='allcoursedepartment_with_department'),
+    path('allcourses-based-department/<int:department_id>', views.AllCourseDepartmentRetrieve.as_view(),
+         name='allcoursedepartment_retrieve'),
 ]
