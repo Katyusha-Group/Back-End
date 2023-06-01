@@ -1,5 +1,6 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Q, Count, F
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
@@ -8,7 +9,7 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse, Teacher
+from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse, Teacher, CourseTimePlace
 from university.scripts.views_scripts import get_user_department, sort_departments_by_user_department
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
     CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, \
@@ -208,113 +209,28 @@ class CourseStudentCountView(APIView):
             raise ValidationError({'detail': 'No course with this course_number in database.'}, )
 
 
-class AllCourseDepartment(APIView):
+class BaseAllCourseDepartment(APIView):
     permission_classes = [IsAuthenticated]
     from .pagination import DefaultPagination
     pagination_class = DefaultPagination
-
-
-    @staticmethod
-    def time_edit(start, end):
-        start = int(((str(start)))[:2])
-
-        if start == 7:
-            return 0
-        elif start == 9:
-            return 1
-        elif start == 10:
-            return 2
-        elif start == 13:
-            return 3
-        elif start == 15:
-            return 4
-        elif start == 16:
-            return 5
-        elif start == 18:
-            return 6
-        else:
-            return 7
-
-    def get(self, request, *args, **kwargs):
-        user_department_id = self.request.user.department_id
-        # return 2 course with same user_deparment
-        all_courses = Course.objects.filter(base_course__department_id=user_department_id, )
-        courses_list = []
-        count_courses_in_same_time_same_day = {'0': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '1': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '2': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '3': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '4': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '5': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '6': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               }
-
-        for course in all_courses:
-            for day in range(6):
-                if course.course_times.filter(day=day).exists():
-                    start_time_str = str(course.course_times.all().values_list('start_time', flat=True)[0])
-                    end_time_str = str(course.course_times.all().values_list('end_time', flat=True)[0])
-                    time_format = self.time_edit(start_time_str, end_time_str)
-                    count_courses_in_same_time_same_day[str(day)][str(time_format)] += 1
-                    courses_list.append({**AllCourseDepartmentSerializer(course).data, 'day': day, 'time': time_format})
-
-        for course in courses_list:
-            course['count'] = count_courses_in_same_time_same_day[str(course['day'])][str(course['time'])]
-
-        return Response(courses_list)
-
-
-class All(APIView):
-    from .pagination import DefaultPagination
-    permission_classes = [IsAuthenticated]
-    pagination_class = DefaultPagination
-
-    @staticmethod
-    def time_edit(start, end):
-        start = int(((str(start)))[:2])
-
-        if start == 7:
-            return 0
-        elif start == 9:
-            return 1
-        elif start == 10:
-            return 2
-        elif start == 13:
-            return 3
-        elif start == 15:
-            return 4
-        elif start == 16:
-            return 5
-        elif start == 18:
-            return 6
-        else:
-            return 7
 
     def get(self, request, department_id, *args, **kwargs):
-        # return 2 course with same user_deparment
-        all_courses = Course.objects.filter(base_course__department_id=department_id, )
-        courses_list = []
-        count_courses_in_same_time_same_day = {'0': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '1': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '2': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '3': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '4': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '5': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               '6': {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0},
-                                               }
-
-        for course in all_courses:
-            for day in range(6):
-                if course.course_times.filter(day=day).exists():
-                    start_time_str = str(course.course_times.all().values_list('start_time', flat=True)[0])
-                    end_time_str = str(course.course_times.all().values_list('end_time', flat=True)[0])
-                    time_format = self.time_edit(start_time_str, end_time_str)
-                    count_courses_in_same_time_same_day[str(day)][str(time_format)] += 1
-                    courses_list.append({**AllCourseDepartmentSerializer(course).data, 'day': day, 'time': time_format})
-
-        for course in courses_list:
-            course['count'] = count_courses_in_same_time_same_day[str(course['day'])][str(course['time'])]
-
-        return Response(courses_list)
+        all_courses = (
+            Course.objects
+            .filter(base_course__department_id=department_id, semester=project_variables.CURRENT_SEMESTER)
+            .prefetch_related('course_times', 'exam_times', 'students')
+            .select_related('teacher')
+            .select_related('base_course')
+            .all()
+        )
+        return Response(AllCourseDepartmentSerializer(all_courses, many=True).data)
 
 
+class AllCourseDepartmentList(BaseAllCourseDepartment):
+    def get(self, request, *args, **kwargs):
+        return super(AllCourseDepartmentList, self).get(request, request.user.department_id, *args, **kwargs)
+
+
+class AllCourseDepartmentRetrieve(BaseAllCourseDepartment):
+    def get(self, request, department_id, *args, **kwargs):
+        return super(AllCourseDepartmentRetrieve, self).get(request, department_id, *args, **kwargs)

@@ -191,25 +191,3 @@ class AllowedDepartment(models.Model):
     class Meta:
         verbose_name = 'دانشکدۀ مجاز و غیر مجاز'
         verbose_name_plural = 'دانشکده های مجاز و غیر مجاز'
-
-
-
-
-from django.db.models.signals import post_save, pre_save
-from django.dispatch import receiver
-
-
-@receiver(pre_save, sender=Course)
-def capacity_change(sender, instance, **kwargs):
-    # Check if the capacity field has changed
-    print("capacity_change")
-    if instance.pk:
-        old_instance = Course.objects.get(pk=instance.pk)
-        if old_instance.capacity != instance.capacity:
-            # Capacity has changed
-            old_capacity = old_instance.capacity
-            new_capacity = instance.capacity
-            # Do something with the old and new capacity values (e.g., print or display)
-            print(f"Capacity has changed from {old_capacity} to {new_capacity}")
-
-

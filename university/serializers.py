@@ -71,7 +71,7 @@ class SimpleExamTimePlaceSerializer(serializers.ModelSerializer):
         fields = ['date', 'exam_start_time', 'exam_end_time']
 
 
-class SimpleCourseTimePlaceSerializer(serializers.ModelSerializer):
+class BaseCourseTimePlaceSerializer(serializers.ModelSerializer):
     course_day = serializers.CharField(source='day')
     course_start_time = serializers.CharField(source='start_time')
     course_end_time = serializers.CharField(source='end_time')
@@ -79,6 +79,25 @@ class SimpleCourseTimePlaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseTimePlace
         fields = ['course_day', 'course_start_time', 'course_end_time', 'place']
+
+
+class SimpleCourseTimePlaceSerializer(BaseCourseTimePlaceSerializer):
+    pass
+
+
+class SimpleCourseTimePlaceSerializerAllCoursesDepartment(BaseCourseTimePlaceSerializer):
+    course_time_representation = serializers.SerializerMethodField(read_only=True)
+
+    def get_course_time_representation(self, obj: CourseTimePlace):
+        start = int((str(obj.start_time))[:2])
+        if start in project_variables.start_time_mapper:
+            return project_variables.start_time_mapper[start]
+        else:
+            return 7
+
+    class Meta:
+        model = BaseCourseTimePlaceSerializer.Meta.model
+        fields = BaseCourseTimePlaceSerializer.Meta.fields + ['course_time_representation']
 
 
 class SimpleCourseSerializer(serializers.ModelSerializer):
@@ -258,62 +277,29 @@ class TimelineSerializer(serializers.ModelSerializer):
         fields = ['course_number', 'name', 'courses']
 
 
-class CourseGroupSerializer(serializers.ModelSerializer):
-    total_unit = serializers.IntegerField(source='base_course.total_unit', read_only=True)
-    practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
-    exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
-    course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
-    teacher = TeacherSerializer(read_only=True)
-    name = serializers.CharField(source='base_course.name', read_only=True)
-    complete_course_number = serializers.SerializerMethodField(read_only=True)
-
-    def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
-
-    class Meta:
-        model = Course
-        fields = ['complete_course_number', 'name', 'base_course_id', 'class_gp', 'capacity',
-                  'registered_count', 'waiting_count', 'exam_times',
-                  'course_times', 'teacher', 'total_unit', 'practical_unit', 'sex']
-
-
 class StudentCountSerializer(serializers.Serializer):
     count = serializers.IntegerField()
 
 
 class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='base_course.name', read_only=True)
-
-    class Meta:
-        model = BaseCourse
-        fields = ['name']
-
-
-class AllCourseDepartmentSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
-    course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
+    course_times = SimpleCourseTimePlaceSerializerAllCoursesDepartment(many=True, read_only=True)
     teacher = TeacherSerializer(read_only=True)
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
 
-    def get_color_intensity_percentage(self, obj):
+    def get_color_intensity_percentage(self, obj: Course):
         '''
         Color intensity percentage = ((Remaining capacity - Number of people on the waiting list) / (Total capacity + Number of people on the waiting list + (1.2 * Number of people who want to take the course))) * 100
         '''
 
         color_intensity_percentage = ((((obj.capacity - obj.registered_count) - obj.waiting_count) * 100) / (
-                obj.capacity + obj.waiting_count + (1.2 * self.get_added_to_calendar_count(obj))))
+                obj.capacity + obj.waiting_count + (1.2 * obj.students.count())))
         return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
 
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
-
-    def get_added_to_calendar_count(self, obj):
-        base_course_id = self.get_complete_course_number(obj)
-        course_id_major, group_number = base_course_id.split('_')
-        courses = Course.objects.filter(base_course_id=course_id_major, class_gp=group_number)
-        return courses.first().students.count()
 
     class Meta:
         model = Course
