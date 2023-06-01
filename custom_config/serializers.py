@@ -5,8 +5,8 @@ from rest_framework import serializers
 from accounts.api.serializers import SimpleUserSerializer
 from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote
 
-from university.models import Course, Teacher
-from university.serializers import SimpleCourseSerializer
+from university.models import Course
+from university.serializers import ShoppingCourseSerializer
 
 from custom_config.scripts.get_item_price import get_item_price
 from university.scripts.get_or_create import get_course
@@ -14,15 +14,16 @@ from utils import project_variables
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    course = SimpleCourseSerializer(read_only=True)
+    course = ShoppingCourseSerializer(read_only=True)
     price = serializers.SerializerMethodField(read_only=True)
+    teacher_image = serializers.ImageField(source='course.teacher.image', read_only=True)
 
     def get_price(self, obj: CartItem):
         return get_item_price(obj)
 
     class Meta:
         model = CartItem
-        fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'price']
+        fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'price', 'teacher_image']
 
 
 class UpdateCartItemSerializer(serializers.ModelSerializer):
@@ -108,7 +109,7 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    course = SimpleCourseSerializer(read_only=True)
+    course = ShoppingCourseSerializer(read_only=True)
 
     class Meta:
         model = OrderItem
