@@ -97,7 +97,11 @@ class CourseViewSet(ModelViewSet):
             if not courses.exists():
                 raise ValidationError(detail='No course with this course_number exists in database.')
             else:
-                return courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()
+                return courses.prefetch_related('teacher',
+                                                'course_times',
+                                                'exam_times',
+                                                'base_course',
+                                                'students').all()
         except TypeError:
             if self.action != 'my_exams' and self.action != 'my_courses' and self.action != 'my_summary':
                 raise ValidationError(detail='Enter course_number as query string in the url.')
@@ -175,9 +179,13 @@ class CourseGroupListView(ModelViewSet):
                    .select_related('base_course', 'semester')
                    .prefetch_related('teacher',
                                      'course_times',
-                                     'exam_times')
+                                     'exam_times',
+                                     'students')
                    .filter(base_course_id=base_course_id, semester_id=project_variables.CURRENT_SEMESTER,
-                           sex__in=[user.gender, 'B']).all())
+                           sex__in=[user.gender, 'B'])
+                   .annotate(student_count=Count('students'))
+                   .order_by('-student_count')
+                   .all())
         if courses.exists():
             return courses
         else:

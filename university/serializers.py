@@ -40,7 +40,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
             courses
             .values('course_number', 'name')
             .annotate(group_count=Count('course_number'))
-            .order_by())
+            .order_by('name'))
         serializer = SimpleBaseCourseSerializer(data=courses, many=True, context=self.context)
         serializer.is_valid()
         return serializer.data
@@ -325,14 +325,6 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
 
-    class Meta:
-        model = Course
-        fields = ['complete_course_number', 'added_to_calendar_count', 'name', 'base_course_id', 'group_number',
-                  'capacity',
-                  'registered_count', 'waiting_count', 'exam_times',
-                  'course_times', 'teacher', 'color_intensity_percentage', 'color_code',
-                  'total_unit', 'practical_unit', 'sex']
-
     def get_color_intensity_percentage(self, obj):
         '''
         Color intensity percentage = ((Remaining capacity - Number of people on the waiting list) / (Total capacity + Number of people on the waiting list + (1.2 * Number of people who want to take the course))) * 100
@@ -344,11 +336,15 @@ class CourseGroupSerializer(serializers.ModelSerializer):
                 obj.capacity + obj.waiting_count + (1.2 * self.get_added_to_calendar_count(obj))))
         return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
 
-    def get_added_to_calendar_count(self, obj):
-        base_course_id = self.get_complete_course_number(obj)
-        course_id_major, group_number = base_course_id.split('_')
-        courses = Course.objects.filter(base_course_id=course_id_major, class_gp=group_number)
-        return courses.first().students.count()
+    def get_added_to_calendar_count(self, obj: Course):
+        return obj.students.count()
 
     def get_color_code(self, obj):
         return 'None'
+
+    class Meta:
+        model = Course
+        fields = ['complete_course_number', 'added_to_calendar_count', 'name', 'base_course_id', 'group_number',
+                  'capacity', 'registered_count', 'waiting_count', 'exam_times',
+                  'course_times', 'teacher', 'color_intensity_percentage', 'color_code',
+                  'total_unit', 'practical_unit', 'sex']
