@@ -162,6 +162,7 @@ class CourseGroupListView(ModelViewSet):
 
     def get_queryset(self):
         base_course_id = self.kwargs['base_course_id']
+        user = self.request.user
         if base_course_id is None:
             raise ValidationError({'detail': 'Enter course_number as query string in the url.'}, )
         elif base_course_id.isdigit() is True:
@@ -169,8 +170,11 @@ class CourseGroupListView(ModelViewSet):
         else:
             raise ValidationError({'detail': 'Enter course_number as query number in the url.'}, )
         print()
-        courses = Course.objects.filter(base_course_id=base_course_id)
-
+        courses = Course.objects.filter(semester_id=project_variables.CURRENT_SEMESTER).filter(
+            Q(sex=user.gender) | Q(sex='B')).filter(base_course_id=base_course_id).prefetch_related('teacher',
+                                                                                                    'course_times',
+                                                                                                    'exam_times',
+                                                                                                    'base_course').all()
         if courses.exists():
             return courses
         else:

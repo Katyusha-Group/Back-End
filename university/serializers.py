@@ -94,6 +94,20 @@ class SimpleCourseSerializer(serializers.ModelSerializer):
                   'registered_count', 'capacity']
 
 
+class ShoppingCourseSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='base_course.name', read_only=True)
+    complete_course_number = serializers.SerializerMethodField(read_only=True)
+    teacher = TeacherSerializer(read_only=True)
+
+    def get_complete_course_number(self, obj: Course):
+        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+
+    class Meta:
+        model = Course
+        fields = ['complete_course_number', 'name',
+                  'registered_count', 'capacity', 'teacher']
+
+
 class CourseSerializer(serializers.ModelSerializer):
     total_unit = serializers.IntegerField(source='base_course.total_unit', read_only=True)
     practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
@@ -245,21 +259,22 @@ class TimelineSerializer(serializers.ModelSerializer):
 
 
 class CourseGroupSerializer(serializers.ModelSerializer):
+    total_unit = serializers.IntegerField(source='base_course.total_unit', read_only=True)
+    practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
     teacher = TeacherSerializer(read_only=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
-    group_number = serializers.CharField(source='class_gp', read_only=True)
 
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
 
     class Meta:
         model = Course
-        fields = ['complete_course_number', 'name', 'base_course_id', 'group_number', 'capacity',
+        fields = ['complete_course_number', 'name', 'base_course_id', 'class_gp', 'capacity',
                   'registered_count', 'waiting_count', 'exam_times',
-                  'course_times', 'teacher']
+                  'course_times', 'teacher', 'total_unit', 'practical_unit', 'sex']
 
 
 class StudentCountSerializer(serializers.Serializer):
@@ -309,6 +324,8 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
 
 
 class CourseGroupSerializer(serializers.ModelSerializer):
+    total_unit = serializers.IntegerField(source='base_course.total_unit', read_only=True)
+    practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
     teacher = TeacherSerializer(read_only=True)
@@ -327,7 +344,8 @@ class CourseGroupSerializer(serializers.ModelSerializer):
         fields = ['complete_course_number', 'added_to_calendar_count', 'name', 'base_course_id', 'group_number',
                   'capacity',
                   'registered_count', 'waiting_count', 'exam_times',
-                  'course_times', 'teacher', 'color_intensity_percentage', 'color_code']
+                  'course_times', 'teacher', 'color_intensity_percentage', 'color_code',
+                  'total_unit', 'practical_unit', 'sex']
 
     def get_color_intensity_percentage(self, obj):
         '''
