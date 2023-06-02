@@ -26,21 +26,32 @@ class CartItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'price', 'teacher_image']
 
 
+class UpdateCartItemViewSerializer(serializers.ModelSerializer):
+    total_price = serializers.SerializerMethodField(read_only=True)
+
+    def get_total_price(self, obj: CartItem):
+        return get_item_price(obj)
+
+    class Meta:
+        model = CartItem
+        fields = ['contain_telegram', 'contain_sms', 'contain_email', 'total_price']
+
+
 class UpdateCartItemSerializer(serializers.ModelSerializer):
-    def save(self, **kwargs):
-        contain_telegram = self.validated_data['contain_telegram']
-        contain_sms = self.validated_data['contain_sms']
-        contain_email = self.validated_data['contain_email']
+    def update(self, instance, validated_data):
+        contain_telegram = validated_data['contain_telegram']
+        contain_sms = validated_data['contain_sms']
+        contain_email = validated_data['contain_email']
 
         if not contain_telegram and not contain_sms and not contain_email:
-            self.instance.delete()
+            instance.delete()
             return
 
-        self.instance.contain_telegram = contain_telegram
-        self.instance.contain_sms = contain_sms
-        self.instance.contain_email = contain_email
-        self.instance.save()
-        return self.instance
+        instance.contain_telegram = contain_telegram
+        instance.contain_sms = contain_sms
+        instance.contain_email = contain_email
+        instance.save()
+        return instance
 
     class Meta:
         model = CartItem
