@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse
 from utils import project_variables
-from .scripts import color_handler
+from .scripts import model_based_functions
 from .scripts.get_or_create import get_course
 
 
@@ -142,11 +142,10 @@ class CourseSerializer(serializers.ModelSerializer):
     is_allowed = serializers.SerializerMethodField(read_only=True)
 
     def get_is_allowed(self, obj: Course):
-        return obj.base_course.department.department_number in \
-               [self.context['user'].department.department_number] + project_variables.GENERAL_DEPARTMENTS_ID
+        return model_based_functions.get_is_allowed(obj, self.context['user'])
 
     def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+        return model_based_functions.get_complete_course_number(obj)
 
     class Meta:
         model = Course
@@ -165,7 +164,7 @@ class MyCourseSerializer(serializers.ModelSerializer):
     complete_course_number = serializers.SerializerMethodField(read_only=True)
 
     def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+        return model_based_functions.get_complete_course_number(obj)
 
     class Meta:
         model = Course
@@ -178,19 +177,12 @@ class ModifyMyCourseSerializer(serializers.Serializer):
     complete_course_number = serializers.CharField()
 
     def validate(self, attrs):
-        # user_id = self.context['user_id']
-        # user = get_user_model().objects.get(id=user_id)
         course_number, class_gp = attrs['complete_course_number'].split('_')
         courses = Course.objects.filter(class_gp=class_gp, base_course_id=course_number)
         if not courses.exists():
             raise serializers.ValidationError(
                 detail='No course with the given course number was found.'
             )
-        # if not courses.first().base_course.department.name in \
-        #        [user.department.name] + project_variables.GENERAL_DEPARTMENTS:
-        #     raise serializers.ValidationError(
-        #         detail='This course can not be added, due to its department incompatibility with allowed departments',
-        #     )
         return attrs
 
     def save(self, **kwargs):
@@ -212,7 +204,7 @@ class CourseExamTimeSerializer(serializers.ModelSerializer):
     complete_course_number = serializers.SerializerMethodField(read_only=True)
 
     def get_complete_course_number(self, obj: ExamTimePlace):
-        return str(obj.course.base_course.course_number) + '_' + obj.course.class_gp
+        return model_based_functions.get_complete_course_number(obj.course)
 
     class Meta:
         model = ExamTimePlace
@@ -299,14 +291,13 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     is_allowed = serializers.SerializerMethodField(read_only=True)
 
     def get_is_allowed(self, obj: Course):
-        return obj.base_course.department.department_number in \
-               [self.context['user'].department.department_number] + project_variables.GENERAL_DEPARTMENTS_ID
+        return model_based_functions.get_is_allowed(obj, self.context['user'])
 
     def get_color_intensity_percentage(self, obj: Course):
-        return color_handler.get_color_intensity_percentage(obj)
+        return model_based_functions.get_color_intensity_percentage(obj)
 
     def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+        return model_based_functions.get_complete_course_number(obj)
 
     class Meta:
         model = Course
@@ -330,10 +321,10 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     color_code = serializers.SerializerMethodField(read_only=True)
 
     def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+        return model_based_functions.get_complete_course_number(obj)
 
     def get_color_intensity_percentage(self, obj):
-        return color_handler.get_color_intensity_percentage(obj)
+        return model_based_functions.get_color_intensity_percentage(obj)
 
     def get_added_to_calendar_count(self, obj: Course):
         return obj.students.count()

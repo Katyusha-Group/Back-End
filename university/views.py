@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Q, Count, ExpressionWrapper, F, FloatField, Case, When, Value, IntegerField
+from django.db.models import Q, Count, ExpressionWrapper, F, FloatField, Case, When, Value, IntegerField, Prefetch, \
+    OuterRef, Exists, BooleanField
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
@@ -8,7 +9,8 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse, Teacher, CourseTimePlace
+from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse, Teacher, CourseTimePlace, \
+    AllowedDepartment
 from university.scripts.get_or_create import get_course
 from university.scripts.views_scripts import get_user_department, sort_departments_by_user_department
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
@@ -87,7 +89,13 @@ class CourseViewSet(ModelViewSet):
         base_course = self.request.query_params.get('course_number', None)
         allowed_only = self.request.query_params.get('allowed_only', False)
         user = self.request.user
-        courses = Course.objects.filter(semester_id=project_variables.CURRENT_SEMESTER).filter(
+        courses = Course.objects.prefetch_related('teacher',
+                                                  'course_times',
+                                                  'exam_times',
+                                                  'base_course',
+                                                  'students',
+                                                  'allowed_departments__department__user_set').filter(
+            semester_id=project_variables.CURRENT_SEMESTER).filter(
             Q(sex=user.gender) | Q(sex='B'))
         try:
             base_course = int(base_course)
@@ -98,11 +106,7 @@ class CourseViewSet(ModelViewSet):
             if not courses.exists():
                 raise ValidationError(detail='No course with this course_number exists in database.')
             else:
-                return courses.prefetch_related('teacher',
-                                                'course_times',
-                                                'exam_times',
-                                                'base_course',
-                                                'students').all()
+                return courses.all()
         except TypeError:
             if self.action != 'my_exams' and self.action != 'my_courses' and self.action != 'my_summary':
                 raise ValidationError(detail='Enter course_number as query string in the url.')
@@ -112,9 +116,10 @@ class CourseViewSet(ModelViewSet):
         student = request.user
         if request.method == 'GET':
             courses = CourseSerializer(
-                (student.courses.prefetch_related('teacher', 'course_times', 'exam_times',
-                                                  'allowed_departments').select_related(
-                    'base_course__department').all()),
+                (student.courses.select_related('teacher').prefetch_related('course_times',
+                                                                            'exam_times', ).select_related(
+                    'base_course__department')
+                 .prefetch_related(Prefetch('base_course__department', Department.objects.all())).all()),
                 many=True,
                 context=self.get_serializer_context()
             )
@@ -239,9 +244,9 @@ class BaseAllCourseDepartment(APIView):
         all_courses = (
             Course.objects
             .filter(base_course__department_id=department_id, semester=project_variables.CURRENT_SEMESTER)
-            .prefetch_related('course_times', 'exam_times', 'students')
             .select_related('teacher')
-            .select_related('base_course__department')
+            .select_related('base_course')
+            .prefetch_related('course_times', 'exam_times', 'students')
             .all()
         )
         return Response(AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
