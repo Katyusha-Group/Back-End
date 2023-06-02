@@ -85,7 +85,7 @@ class SimpleCourseTimePlaceSerializer(BaseCourseTimePlaceSerializer):
     pass
 
 
-class SimpleCourseTimePlaceSerializerAllCoursesDepartment(BaseCourseTimePlaceSerializer):
+class CourseTimeSerializerDayRepresentation(BaseCourseTimePlaceSerializer):
     course_time_representation = serializers.SerializerMethodField(read_only=True)
 
     def get_course_time_representation(self, obj: CourseTimePlace):
@@ -132,7 +132,7 @@ class CourseSerializer(serializers.ModelSerializer):
     practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
     emergency_deletion = serializers.BooleanField(source='base_course.emergency_deletion', read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
-    course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
+    course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
     teacher = TeacherSerializer(read_only=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
@@ -144,14 +144,14 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = ['complete_course_number', 'name', 'class_gp', 'total_unit',
                   'practical_unit', 'capacity', 'registered_count',
-                  'waiting_count', 'sex', 'guest_able', 'emergency_deletion',
+                  'waiting_count', 'sex', 'emergency_deletion',
                   'registration_limit', 'description', 'presentation_type',
                   'teacher', 'exam_times', 'course_times']
 
 
 class MyCourseSerializer(serializers.ModelSerializer):
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
-    course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
+    course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
     teacher = TeacherSerializer(read_only=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
@@ -284,7 +284,7 @@ class StudentCountSerializer(serializers.Serializer):
 class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
-    course_times = SimpleCourseTimePlaceSerializerAllCoursesDepartment(many=True, read_only=True)
+    course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
     teacher = TeacherSerializer(read_only=True)
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
@@ -313,7 +313,7 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     total_unit = serializers.IntegerField(source='base_course.total_unit', read_only=True)
     practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
-    course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
+    course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
     teacher = TeacherSerializer(read_only=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)

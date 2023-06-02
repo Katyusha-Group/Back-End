@@ -1,10 +1,6 @@
-from django.contrib.auth import get_user_model
-from django.shortcuts import render
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet, ModelViewSet
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin, DestroyModelMixin
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote
