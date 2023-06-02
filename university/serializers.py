@@ -234,6 +234,13 @@ class TeacherTimeLineSerializer(serializers.ModelSerializer):
 
 
 class CourseTimeLineSerializer(serializers.ModelSerializer):
+    complete_course_number = serializers.SerializerMethodField(read_only=True)
+    teacher = TeacherTimeLineSerializer(read_only=True)
+
+    def get_complete_course_number(self, obj: Course):
+        course_number_str = str(obj.base_course.course_number)
+        return course_number_str[:2] + '-' + course_number_str[2:4] + '-' + course_number_str[4:7] + '-' + obj.class_gp
+
     def to_representation(self, obj):
         representation = super().to_representation(obj)
         if 'teacher' in representation:
@@ -242,11 +249,9 @@ class CourseTimeLineSerializer(serializers.ModelSerializer):
                 representation[sub_key] = teacher_representation[sub_key]
         return representation
 
-    teacher = TeacherTimeLineSerializer(read_only=True)
-
     class Meta:
         model = Course
-        fields = ['semester', 'teacher', 'capacity', 'registered_count']
+        fields = ['semester', 'teacher', 'capacity', 'registered_count', 'complete_course_number']
 
 
 class TimelineSerializer(serializers.ModelSerializer):
@@ -258,16 +263,32 @@ class TimelineSerializer(serializers.ModelSerializer):
             for sub_item in courses_representation:
                 new_data = {}
                 for sub_key in sub_item:
-                    if sub_key == 'semester':
+                    if sub_key == 'semester' or sub_key == 'teacher_name':
                         continue
                     if sub_key in new_data:
                         new_data[sub_key].append(sub_item[sub_key])
                     else:
                         new_data[sub_key] = sub_item[sub_key]
-                if sub_item['semester'] in representation['data']:
-                    representation['data'][sub_item['semester']].append(new_data)
-                else:
-                    representation['data'][sub_item['semester']] = [new_data]
+                if sub_item['semester'] not in representation['data']:
+                    representation['data'][sub_item['semester']] = {}
+                if sub_item['teacher_name'] not in representation['data'][sub_item['semester']]:
+                    representation['data'][sub_item['semester']][sub_item['teacher_name']] = {}
+                    representation['data'][sub_item['semester']][sub_item['teacher_name']]['courses'] = []
+                if sub_item['teacher_name'] in representation['data'][sub_item['semester']]:
+                    representation['data'][sub_item['semester']][sub_item['teacher_name']]['courses'].append(new_data)
+        for sub_key in representation:
+            if sub_key == 'data':
+                for semester in representation[sub_key]:
+                    for teacher in representation[sub_key][semester]:
+                        representation[sub_key][semester][teacher]['total_capacity'] = sum(
+                            [item['capacity'] for item in representation[sub_key][semester][teacher]['courses']]
+                        )
+                        representation[sub_key][semester][teacher]['total_registered_count'] = sum(
+                            [item['registered_count'] for item in representation[sub_key][semester][teacher]['courses']]
+                        )
+                        representation[sub_key][semester][teacher]['popularity'] = \
+                            (representation[sub_key][semester][teacher]['total_registered_count'] /
+                             representation[sub_key][semester][teacher]['total_capacity'] * 100) // 1
         return representation
 
     courses = CourseTimeLineSerializer(many=True, read_only=True)
