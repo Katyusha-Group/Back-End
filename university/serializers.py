@@ -291,6 +291,11 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     teacher = TeacherSerializer(read_only=True)
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
+    is_allowed = serializers.SerializerMethodField(read_only=True)
+
+    def get_is_allowed(self, obj: Course):
+        return obj.base_course.department.name in \
+               [self.context['user'].department.name] + project_variables.GENERAL_DEPARTMENTS
 
     def get_color_intensity_percentage(self, obj: Course):
         return color_handler.get_color_intensity_percentage(obj)
@@ -300,7 +305,7 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ('name', 'id', 'class_gp', 'capacity', 'complete_course_number',
+        fields = ('name', 'id', 'is_allowed', 'class_gp', 'capacity', 'complete_course_number',
                   'registered_count', 'waiting_count', 'guest_able', 'course_times', 'color_intensity_percentage',
                   'registration_limit', 'description', 'sex', 'presentation_type', 'base_course', 'teacher',
                   'exam_times')

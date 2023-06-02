@@ -230,8 +230,6 @@ class CourseStudentCountView(APIView):
 
 class BaseAllCourseDepartment(APIView):
     permission_classes = [IsAuthenticated]
-    from .pagination import DefaultPagination
-    pagination_class = DefaultPagination
 
     def get(self, request, department_id, *args, **kwargs):
         all_courses = (
@@ -239,10 +237,10 @@ class BaseAllCourseDepartment(APIView):
             .filter(base_course__department_id=department_id, semester=project_variables.CURRENT_SEMESTER)
             .prefetch_related('course_times', 'exam_times', 'students')
             .select_related('teacher')
-            .select_related('base_course')
+            .select_related('base_course__department')
             .all()
         )
-        return Response(AllCourseDepartmentSerializer(all_courses, many=True).data)
+        return Response(AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
 
 
 class AllCourseDepartmentList(BaseAllCourseDepartment):
