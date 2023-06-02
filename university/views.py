@@ -15,8 +15,8 @@ from university.scripts.get_or_create import get_course
 from university.scripts.views_scripts import get_user_department, sort_departments_by_user_department
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
     CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, \
-    CourseGroupSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer, TimelineSerializer, \
-    TeacherSerializer
+    CourseGroupSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer, BaseCourseTimeLineSerializer, \
+    TeacherSerializer, TeacherTimeLineSerializer
 from rest_framework.views import APIView
 from utils import project_variables
 
@@ -153,13 +153,22 @@ class CourseViewSet(ModelViewSet):
                               'data': courses.data})
 
 
-class TimelineViewSet(ListAPIView):
+class BaseCoursesTimeLineListAPIView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
-    serializer_class = TimelineSerializer
+    serializer_class = BaseCourseTimeLineSerializer
 
     def get_queryset(self):
         return BaseCourse.objects.filter(course_number=self.kwargs['course_number']).all()
+
+
+class TeachersTimeLineListAPIView(ListAPIView):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAuthenticated]
+    serializer_class = TeacherTimeLineSerializer
+
+    def get_queryset(self):
+        return Teacher.objects.filter(pk=self.kwargs['teacher_id']).all()
 
 
 class TeacherProfileRetrieveAPIView(RetrieveAPIView):

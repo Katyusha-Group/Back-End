@@ -225,7 +225,7 @@ class SummaryCourseSerializer(serializers.ModelSerializer):
         fields = ['complete_course_number', 'name', 'total_unit']
 
 
-class TeacherTimeLineSerializer(serializers.ModelSerializer):
+class SimpleTeacherTimeLineSerializer(serializers.ModelSerializer):
     teacher_name = serializers.CharField(source='name', read_only=True)
 
     class Meta:
@@ -233,9 +233,9 @@ class TeacherTimeLineSerializer(serializers.ModelSerializer):
         fields = ['teacher_name']
 
 
-class CourseTimeLineSerializer(serializers.ModelSerializer):
+class CourseWithTeacherTimeLineSerializer(serializers.ModelSerializer):
     complete_course_number = serializers.SerializerMethodField(read_only=True)
-    teacher = TeacherTimeLineSerializer(read_only=True)
+    teacher = SimpleTeacherTimeLineSerializer(read_only=True)
 
     def get_complete_course_number(self, obj: Course):
         course_number_str = str(obj.base_course.course_number)
@@ -254,7 +254,19 @@ class CourseTimeLineSerializer(serializers.ModelSerializer):
         fields = ['semester', 'teacher', 'capacity', 'registered_count', 'complete_course_number']
 
 
-class TimelineSerializer(serializers.ModelSerializer):
+class CourseWithoutTeacherTimeLineSerializer(serializers.ModelSerializer):
+    course_name = serializers.CharField(source='base_course.name', read_only=True)
+
+    def get_complete_course_number(self, obj: Course):
+        course_number_str = str(obj.base_course.course_number)
+        return course_number_str[:2] + '-' + course_number_str[2:4] + '-' + course_number_str[4:7] + '-' + obj.class_gp
+
+    class Meta:
+        model = Course
+        fields = ['semester', 'capacity', 'course_name', 'registered_count', ]
+
+
+class BaseCourseTimeLineSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         representation = super().to_representation(obj)
         representation['data'] = {}
@@ -276,26 +288,87 @@ class TimelineSerializer(serializers.ModelSerializer):
                     representation['data'][sub_item['semester']][sub_item['teacher_name']]['courses'] = []
                 if sub_item['teacher_name'] in representation['data'][sub_item['semester']]:
                     representation['data'][sub_item['semester']][sub_item['teacher_name']]['courses'].append(new_data)
-        for sub_key in representation:
-            if sub_key == 'data':
-                for semester in representation[sub_key]:
-                    for teacher in representation[sub_key][semester]:
-                        representation[sub_key][semester][teacher]['total_capacity'] = sum(
-                            [item['capacity'] for item in representation[sub_key][semester][teacher]['courses']]
-                        )
-                        representation[sub_key][semester][teacher]['total_registered_count'] = sum(
-                            [item['registered_count'] for item in representation[sub_key][semester][teacher]['courses']]
-                        )
-                        representation[sub_key][semester][teacher]['popularity'] = \
-                            (representation[sub_key][semester][teacher]['total_registered_count'] /
-                             representation[sub_key][semester][teacher]['total_capacity'] * 100) // 1
+        DATA_KEY = 'data'
+        for semester in representation[DATA_KEY]:
+            for teacher in representation[DATA_KEY][semester]:
+                representation[DATA_KEY][semester][teacher]['total_capacity'] = sum(
+                    [item['capacity'] for item in representation[DATA_KEY][semester][teacher]['courses']]
+                )
+                representation[DATA_KEY][semester][teacher]['total_registered_count'] = sum(
+                    [item['registered_count'] for item in representation[DATA_KEY][semester][teacher]['courses']]
+                )
+                representation[DATA_KEY][semester][teacher]['popularity'] = \
+                    (representation[DATA_KEY][semester][teacher]['total_registered_count'] /
+                     representation[DATA_KEY][semester][teacher]['total_capacity'] * 100) // 1
+                representation[DATA_KEY][semester]['total_classes'] = len(
+                    representation[DATA_KEY][semester]['courses'])
         return representation
 
-    courses = CourseTimeLineSerializer(many=True, read_only=True)
+    courses = CourseWithTeacherTimeLineSerializer(many=True, read_only=True)
 
     class Meta:
         model = BaseCourse
         fields = ['course_number', 'name', 'courses']
+
+
+class TeacherTimeLineSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, obj):
+        representation = super().to_representation(obj)
+        representation['data'] = {}
+        if 'courses' in representation:
+            courses_representation = representation.pop('courses')
+            for sub_item in courses_representation:
+                new_data = {}
+                for sub_key in sub_item:
+                    if sub_key == 'semester' or sub_key == 'course_name':
+                        continue
+                    if sub_key in new_data:
+                        new_data[sub_key].append(sub_item[sub_key])
+                    else:
+                        new_data[sub_key] = sub_item[sub_key]
+                if sub_item['semester'] not in representation['data']:
+                    representation['data'][sub_item['semester']] = {}
+                    representation['data'][sub_item['semester']]['courses'] = {}
+                if sub_item['course_name'] not in representation['data'][sub_item['semester']]['courses']:
+                    representation['data'][sub_item['semester']]['courses'][sub_item['course_name']] = {}
+                    representation['data'][sub_item['semester']]['courses'][sub_item['course_name']]['detail'] = []
+                representation['data'][sub_item['semester']]['courses'][sub_item['course_name']]['detail'].append(
+                    new_data)
+        DATA_KEY = 'data'
+        for semester in representation[DATA_KEY]:
+            total_capacity = 0
+            total_registered_count = 0
+            total_count = 0
+            for course in representation[DATA_KEY][semester]['courses']:
+                representation[DATA_KEY][semester]['courses'][course]['course_total_capacity'] = sum(
+                    [item['capacity'] for item in representation[DATA_KEY][semester]['courses'][course]['detail']]
+                )
+                representation[DATA_KEY][semester]['courses'][course]['course_total_registered_count'] = sum(
+                    [item['registered_count'] for item in
+                     representation[DATA_KEY][semester]['courses'][course]['detail']]
+                )
+                representation[DATA_KEY][semester]['courses'][course]['course_popularity'] = \
+                    (representation[DATA_KEY][semester]['courses'][course]['course_total_registered_count'] /
+                     representation[DATA_KEY][semester]['courses'][course]['course_total_capacity'] * 100) // 1
+                representation[DATA_KEY][semester]['courses'][course]['course_total_classes'] = len(
+                    representation[DATA_KEY][semester]['courses'][course])
+                total_capacity += representation[DATA_KEY][semester]['courses'][course]['course_total_capacity']
+                total_registered_count += representation[DATA_KEY][semester]['courses'][course][
+                    'course_total_registered_count']
+                total_count += representation[DATA_KEY][semester]['courses'][course]['course_total_classes']
+            representation[DATA_KEY][semester]['courses']['total_capacity'] = total_capacity
+            representation[DATA_KEY][semester]['courses']['total_registered_count'] = total_registered_count
+            representation[DATA_KEY][semester]['courses']['popularity'] = \
+                (total_registered_count / total_capacity * 100) // 1
+            representation[DATA_KEY][semester]['courses']['total_classes'] = total_count
+        return representation
+
+    courses = CourseWithoutTeacherTimeLineSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Teacher
+        fields = ['name', 'courses']
 
 
 class StudentCountSerializer(serializers.Serializer):
