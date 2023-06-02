@@ -300,8 +300,8 @@ class BaseCourseTimeLineSerializer(serializers.ModelSerializer):
                 representation[DATA_KEY][semester][teacher]['popularity'] = \
                     (representation[DATA_KEY][semester][teacher]['total_registered_count'] /
                      representation[DATA_KEY][semester][teacher]['total_capacity'] * 100) // 1
-                representation[DATA_KEY][semester]['total_classes'] = len(
-                    representation[DATA_KEY][semester]['courses'])
+                representation[DATA_KEY][semester][teacher]['total_classes'] = len(
+                    representation[DATA_KEY][semester][teacher]['courses'])
         return representation
 
     courses = CourseWithTeacherTimeLineSerializer(many=True, read_only=True)
@@ -312,7 +312,6 @@ class BaseCourseTimeLineSerializer(serializers.ModelSerializer):
 
 
 class TeacherTimeLineSerializer(serializers.ModelSerializer):
-
     def to_representation(self, obj):
         representation = super().to_representation(obj)
         representation['data'] = {}
