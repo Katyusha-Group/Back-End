@@ -139,6 +139,11 @@ class CourseSerializer(serializers.ModelSerializer):
     teacher = TeacherSerializer(read_only=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
+    is_allowed = serializers.SerializerMethodField(read_only=True)
+
+    def get_is_allowed(self, obj: Course):
+        return obj.base_course.department.department_number in \
+               [self.context['user'].department.department_number] + project_variables.GENERAL_DEPARTMENTS_ID
 
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
@@ -149,7 +154,7 @@ class CourseSerializer(serializers.ModelSerializer):
                   'practical_unit', 'capacity', 'registered_count',
                   'waiting_count', 'sex', 'emergency_deletion',
                   'registration_limit', 'description', 'presentation_type',
-                  'teacher', 'exam_times', 'course_times']
+                  'teacher', 'exam_times', 'course_times', 'is_allowed']
 
 
 class MyCourseSerializer(serializers.ModelSerializer):
@@ -294,8 +299,8 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     is_allowed = serializers.SerializerMethodField(read_only=True)
 
     def get_is_allowed(self, obj: Course):
-        return obj.base_course.department.name in \
-               [self.context['user'].department.name] + project_variables.GENERAL_DEPARTMENTS
+        return obj.base_course.department.department_number in \
+               [self.context['user'].department.department_number] + project_variables.GENERAL_DEPARTMENTS_ID
 
     def get_color_intensity_percentage(self, obj: Course):
         return color_handler.get_color_intensity_percentage(obj)

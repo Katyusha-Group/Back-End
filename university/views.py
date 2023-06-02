@@ -9,7 +9,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse, Teacher, CourseTimePlace
-from university.scripts import color_handler
 from university.scripts.get_or_create import get_course
 from university.scripts.views_scripts import get_user_department, sort_departments_by_user_department
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
@@ -72,6 +71,9 @@ class CourseViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
 
+    def get_serializer_context(self):
+        return {'user': self.request.user}
+
     def get_serializer_class(self):
         if self.action == 'my_courses' and self.request.method == 'PUT':
             return ModifyMyCourseSerializer
@@ -84,8 +86,7 @@ class CourseViewSet(ModelViewSet):
     def get_queryset(self):
         base_course = self.request.query_params.get('course_number', None)
         allowed_only = self.request.query_params.get('allowed_only', False)
-        user_id = self.request.user.id
-        user = get_user_model().objects.get(id=user_id)
+        user = self.request.user
         courses = Course.objects.filter(semester_id=project_variables.CURRENT_SEMESTER).filter(
             Q(sex=user.gender) | Q(sex='B'))
         try:
@@ -108,11 +109,14 @@ class CourseViewSet(ModelViewSet):
 
     @action(detail=False, methods=['GET', 'PUT'])
     def my_courses(self, request):
-        student = get_user_model().objects.get(id=request.user.id)
+        student = request.user
         if request.method == 'GET':
             courses = CourseSerializer(
-                (student.courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()),
-                many=True
+                (student.courses.prefetch_related('teacher', 'course_times', 'exam_times',
+                                                  'allowed_departments').select_related(
+                    'base_course__department').all()),
+                many=True,
+                context=self.get_serializer_context()
             )
             return Response(status=status.HTTP_200_OK, data=courses.data)
         elif request.method == 'PUT':

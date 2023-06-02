@@ -68,7 +68,7 @@ TUE_NUMBER = 3
 WED_NUMBER = 4
 
 # General Departments
-GENERAL_DEPARTMENTS = [
+GENERAL_DEPARTMENTS_ID = [
     14,
     16,
     26,
