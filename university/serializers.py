@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse
 from utils import project_variables
+from .scripts import model_based_functions
 from .scripts.get_or_create import get_course
 
 
@@ -10,6 +11,7 @@ class SimpleBaseCourseSerializer(serializers.Serializer):
     course_number = serializers.IntegerField(read_only=True)
     name = serializers.CharField(read_only=True)
     group_count = serializers.IntegerField(read_only=True)
+    allowed_count = serializers.IntegerField(read_only=True)
 
 
 class SimpleDepartmentSerializer(serializers.ModelSerializer):
@@ -38,7 +40,8 @@ class DepartmentSerializer(serializers.ModelSerializer):
                     courses__sex__in=[user.gender, 'B']))
         courses = (
             courses
-            .values('course_number', 'name')
+            .annotate(allowed_count=Count('courses__allowed_departments__department'))
+            .values('course_number', 'name', 'allowed_count')
             .annotate(group_count=Count('course_number'))
             .order_by('name'))
         serializer = SimpleBaseCourseSerializer(data=courses, many=True, context=self.context)
@@ -136,9 +139,13 @@ class CourseSerializer(serializers.ModelSerializer):
     teacher = TeacherSerializer(read_only=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
+    is_allowed = serializers.SerializerMethodField(read_only=True)
+
+    def get_is_allowed(self, obj: Course):
+        return model_based_functions.get_is_allowed(obj, self.context['user'])
 
     def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+        return model_based_functions.get_complete_course_number(obj)
 
     class Meta:
         model = Course
@@ -146,7 +153,7 @@ class CourseSerializer(serializers.ModelSerializer):
                   'practical_unit', 'capacity', 'registered_count',
                   'waiting_count', 'sex', 'emergency_deletion',
                   'registration_limit', 'description', 'presentation_type',
-                  'teacher', 'exam_times', 'course_times']
+                  'teacher', 'exam_times', 'course_times', 'is_allowed']
 
 
 class MyCourseSerializer(serializers.ModelSerializer):
@@ -157,7 +164,7 @@ class MyCourseSerializer(serializers.ModelSerializer):
     complete_course_number = serializers.SerializerMethodField(read_only=True)
 
     def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+        return model_based_functions.get_complete_course_number(obj)
 
     class Meta:
         model = Course
@@ -170,19 +177,12 @@ class ModifyMyCourseSerializer(serializers.Serializer):
     complete_course_number = serializers.CharField()
 
     def validate(self, attrs):
-        # user_id = self.context['user_id']
-        # user = get_user_model().objects.get(id=user_id)
         course_number, class_gp = attrs['complete_course_number'].split('_')
         courses = Course.objects.filter(class_gp=class_gp, base_course_id=course_number)
         if not courses.exists():
             raise serializers.ValidationError(
                 detail='No course with the given course number was found.'
             )
-        # if not courses.first().base_course.department.name in \
-        #        [user.department.name] + project_variables.GENERAL_DEPARTMENTS:
-        #     raise serializers.ValidationError(
-        #         detail='This course can not be added, due to its department incompatibility with allowed departments',
-        #     )
         return attrs
 
     def save(self, **kwargs):
@@ -204,7 +204,7 @@ class CourseExamTimeSerializer(serializers.ModelSerializer):
     complete_course_number = serializers.SerializerMethodField(read_only=True)
 
     def get_complete_course_number(self, obj: ExamTimePlace):
-        return str(obj.course.base_course.course_number) + '_' + obj.course.class_gp
+        return model_based_functions.get_complete_course_number(obj.course)
 
     class Meta:
         model = ExamTimePlace
@@ -225,7 +225,7 @@ class SummaryCourseSerializer(serializers.ModelSerializer):
         fields = ['complete_course_number', 'name', 'total_unit']
 
 
-class TeacherTimeLineSerializer(serializers.ModelSerializer):
+class SimpleTeacherTimeLineSerializer(serializers.ModelSerializer):
     teacher_name = serializers.CharField(source='name', read_only=True)
 
     class Meta:
@@ -233,7 +233,14 @@ class TeacherTimeLineSerializer(serializers.ModelSerializer):
         fields = ['teacher_name']
 
 
-class CourseTimeLineSerializer(serializers.ModelSerializer):
+class CourseWithTeacherTimeLineSerializer(serializers.ModelSerializer):
+    complete_course_number = serializers.SerializerMethodField(read_only=True)
+    teacher = SimpleTeacherTimeLineSerializer(read_only=True)
+
+    def get_complete_course_number(self, obj: Course):
+        course_number_str = str(obj.base_course.course_number)
+        return course_number_str[:2] + '-' + course_number_str[2:4] + '-' + course_number_str[4:7] + '-' + obj.class_gp
+
     def to_representation(self, obj):
         representation = super().to_representation(obj)
         if 'teacher' in representation:
@@ -242,14 +249,24 @@ class CourseTimeLineSerializer(serializers.ModelSerializer):
                 representation[sub_key] = teacher_representation[sub_key]
         return representation
 
-    teacher = TeacherTimeLineSerializer(read_only=True)
+    class Meta:
+        model = Course
+        fields = ['semester', 'teacher', 'capacity', 'registered_count', 'complete_course_number']
+
+
+class CourseWithoutTeacherTimeLineSerializer(serializers.ModelSerializer):
+    course_name = serializers.CharField(source='base_course.name', read_only=True)
+
+    def get_complete_course_number(self, obj: Course):
+        course_number_str = str(obj.base_course.course_number)
+        return course_number_str[:2] + '-' + course_number_str[2:4] + '-' + course_number_str[4:7] + '-' + obj.class_gp
 
     class Meta:
         model = Course
-        fields = ['semester', 'teacher', 'capacity', 'registered_count']
+        fields = ['semester', 'capacity', 'course_name', 'registered_count', ]
 
 
-class TimelineSerializer(serializers.ModelSerializer):
+class BaseCourseTimeLineSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         representation = super().to_representation(obj)
         representation['data'] = {}
@@ -258,23 +275,99 @@ class TimelineSerializer(serializers.ModelSerializer):
             for sub_item in courses_representation:
                 new_data = {}
                 for sub_key in sub_item:
-                    if sub_key == 'semester':
+                    if sub_key == 'semester' or sub_key == 'teacher_name':
                         continue
                     if sub_key in new_data:
                         new_data[sub_key].append(sub_item[sub_key])
                     else:
                         new_data[sub_key] = sub_item[sub_key]
-                if sub_item['semester'] in representation['data']:
-                    representation['data'][sub_item['semester']].append(new_data)
-                else:
-                    representation['data'][sub_item['semester']] = [new_data]
+                if sub_item['semester'] not in representation['data']:
+                    representation['data'][sub_item['semester']] = {}
+                if sub_item['teacher_name'] not in representation['data'][sub_item['semester']]:
+                    representation['data'][sub_item['semester']][sub_item['teacher_name']] = {}
+                    representation['data'][sub_item['semester']][sub_item['teacher_name']]['courses'] = []
+                if sub_item['teacher_name'] in representation['data'][sub_item['semester']]:
+                    representation['data'][sub_item['semester']][sub_item['teacher_name']]['courses'].append(new_data)
+        DATA_KEY = 'data'
+        for semester in representation[DATA_KEY]:
+            for teacher in representation[DATA_KEY][semester]:
+                representation[DATA_KEY][semester][teacher]['total_capacity'] = sum(
+                    [item['capacity'] for item in representation[DATA_KEY][semester][teacher]['courses']]
+                )
+                representation[DATA_KEY][semester][teacher]['total_registered_count'] = sum(
+                    [item['registered_count'] for item in representation[DATA_KEY][semester][teacher]['courses']]
+                )
+                representation[DATA_KEY][semester][teacher]['popularity'] = \
+                    (representation[DATA_KEY][semester][teacher]['total_registered_count'] /
+                     representation[DATA_KEY][semester][teacher]['total_capacity'] * 100) // 1
+                representation[DATA_KEY][semester][teacher]['total_classes'] = len(
+                    representation[DATA_KEY][semester][teacher]['courses'])
         return representation
 
-    courses = CourseTimeLineSerializer(many=True, read_only=True)
+    courses = CourseWithTeacherTimeLineSerializer(many=True, read_only=True)
 
     class Meta:
         model = BaseCourse
         fields = ['course_number', 'name', 'courses']
+
+
+class TeacherTimeLineSerializer(serializers.ModelSerializer):
+    def to_representation(self, obj):
+        representation = super().to_representation(obj)
+        representation['data'] = {}
+        if 'courses' in representation:
+            courses_representation = representation.pop('courses')
+            for sub_item in courses_representation:
+                new_data = {}
+                for sub_key in sub_item:
+                    if sub_key == 'semester' or sub_key == 'course_name':
+                        continue
+                    if sub_key in new_data:
+                        new_data[sub_key].append(sub_item[sub_key])
+                    else:
+                        new_data[sub_key] = sub_item[sub_key]
+                if sub_item['semester'] not in representation['data']:
+                    representation['data'][sub_item['semester']] = {}
+                    representation['data'][sub_item['semester']]['courses'] = {}
+                if sub_item['course_name'] not in representation['data'][sub_item['semester']]['courses']:
+                    representation['data'][sub_item['semester']]['courses'][sub_item['course_name']] = {}
+                    representation['data'][sub_item['semester']]['courses'][sub_item['course_name']]['detail'] = []
+                representation['data'][sub_item['semester']]['courses'][sub_item['course_name']]['detail'].append(
+                    new_data)
+        DATA_KEY = 'data'
+        for semester in representation[DATA_KEY]:
+            total_capacity = 0
+            total_registered_count = 0
+            total_count = 0
+            for course in representation[DATA_KEY][semester]['courses']:
+                representation[DATA_KEY][semester]['courses'][course]['course_total_capacity'] = sum(
+                    [item['capacity'] for item in representation[DATA_KEY][semester]['courses'][course]['detail']]
+                )
+                representation[DATA_KEY][semester]['courses'][course]['course_total_registered_count'] = sum(
+                    [item['registered_count'] for item in
+                     representation[DATA_KEY][semester]['courses'][course]['detail']]
+                )
+                representation[DATA_KEY][semester]['courses'][course]['course_popularity'] = \
+                    (representation[DATA_KEY][semester]['courses'][course]['course_total_registered_count'] /
+                     representation[DATA_KEY][semester]['courses'][course]['course_total_capacity'] * 100) // 1
+                representation[DATA_KEY][semester]['courses'][course]['course_total_classes'] = len(
+                    representation[DATA_KEY][semester]['courses'][course])
+                total_capacity += representation[DATA_KEY][semester]['courses'][course]['course_total_capacity']
+                total_registered_count += representation[DATA_KEY][semester]['courses'][course][
+                    'course_total_registered_count']
+                total_count += representation[DATA_KEY][semester]['courses'][course]['course_total_classes']
+            representation[DATA_KEY][semester]['courses']['total_capacity'] = total_capacity
+            representation[DATA_KEY][semester]['courses']['total_registered_count'] = total_registered_count
+            representation[DATA_KEY][semester]['courses']['popularity'] = \
+                (total_registered_count / total_capacity * 100) // 1
+            representation[DATA_KEY][semester]['courses']['total_classes'] = total_count
+        return representation
+
+    courses = CourseWithoutTeacherTimeLineSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Teacher
+        fields = ['name', 'courses']
 
 
 class StudentCountSerializer(serializers.Serializer):
@@ -288,22 +381,20 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     teacher = TeacherSerializer(read_only=True)
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
+    is_allowed = serializers.SerializerMethodField(read_only=True)
+
+    def get_is_allowed(self, obj: Course):
+        return model_based_functions.get_is_allowed(obj, self.context['user'])
 
     def get_color_intensity_percentage(self, obj: Course):
-        '''
-        Color intensity percentage = ((Remaining capacity - Number of people on the waiting list) / (Total capacity + Number of people on the waiting list + (1.2 * Number of people who want to take the course))) * 100
-        '''
-
-        color_intensity_percentage = ((((obj.capacity - obj.registered_count) - obj.waiting_count) * 100) / (
-                obj.capacity + obj.waiting_count + (1.2 * obj.students.count())))
-        return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
+        return model_based_functions.get_color_intensity_percentage(obj)
 
     def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+        return model_based_functions.get_complete_course_number(obj)
 
     class Meta:
         model = Course
-        fields = ('name', 'id', 'class_gp', 'capacity', 'complete_course_number',
+        fields = ('name', 'id', 'is_allowed', 'class_gp', 'capacity', 'complete_course_number',
                   'registered_count', 'waiting_count', 'guest_able', 'course_times', 'color_intensity_percentage',
                   'registration_limit', 'description', 'sex', 'presentation_type', 'base_course', 'teacher',
                   'exam_times')
@@ -323,18 +414,10 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     color_code = serializers.SerializerMethodField(read_only=True)
 
     def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+        return model_based_functions.get_complete_course_number(obj)
 
     def get_color_intensity_percentage(self, obj):
-        '''
-        Color intensity percentage = ((Remaining capacity - Number of people on the waiting list) / (Total capacity + Number of people on the waiting list + (1.2 * Number of people who want to take the course))) * 100
-        '''
-        if obj.capacity == 0:
-            return 100
-
-        color_intensity_percentage = ((((obj.capacity - obj.registered_count) - obj.waiting_count) * 100) / (
-                obj.capacity + obj.waiting_count + (1.2 * self.get_added_to_calendar_count(obj))))
-        return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
+        return model_based_functions.get_color_intensity_percentage(obj)
 
     def get_added_to_calendar_count(self, obj: Course):
         return obj.students.count()
