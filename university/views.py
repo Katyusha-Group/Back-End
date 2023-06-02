@@ -1,6 +1,5 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Q, Count, F
+from django.db.models import Q, Count, ExpressionWrapper, F, FloatField, Case, When, Value, IntegerField
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
@@ -10,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse, Teacher, CourseTimePlace
+from university.scripts import color_handler
 from university.scripts.get_or_create import get_course
 from university.scripts.views_scripts import get_user_department, sort_departments_by_user_department
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
@@ -175,17 +175,25 @@ class CourseGroupListView(ModelViewSet):
         else:
             raise ValidationError({'detail': 'Enter course_number as query number in the url.'}, )
         user = self.request.user
-        courses = (Course.objects
-                   .select_related('base_course', 'semester')
-                   .prefetch_related('teacher',
-                                     'course_times',
-                                     'exam_times',
-                                     'students')
-                   .filter(base_course_id=base_course_id, semester_id=project_variables.CURRENT_SEMESTER,
-                           sex__in=[user.gender, 'B'])
-                   .annotate(student_count=Count('students'))
-                   .order_by('-student_count')
-                   .all())
+        courses = (
+            Course.objects
+            .select_related('base_course', 'semester')
+            .prefetch_related('teacher',
+                              'course_times',
+                              'exam_times',
+                              'students')
+            .filter(base_course_id=base_course_id, semester_id=project_variables.CURRENT_SEMESTER,
+                    sex__in=[user.gender, 'B'])
+            .annotate(student_count=Count('students'))
+            .annotate(
+                color_intensity_percentage_first=ExpressionWrapper(
+                    (((F('capacity') - F('registered_count') - F('waiting_count')) * 100) / (
+                            F('capacity') + F('waiting_count') + (1.2 * F('student_count')))),
+                    output_field=FloatField())
+            )
+            .order_by('color_intensity_percentage_first')
+            .all()
+        )
         if courses.exists():
             return courses
         else:

@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse
 from utils import project_variables
+from .scripts import color_handler
 from .scripts.get_or_create import get_course
 
 
@@ -10,6 +11,7 @@ class SimpleBaseCourseSerializer(serializers.Serializer):
     course_number = serializers.IntegerField(read_only=True)
     name = serializers.CharField(read_only=True)
     group_count = serializers.IntegerField(read_only=True)
+    allowed_count = serializers.IntegerField(read_only=True)
 
 
 class SimpleDepartmentSerializer(serializers.ModelSerializer):
@@ -38,7 +40,8 @@ class DepartmentSerializer(serializers.ModelSerializer):
                     courses__sex__in=[user.gender, 'B']))
         courses = (
             courses
-            .values('course_number', 'name')
+            .annotate(allowed_count=Count('courses__allowed_departments__department'))
+            .values('course_number', 'name', 'allowed_count')
             .annotate(group_count=Count('course_number'))
             .order_by('name'))
         serializer = SimpleBaseCourseSerializer(data=courses, many=True, context=self.context)
@@ -290,13 +293,7 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
 
     def get_color_intensity_percentage(self, obj: Course):
-        '''
-        Color intensity percentage = ((Remaining capacity - Number of people on the waiting list) / (Total capacity + Number of people on the waiting list + (1.2 * Number of people who want to take the course))) * 100
-        '''
-
-        color_intensity_percentage = ((((obj.capacity - obj.registered_count) - obj.waiting_count) * 100) / (
-                obj.capacity + obj.waiting_count + (1.2 * obj.students.count())))
-        return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
+        return color_handler.get_color_intensity_percentage(obj)
 
     def get_complete_course_number(self, obj: Course):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
@@ -326,15 +323,7 @@ class CourseGroupSerializer(serializers.ModelSerializer):
         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
 
     def get_color_intensity_percentage(self, obj):
-        '''
-        Color intensity percentage = ((Remaining capacity - Number of people on the waiting list) / (Total capacity + Number of people on the waiting list + (1.2 * Number of people who want to take the course))) * 100
-        '''
-        if obj.capacity == 0:
-            return 100
-
-        color_intensity_percentage = ((((obj.capacity - obj.registered_count) - obj.waiting_count) * 100) / (
-                obj.capacity + obj.waiting_count + (1.2 * self.get_added_to_calendar_count(obj))))
-        return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
+        return color_handler.get_color_intensity_percentage(obj)
 
     def get_added_to_calendar_count(self, obj: Course):
         return obj.students.count()
