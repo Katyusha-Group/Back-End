@@ -1,6 +1,5 @@
 import codecs
 
-from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Q, Manager
 from django.core.mail import send_mail
@@ -78,9 +77,6 @@ def prepare_header_create_delete_message(course_instance):
 def send_notification_to_user(order_item: OrderItem, message: str):
     if message is None or message == '':
         return
-    with codecs.open('log.txt', 'a', encoding='utf-8') as f:
-        f.write('Notifying to ' + order_item.order.user.email + '\n')
-        f.write(message)
     if order_item.contain_email:
         print('Sending email to: ' + order_item.order.user.email)
         # send_mail(
