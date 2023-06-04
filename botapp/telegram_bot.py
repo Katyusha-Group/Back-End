@@ -170,7 +170,7 @@ async def get_course_in_my_calender(update: Update, context: ContextTypes.DEFAUL
 #     # get data of user
 #     data_user = requests.get(f"http://
 
-def send_notification_to_user(user_id, changes):
+def send_notification_to_user(user, message):
     pass
 # async def send_message_to_user(bot, chat_id: int, message_text: str) -> None:
 #     """Send a message to a specific user."""

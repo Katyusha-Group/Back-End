@@ -31,6 +31,9 @@ EMERGENCY_DELETION = 'امکان حذف اضطراری'
 GUEST_ABLE = 'امکان اخذ توسط مهمان'
 DESCRIPTION = 'توضیحات'
 ALLOWED_DEPARTMENTS = 'محدودیت دانشکده ها'
+REGISTERED_COUNT_NOTIFICATION = 'تعداد ثبت نام شده'
+WAITING_COUNT_NOTIFICATION = 'تعداد لیست انتظار'
+TEACHER_NOTIFICATION = 'استاد'
 
 # days:
 SAT = 'شنبه'
@@ -65,7 +68,7 @@ TUE_NUMBER = 3
 WED_NUMBER = 4
 
 # General Departments
-GENERAL_DEPARTMENTS = [
+GENERAL_DEPARTMENTS_ID = [
     14,
     16,
     26,
@@ -73,3 +76,52 @@ GENERAL_DEPARTMENTS = [
     28,
     90,
 ]
+
+course_field_mapper_fa_to_en = {
+    CAPACITY: 'capacity',
+    REGISTERED_COUNT: 'registered_count',
+    WAITING_COUNT: 'waiting_count',
+    SEX: 'sex',
+    TEACHER: 'teacher_id',
+    REGISTRATION_LIMIT: 'registration_limit',
+    PRESENTATION_TYPE: 'presentation_type',
+    GUEST_ABLE: 'guest_able',
+    DESCRIPTION: 'description',
+    ALLOWED_DEPARTMENTS: 'AllowedDepartment',
+    EXAM_TIME_PLACE: 'ExamTimePlace',
+    COURSE_TIME_PLACE: 'CourseTimePlace',
+}
+
+course_field_mapper_en_to_fa_notification = {
+    'capacity': CAPACITY,
+    'registered_count': REGISTERED_COUNT_NOTIFICATION,
+    'waiting_count': WAITING_COUNT_NOTIFICATION,
+    'sex': SEX,
+    'teacher_id': TEACHER_NOTIFICATION,
+    'registration_limit': REGISTRATION_LIMIT,
+    'presentation_type': PRESENTATION_TYPE,
+    'guest_able': GUEST_ABLE,
+    'description': DESCRIPTION,
+    'AllowedDepartment': ALLOWED_DEPARTMENTS,
+    'ExamTimePlace': EXAM_TIME_PLACE,
+    'CourseTimePlace': COURSE_TIME_PLACE,
+}
+
+day_mapper = {
+    SAT_NUMBER: SAT,
+    SUN_NUMBER: SUN,
+    MON_NUMBER: MON,
+    TUE_NUMBER: TUE,
+    WED_NUMBER: WED,
+}
+
+start_time_mapper = {
+    7: 0,
+    9: 1,
+    10: 2,
+    12: 3,
+    13: 4,
+    15: 5,
+    16: 6,
+    18: 7,
+}

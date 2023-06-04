@@ -1,17 +1,13 @@
-from django.contrib.auth import get_user_model
-from django.shortcuts import render
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet, ModelViewSet
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin, DestroyModelMixin
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote
 from custom_config.serializers import CartSerializer, CartItemSerializer, \
     AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, \
     TeacherVoteSerializer, ModifyTeacherVoteSerializer, ModifyTeacherReviewSerializer, TeacherReviewSerializer, \
-    ModifyReviewVoteSerializer, ReviewVoteSerializer
+    ModifyReviewVoteSerializer, ReviewVoteSerializer, UpdateCartItemViewSerializer
 from university.models import Teacher
 
 
@@ -33,6 +29,20 @@ class CartItemViewSet(ModelViewSet):
         if self.request.method == 'PATCH':
             return UpdateCartItemSerializer
         return CartItemSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'cart_id': self.kwargs['cart_pk']})
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+        serializer = UpdateCartItemViewSerializer(instance)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'cart_id': self.kwargs['cart_pk']})
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.update(self.get_object(), serializer.validated_data)
+        serializer = UpdateCartItemViewSerializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_serializer_context(self):
         return {'cart_id': self.kwargs['cart_pk'], 'request': self.request}

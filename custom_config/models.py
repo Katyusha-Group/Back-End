@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
-from university.models import Course, Teacher
+from university.models import Course, Teacher, AllowedDepartment, CourseTimePlace, ExamTimePlace
 
 
 class ModelTracker(models.Model):
@@ -25,7 +25,12 @@ class ModelTracker(models.Model):
     applied_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
 
     def __str__(self):
-        return str(self.model) + str(self.instance_id) + ' : ' + str(self.action)
+        if self.model == AllowedDepartment.__name__:
+            return str(AllowedDepartment.objects.get(pk=self.instance_id))
+        if self.model == CourseTimePlace.__name__:
+            return str(CourseTimePlace.objects.get(pk=self.instance_id))
+        if self.model == ExamTimePlace.__name__:
+            return str(ExamTimePlace.objects.get(pk=self.instance_id))
 
     class Meta:
         ordering = ['-applied_at']

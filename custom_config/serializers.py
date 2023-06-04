@@ -5,8 +5,8 @@ from rest_framework import serializers
 from accounts.api.serializers import SimpleUserSerializer
 from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote
 
-from university.models import Course, Teacher
-from university.serializers import SimpleCourseSerializer
+from university.models import Course
+from university.serializers import ShoppingCourseSerializer
 
 from custom_config.scripts.get_item_price import get_item_price
 from university.scripts.get_or_create import get_course
@@ -14,32 +14,44 @@ from utils import project_variables
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    course = SimpleCourseSerializer(read_only=True)
+    course = ShoppingCourseSerializer(read_only=True)
     price = serializers.SerializerMethodField(read_only=True)
+    teacher_image = serializers.ImageField(source='course.teacher.image', read_only=True)
 
     def get_price(self, obj: CartItem):
         return get_item_price(obj)
 
     class Meta:
         model = CartItem
-        fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'price']
+        fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'price', 'teacher_image']
+
+
+class UpdateCartItemViewSerializer(serializers.ModelSerializer):
+    total_price = serializers.SerializerMethodField(read_only=True)
+
+    def get_total_price(self, obj: CartItem):
+        return get_item_price(obj)
+
+    class Meta:
+        model = CartItem
+        fields = ['contain_telegram', 'contain_sms', 'contain_email', 'total_price']
 
 
 class UpdateCartItemSerializer(serializers.ModelSerializer):
-    def save(self, **kwargs):
-        contain_telegram = self.validated_data['contain_telegram']
-        contain_sms = self.validated_data['contain_sms']
-        contain_email = self.validated_data['contain_email']
+    def update(self, instance, validated_data):
+        contain_telegram = validated_data['contain_telegram']
+        contain_sms = validated_data['contain_sms']
+        contain_email = validated_data['contain_email']
 
         if not contain_telegram and not contain_sms and not contain_email:
-            self.instance.delete()
+            instance.delete()
             return
 
-        self.instance.contain_telegram = contain_telegram
-        self.instance.contain_sms = contain_sms
-        self.instance.contain_email = contain_email
-        self.instance.save()
-        return self.instance
+        instance.contain_telegram = contain_telegram
+        instance.contain_sms = contain_sms
+        instance.contain_email = contain_email
+        instance.save()
+        return instance
 
     class Meta:
         model = CartItem
@@ -108,7 +120,7 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    course = SimpleCourseSerializer(read_only=True)
+    course = ShoppingCourseSerializer(read_only=True)
 
     class Meta:
         model = OrderItem
