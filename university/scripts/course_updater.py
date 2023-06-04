@@ -1,17 +1,24 @@
 import time
 
 import pandas as pd
+from pandas import DataFrame
 
 from university.models import Course, Teacher
-from university.scripts import populate_table, maps, get_or_create, clean_data, delete_from_table
+from university.scripts import populate_table, get_or_create, clean_data, delete_from_table
 from utils import project_variables
 from utils.get_data_path import get_teachers_data
 
 
-def make_create_update_list(diff):
+def is_row_deleted(row: DataFrame) -> bool:
+    data = pd.DataFrame(data=row.iloc[:, [0, 5]]).values[0]
+    return get_or_create.get_course(course_code=data[1], semester=data[0]) is not None
+
+
+def make_create_update_list(diff) -> dict:
     modifications = diff.groupby([project_variables.COURSE_ID])
     update_list = []
     create_list = []
+    delete_list = []
     for key in modifications.groups:
         indices = modifications.groups[key].tolist()
         if len(indices) == 2:
@@ -19,10 +26,14 @@ def make_create_update_list(diff):
             update_list.append(rows)
         elif len(indices) == 1:
             row = modifications.get_group(key)
-            create_list.append(row)
+            if is_row_deleted(row):
+                delete_list.append(row)
+            else:
+                create_list.append(row)
     create_list = pd.concat(create_list) if len(create_list) > 0 else pd.DataFrame()
+    delete_list = pd.concat(delete_list) if len(delete_list) > 0 else pd.DataFrame()
     update_list = pd.concat(update_list) if len(update_list) > 0 else pd.DataFrame()
-    return create_list, update_list
+    return {'create': create_list, 'delete': delete_list, 'update': update_list}
 
 
 def create(data: pd.DataFrame):
@@ -31,6 +42,15 @@ def create(data: pd.DataFrame):
     print('Adding new courses to database.')
     pre = time.time()
     populate_table.populate_all_tables(data, get_teachers_data(), is_initial=False)
+    print(time.time() - pre)
+
+
+def delete(data):
+    if data.empty:
+        return
+    print('Deleting removed courses from database.')
+    pre = time.time()
+    delete_from_table.delete_from_course(data)
     print(time.time() - pre)
 
 
