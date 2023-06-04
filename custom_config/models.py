@@ -109,18 +109,22 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name='items')
     course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='order_items')
-    course_code = models.CharField(max_length=10, default='1')
+    class_gp = models.CharField(max_length=2, default='00')
+    course_number = models.PositiveIntegerField()
     contain_telegram = models.BooleanField(default=False)
     contain_sms = models.BooleanField(default=False)
     contain_email = models.BooleanField(default=False)
     unit_price = models.DecimalField(max_digits=9, decimal_places=2)
 
     def __str__(self):
-        return str(self.id) + ' : ' + str(self.order.id) + ' : ' + self.course_code
+        return str(self.id) + ' : ' + str(self.order.id) + ' : ' + str(self.course_number) + '_' + self.class_gp
 
     class Meta:
         verbose_name = 'سفارش'
         verbose_name_plural = 'آیتم های سفارش'
+        indexes = [
+            models.Index(fields=['course_number', 'class_gp']),
+        ]
 
 
 class TeacherReview(models.Model):
