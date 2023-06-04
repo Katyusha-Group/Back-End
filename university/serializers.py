@@ -1,7 +1,7 @@
 from django.db.models import Count, Q
 from rest_framework import serializers
 
-from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse
+from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse, AllowedDepartment
 from utils import project_variables
 from .scripts import model_based_functions
 from .scripts.get_or_create import get_course
@@ -374,7 +374,24 @@ class StudentCountSerializer(serializers.Serializer):
     count = serializers.IntegerField()
 
 
+class SimpleAllowedDepartmentSerializer(serializers.ModelSerializer):
+    department_name = serializers.CharField(source='department.name', read_only=True)
+
+    class Meta:
+        model = AllowedDepartment
+        fields = ['department_name']
+
+
 class AllCourseDepartmentSerializer(serializers.ModelSerializer):
+    def to_representation(self, obj):
+        representation = super().to_representation(obj)
+        if 'allowed_departments' in representation:
+            allowed_departments = representation.pop('allowed_departments')
+            representation['allowed_departments'] = []
+            for key in allowed_departments:
+                representation['allowed_departments'].append(key['department_name'])
+        return representation
+
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
     course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
@@ -382,6 +399,7 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     is_allowed = serializers.SerializerMethodField(read_only=True)
+    allowed_departments = SimpleAllowedDepartmentSerializer(many=True, read_only=True)
 
     def get_is_allowed(self, obj: Course):
         return model_based_functions.get_is_allowed(obj, self.context['user'])
@@ -397,7 +415,7 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
         fields = ('name', 'id', 'is_allowed', 'class_gp', 'capacity', 'complete_course_number',
                   'registered_count', 'waiting_count', 'guest_able', 'course_times', 'color_intensity_percentage',
                   'registration_limit', 'description', 'sex', 'presentation_type', 'base_course', 'teacher',
-                  'exam_times')
+                  'exam_times', 'allowed_departments')
 
 
 class CourseGroupSerializer(serializers.ModelSerializer):
