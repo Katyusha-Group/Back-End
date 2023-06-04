@@ -23,6 +23,9 @@ class ModelTracker(models.Model):
     instance_id = models.IntegerField(verbose_name='شناسه')
     action = models.CharField(max_length=1, choices=ACTION_CHOICES, verbose_name='عملیات')
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, verbose_name='وضعیت')
+    is_course = models.BooleanField(default=False, blank=True, verbose_name='درس است؟')
+    course_number = models.CharField(null=True, blank=True, max_length=11, verbose_name='شماره درس')
+    course_name = models.CharField(null=True, blank=True, max_length=255, verbose_name='نام درس')
     applied_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
 
     def __str__(self):
