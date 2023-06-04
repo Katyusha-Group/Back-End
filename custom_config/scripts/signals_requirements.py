@@ -17,9 +17,9 @@ def create_model_tracker(is_course, course_name, course_number, action, instance
 def get_course_info(instance):
     is_course = instance.__class__.__name__ == Course.__name__
     if is_course:
-        course_number = instance.base_course.course_number + '_' + instance.class_gp
+        course_number = str(instance.base_course.course_number) + '_' + str(instance.class_gp)
         course_name = instance.base_course.name
     else:
-        course_number = instance.course.base_course.course_number + '_' + instance.course.class_gp
-        course_name = instance.course.base_course.name
+        course_number = str(instance.course.base_course.course_number) + '_' + str(instance.course.class_gp)
+        course_name = str(instance.course.base_course.name)
     return is_course, course_name, course_number

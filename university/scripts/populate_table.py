@@ -1,8 +1,10 @@
+import codecs
 import os
 
 import pandas as pd
 from django.core.files import File
 from django.core.management import CommandError
+from django.db import transaction
 
 from crawler_scripts.golestan_data_cleaner import extract_limitation_data
 from university.models import Semester, Department, CourseStudyingGP, BaseCourse, Teacher, Course, CourseTimePlace, \
@@ -12,15 +14,16 @@ from utils import project_variables
 
 
 def populate_all_tables(golestan_data, teachers_data, is_initial):
-    populate_semester(golestan_data)
-    populate_department(golestan_data)
-    populate_gp_studying(golestan_data)
-    populate_base_course(golestan_data)
-    populate_teacher(golestan_data, teachers_data)
-    populate_course(golestan_data, False)
-    populate_course_class_time(golestan_data, False, is_initial)
-    populate_exam_time(golestan_data, False, is_initial)
-    populate_allowed_departments(golestan_data, False, is_initial)
+    with transaction.atomic():
+        populate_semester(golestan_data)
+        populate_department(golestan_data)
+        populate_gp_studying(golestan_data)
+        populate_base_course(golestan_data)
+        populate_teacher(golestan_data, teachers_data)
+        populate_course(golestan_data, False, is_initial)
+        populate_course_class_time(golestan_data, False, is_initial)
+        populate_exam_time(golestan_data, False, is_initial)
+        populate_allowed_departments(golestan_data, False, is_initial)
 
 
 def populate_semester(data, ignore_conflicts=True):
@@ -89,21 +92,34 @@ def populate_teacher(golestan_data, teachers_data, ignore_conflicts=True):
                                 ignore_conflicts=ignore_conflicts)
 
 
-def populate_course(data, ignore_conflicts=True):
+def populate_course(data, ignore_conflicts=True, is_initial=True):
     df = pd.DataFrame(data.iloc[:, [0, 5, 9, 10, 11, 12, 13, 14, 15, 19, 22, 23, 16]]).values
-    Course.objects.bulk_create(
-        [Course(semester_id=row[0],
-                base_course_id=clean_data.get_course_code(entry=row[1])[0],
-                teacher=Teacher.objects.get(name=row[6]),
-                sex=clean_data.determine_sex(sex=row[5]),
-                presentation_type=clean_data.determine_presentation_type(
-                    presentation_type=row[9]),
-                guest_able=clean_data.determine_true_false(entry=row[10]),
-                class_gp=clean_data.get_course_code(entry=row[1])[1],
-                capacity=row[2], registered_count=row[3], registration_limit=row[12],
-                waiting_count=row[4], description=row[11])
-         for row in df],
-        ignore_conflicts=ignore_conflicts)
+    if is_initial:
+        Course.objects.bulk_create(
+            [Course(semester_id=row[0],
+                    base_course_id=clean_data.get_course_code(entry=row[1])[0],
+                    teacher=Teacher.objects.get(name=row[6]),
+                    sex=clean_data.determine_sex(sex=row[5]),
+                    presentation_type=clean_data.determine_presentation_type(
+                        presentation_type=row[9]),
+                    guest_able=clean_data.determine_true_false(entry=row[10]),
+                    class_gp=clean_data.get_course_code(entry=row[1])[1],
+                    capacity=row[2], registered_count=row[3], registration_limit=row[12],
+                    waiting_count=row[4], description=row[11])
+             for row in df],
+            ignore_conflicts=ignore_conflicts)
+    else:
+        for row in df:
+            Course.objects.create(semester_id=row[0],
+                                  base_course_id=clean_data.get_course_code(entry=row[1])[0],
+                                  teacher=Teacher.objects.get(name=row[6]),
+                                  sex=clean_data.determine_sex(sex=row[5]),
+                                  presentation_type=clean_data.determine_presentation_type(
+                                      presentation_type=row[9]),
+                                  guest_able=clean_data.determine_true_false(entry=row[10]),
+                                  class_gp=clean_data.get_course_code(entry=row[1])[1],
+                                  capacity=row[2], registered_count=row[3], registration_limit=row[12],
+                                  waiting_count=row[4], description=row[11])
 
 
 def populate_course_class_time(data, ignore_conflicts=True, is_initial=True):
