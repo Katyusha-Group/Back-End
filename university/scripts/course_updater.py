@@ -41,7 +41,8 @@ def create(data: pd.DataFrame):
         return
     print('Adding new courses to database.')
     pre = time.time()
-    populate_table.populate_all_tables(data, get_teachers_data(), is_initial=False)
+    populate_table.populate_all_tables(data, get_teachers_data(),
+                                       population_mode=project_variables.POPULATION_COURSE_CREATE)
     print(time.time() - pre)
 
 
@@ -71,9 +72,12 @@ def update(data: pd.DataFrame):
     delete_from_table.delete_from_course_time(old_class_times)
     delete_from_table.delete_from_exam_time(old_exam_times)
     delete_from_table.delete_from_allowed_departments(old_allowed_departments)
-    populate_table.populate_course_class_time(new_class_times, ignore_conflicts=False, is_initial=False)
-    populate_table.populate_exam_time(new_exam_times, ignore_conflicts=False, is_initial=False)
-    populate_table.populate_allowed_departments(new_allowed_departments, ignore_conflicts=False, is_initial=False)
+    populate_table.populate_course_class_time(new_class_times, ignore_conflicts=False,
+                                              population_mode=project_variables.POPULATION_COURSE_UPDATE)
+    populate_table.populate_exam_time(new_exam_times, ignore_conflicts=False,
+                                      population_mode=project_variables.POPULATION_COURSE_UPDATE)
+    populate_table.populate_allowed_departments(new_allowed_departments, ignore_conflicts=False,
+                                                population_mode=project_variables.POPULATION_COURSE_UPDATE)
 
 
 def _extract_courses(modified_columns, data_length, diff, new_data):

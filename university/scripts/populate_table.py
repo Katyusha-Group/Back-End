@@ -13,17 +13,17 @@ from university.scripts import clean_data, get_data, get_or_create
 from utils import project_variables
 
 
-def populate_all_tables(golestan_data, teachers_data, is_initial):
+def populate_all_tables(golestan_data, teachers_data, population_mode=project_variables.POPULATION_INITIAL):
     with transaction.atomic():
         populate_semester(golestan_data)
         populate_department(golestan_data)
         populate_gp_studying(golestan_data)
         populate_base_course(golestan_data)
         populate_teacher(golestan_data, teachers_data)
-        populate_course(golestan_data, False, is_initial)
-        populate_course_class_time(golestan_data, False, is_initial)
-        populate_exam_time(golestan_data, False, is_initial)
-        populate_allowed_departments(golestan_data, False, is_initial)
+        populate_course(golestan_data, False, population_mode)
+        populate_course_class_time(golestan_data, False, population_mode)
+        populate_exam_time(golestan_data, False, population_mode)
+        populate_allowed_departments(golestan_data, False, population_mode)
 
 
 def populate_semester(data, ignore_conflicts=True):
@@ -92,9 +92,10 @@ def populate_teacher(golestan_data, teachers_data, ignore_conflicts=True):
                                 ignore_conflicts=ignore_conflicts)
 
 
-def populate_course(data, ignore_conflicts=True, is_initial=True):
+def populate_course(data, ignore_conflicts=True, population_mode=project_variables.POPULATION_INITIAL):
     df = pd.DataFrame(data.iloc[:, [0, 5, 9, 10, 11, 12, 13, 14, 15, 19, 22, 23, 16]]).values
-    if is_initial:
+    if population_mode == project_variables.POPULATION_INITIAL or\
+            population_mode == project_variables.POPULATION_COURSE_UPDATE:
         Course.objects.bulk_create(
             [Course(semester_id=row[0],
                     base_course_id=clean_data.get_course_code(entry=row[1])[0],
@@ -122,10 +123,11 @@ def populate_course(data, ignore_conflicts=True, is_initial=True):
                                   waiting_count=row[4], description=row[11])
 
 
-def populate_course_class_time(data, ignore_conflicts=True, is_initial=True):
+def populate_course_class_time(data, ignore_conflicts=True, population_mode=project_variables.POPULATION_INITIAL):
     class_times = get_data.get_data_from_course_time(data=data)
     if class_times:
-        if is_initial:
+        if population_mode == project_variables.POPULATION_INITIAL or\
+                population_mode == project_variables.POPULATION_COURSE_CREATE:
             CourseTimePlace.objects.bulk_create(class_times, ignore_conflicts=ignore_conflicts)
         else:
             for class_time in class_times:
@@ -134,10 +136,11 @@ def populate_course_class_time(data, ignore_conflicts=True, is_initial=True):
                                                place=class_time.place)
 
 
-def populate_exam_time(data, ignore_conflicts=True, is_initial=True):
+def populate_exam_time(data, ignore_conflicts=True, population_mode=project_variables.POPULATION_INITIAL):
     exams = get_data.get_data_from_exam_time(data=data)
     if exams:
-        if is_initial:
+        if population_mode == project_variables.POPULATION_INITIAL or \
+                population_mode == project_variables.POPULATION_COURSE_CREATE:
             ExamTimePlace.objects.bulk_create(exams, ignore_conflicts=ignore_conflicts)
         else:
             for exam in exams:
@@ -145,11 +148,12 @@ def populate_exam_time(data, ignore_conflicts=True, is_initial=True):
                                              end_time=exam.end_time, course=exam.course)
 
 
-def populate_allowed_departments(data, ignore_conflicts=True, is_initial=True):
+def populate_allowed_departments(data, ignore_conflicts=True, population_mode=project_variables.POPULATION_INITIAL):
     data = extract_limitation_data(data)
     allowed_departments = get_data.get_data_from_allowed_departments(data=data)
     if allowed_departments:
-        if is_initial:
+        if population_mode == project_variables.POPULATION_INITIAL or \
+                population_mode == project_variables.POPULATION_COURSE_CREATE:
             AllowedDepartment.objects.bulk_create(allowed_departments, ignore_conflicts=ignore_conflicts)
         else:
             for allowed_department in allowed_departments:
