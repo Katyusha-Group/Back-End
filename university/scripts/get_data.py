@@ -69,3 +69,14 @@ def get_data_from_allowed_departments(data):
             for department in Department.objects.all():
                 allowed_departments.append(AllowedDepartment(department=department, course=course))
     return allowed_departments
+
+
+def get_all_courses(data):
+    if data.empty:
+        return
+    df = pd.DataFrame(data=data, columns=[project_variables.COURSE_ID, project_variables.SEMESTER])
+    courses = []
+    for row in df.values:
+        course = get_or_create.get_course(course_code=row[0], semester=row[1])
+        courses.append(course)
+    return courses

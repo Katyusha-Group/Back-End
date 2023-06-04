@@ -120,11 +120,14 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    course = ShoppingCourseSerializer(read_only=True)
+    course_code = serializers.SerializerMethodField(read_only=True)
+
+    def get_course_code(self, obj: OrderItem):
+        return str(obj.course_number) + '_' + obj.class_gp
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'unit_price']
+        fields = ['id', 'course_code', 'contain_telegram', 'contain_sms', 'contain_email', 'unit_price']
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -164,11 +167,13 @@ class CreateOrderSerializer(serializers.Serializer):
                 OrderItem(
                     order=order,
                     course=item.course,
+                    class_gp=item.course.class_gp,
+                    course_number=item.course.base_course.course_number,
                     contain_telegram=item.contain_telegram,
                     contain_sms=item.contain_sms,
                     contain_email=item.contain_email,
                     unit_price=get_item_price(item)
-                ) for item in cart.items.select_related('course').all()
+                ) for item in cart.items.select_related('course__base_course').all()
             ]
             OrderItem.objects.bulk_create(order_items)
             cart.delete()

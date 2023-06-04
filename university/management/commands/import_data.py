@@ -26,5 +26,6 @@ class Command(BaseCommand):
         golestan_data = pd.read_excel(courses_excel_path)
         # start populating
         pre = time.time()
-        populate_table.populate_all_tables(golestan_data, teachers_data, is_initial=True)
+        populate_table.populate_all_tables(golestan_data, teachers_data,
+                                           population_mode=project_variables.POPULATION_INITIAL)
         print(time.time() - pre)

@@ -11,6 +11,7 @@ class ModelTracker(models.Model):
     ACTION_CHOICES = (
         ('C', 'ایجاد'),
         ('U', 'بروزرسانی'),
+        ('D', 'حذف'),
     )
 
     STATUS_CHOICES = (
@@ -22,6 +23,9 @@ class ModelTracker(models.Model):
     instance_id = models.IntegerField(verbose_name='شناسه')
     action = models.CharField(max_length=1, choices=ACTION_CHOICES, verbose_name='عملیات')
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, verbose_name='وضعیت')
+    is_course = models.BooleanField(default=False, blank=True, verbose_name='درس است؟')
+    course_number = models.CharField(null=True, blank=True, max_length=11, verbose_name='شماره درس')
+    course_name = models.CharField(null=True, blank=True, max_length=255, verbose_name='نام درس')
     applied_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
 
     def __str__(self):
@@ -105,18 +109,22 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name='items')
     course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='order_items')
+    class_gp = models.CharField(max_length=2, default='00')
+    course_number = models.PositiveIntegerField()
     contain_telegram = models.BooleanField(default=False)
     contain_sms = models.BooleanField(default=False)
     contain_email = models.BooleanField(default=False)
     unit_price = models.DecimalField(max_digits=9, decimal_places=2)
 
     def __str__(self):
-        return str(self.id) + ' : ' + str(self.order.id) + ' : ' + str(self.course.base_course_id) + '_' + str(
-            self.course.class_gp)
+        return str(self.id) + ' : ' + str(self.order.id) + ' : ' + str(self.course_number) + '_' + self.class_gp
 
     class Meta:
         verbose_name = 'سفارش'
         verbose_name_plural = 'آیتم های سفارش'
+        indexes = [
+            models.Index(fields=['course_number', 'class_gp']),
+        ]
 
 
 class TeacherReview(models.Model):

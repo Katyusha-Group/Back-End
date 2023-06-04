@@ -7,4 +7,5 @@ class CoreConfig(AppConfig):
 
     def ready(self):
         from .signals.handlers import create_c_log
+        from .signals.handlers import create_d_log
         from .signals.handlers import create_u_log
