@@ -41,9 +41,9 @@ POPULATION_COURSE_CREATE = 'course_create'
 POPULATION_COURSE_UPDATE = 'course_update'
 
 # actions:
-CREATE = 'create'
-UPDATE = 'update'
-DELETE = 'delete'
+CREATE = 'C'
+UPDATE = 'U'
+DELETE = 'D'
 
 # days:
 SAT = 'شنبه'
