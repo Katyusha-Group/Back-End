@@ -11,6 +11,7 @@ class ModelTracker(models.Model):
     ACTION_CHOICES = (
         ('C', 'ایجاد'),
         ('U', 'بروزرسانی'),
+        ('D', 'حذف'),
     )
 
     STATUS_CHOICES = (
