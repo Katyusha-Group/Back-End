@@ -48,7 +48,8 @@ def prepare_related_message_field(field):
 
 def prepare_header_update_message(course, related, fields):
     message = 'درس با شماره درس ' + str(course.base_course_id) + '_' + course.class_gp + ' و نام ' + \
-              course.base_course.name + ' در گلستان ' + project_variables.action_mapper[project_variables.UPDATE] + '.\n'
+              course.base_course.name + ' در گلستان ' + project_variables.action_mapper[
+                  project_variables.UPDATE] + '.\n'
     message += 'تغییرات به شرح زیر می باشند:\n'
     count = 0
     if fields is not None:
@@ -90,7 +91,7 @@ def send_notification_to_user(order_item: OrderItem, message: str):
         # send_sms(order_item, message)
     if order_item.contain_telegram:
         print('Sending Telegram to: ', order_item.order.user)
-        # telegram_bot.send_notification_to_user(user=order_item.order.user, message=message)
+        telegram_bot.send_notification_to_user(user=order_item.order.user, message=message)
 
 
 def send_message_to_all(order_items, message):
