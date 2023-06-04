@@ -9,8 +9,6 @@ from custom_config.models import ModelTracker, FieldTracker
 @receiver(post_save, sender=Course)
 @receiver(post_save, sender=AllowedDepartment)
 def create_c_log(sender, **kwargs):
-    for key in kwargs:
-        print(key)
     if kwargs['created']:
         ModelTracker.objects.create(
             model=kwargs['instance'].__class__.__name__,
