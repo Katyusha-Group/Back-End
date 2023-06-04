@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment
-from custom_config.models import ModelTracker, FieldTracker
+from custom_config.models import FieldTracker
 import custom_config.scripts.signals_requirements as requirements
 
 

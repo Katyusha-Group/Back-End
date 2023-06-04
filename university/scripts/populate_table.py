@@ -1,15 +1,13 @@
-import codecs
 import os
 
 import pandas as pd
 from django.core.files import File
-from django.core.management import CommandError
 from django.db import transaction
 
 from crawler_scripts.golestan_data_cleaner import extract_limitation_data
 from university.models import Semester, Department, CourseStudyingGP, BaseCourse, Teacher, Course, CourseTimePlace, \
     ExamTimePlace, AllowedDepartment
-from university.scripts import clean_data, get_data, get_or_create
+from university.scripts import clean_data, get_data
 from utils import project_variables
 
 
@@ -27,12 +25,16 @@ def populate_all_tables(golestan_data, teachers_data, population_mode=project_va
 
 
 def populate_semester(data, ignore_conflicts=True):
+    if data.empty:
+        return
     years = data[project_variables.SEMESTER].unique()
     Semester.objects.bulk_create([Semester(year=y) for y in years],
                                  ignore_conflicts=ignore_conflicts)
 
 
 def populate_department(data, ignore_conflicts=True):
+    if data.empty:
+        return
     columns = [project_variables.DEPARTMENT_ID, project_variables.DEPARTMENT_NAME]
     df = pd.DataFrame(data=data, columns=columns)
     departments = df.groupby(columns).all().index.values
@@ -43,6 +45,8 @@ def populate_department(data, ignore_conflicts=True):
 
 
 def populate_gp_studying(data, ignore_conflicts=True):
+    if data.empty:
+        return
     columns = [project_variables.STUDYING_GROUP_ID, project_variables.STUDYING_GROUP_NAME]
     df = pd.DataFrame(data=data, columns=columns)
     gp_studying = df.groupby(columns).all().index.values
@@ -53,6 +57,8 @@ def populate_gp_studying(data, ignore_conflicts=True):
 
 
 def populate_base_course(data, ignore_conflicts=True):
+    if data.empty:
+        return
     df = pd.DataFrame(data=data.iloc[:, [1, 4, 5, 6, 7, 8, 21]]).values
     BaseCourse.objects.bulk_create([BaseCourse(department_id=row[0],
                                                course_studying_gp=CourseStudyingGP.objects.get(name=row[1]),
@@ -64,6 +70,8 @@ def populate_base_course(data, ignore_conflicts=True):
 
 
 def populate_teacher(golestan_data, teachers_data, ignore_conflicts=True):
+    if golestan_data.empty or teachers_data.empty:
+        return
     df = pd.DataFrame(golestan_data[project_variables.TEACHER].unique())
     names = [name for name in df.iloc[:, 0].values]
     names = pd.DataFrame({'name': names})
@@ -93,6 +101,8 @@ def populate_teacher(golestan_data, teachers_data, ignore_conflicts=True):
 
 
 def populate_course(data, ignore_conflicts=True, population_mode=project_variables.POPULATION_INITIAL):
+    if data.empty:
+        return
     df = pd.DataFrame(data.iloc[:, [0, 5, 9, 10, 11, 12, 13, 14, 15, 19, 22, 23, 16]]).values
     if population_mode == project_variables.POPULATION_INITIAL or\
             population_mode == project_variables.POPULATION_COURSE_UPDATE:
@@ -124,6 +134,8 @@ def populate_course(data, ignore_conflicts=True, population_mode=project_variabl
 
 
 def populate_course_class_time(data, ignore_conflicts=True, population_mode=project_variables.POPULATION_INITIAL):
+    if data.empty:
+        return
     class_times = get_data.get_data_from_course_time(data=data)
     if class_times:
         if population_mode == project_variables.POPULATION_INITIAL or\
@@ -137,6 +149,8 @@ def populate_course_class_time(data, ignore_conflicts=True, population_mode=proj
 
 
 def populate_exam_time(data, ignore_conflicts=True, population_mode=project_variables.POPULATION_INITIAL):
+    if data.empty:
+        return
     exams = get_data.get_data_from_exam_time(data=data)
     if exams:
         if population_mode == project_variables.POPULATION_INITIAL or \
@@ -149,6 +163,8 @@ def populate_exam_time(data, ignore_conflicts=True, population_mode=project_vari
 
 
 def populate_allowed_departments(data, ignore_conflicts=True, population_mode=project_variables.POPULATION_INITIAL):
+    if data.empty:
+        return
     data = extract_limitation_data(data)
     allowed_departments = get_data.get_data_from_allowed_departments(data=data)
     if allowed_departments:
