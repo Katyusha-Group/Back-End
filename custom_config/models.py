@@ -109,14 +109,14 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name='items')
     course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='order_items')
+    course_code = models.CharField(max_length=10, default='1')
     contain_telegram = models.BooleanField(default=False)
     contain_sms = models.BooleanField(default=False)
     contain_email = models.BooleanField(default=False)
     unit_price = models.DecimalField(max_digits=9, decimal_places=2)
 
     def __str__(self):
-        return str(self.id) + ' : ' + str(self.order.id) + ' : ' + str(self.course.base_course_id) + '_' + str(
-            self.course.class_gp)
+        return str(self.id) + ' : ' + str(self.order.id) + ' : ' + self.course_code
 
     class Meta:
         verbose_name = 'سفارش'

@@ -120,11 +120,9 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    course = ShoppingCourseSerializer(read_only=True)
-
     class Meta:
         model = OrderItem
-        fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'unit_price']
+        fields = ['id', 'course_code', 'contain_telegram', 'contain_sms', 'contain_email', 'unit_price']
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -164,6 +162,7 @@ class CreateOrderSerializer(serializers.Serializer):
                 OrderItem(
                     order=order,
                     course=item.course,
+                    course_code=str(item.course.base_course.course_number) + '_' + str(item.course.class_gp),
                     contain_telegram=item.contain_telegram,
                     contain_sms=item.contain_sms,
                     contain_email=item.contain_email,
