@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import asyncio
 import json
 import logging
 from telegram import Bot, Update
@@ -171,25 +172,31 @@ async def get_course_in_my_calender(update: Update, context: ContextTypes.DEFAUL
 
 def send_notification_to_user(user_id, changes):
     pass
+# async def send_message_to_user(bot, chat_id: int, message_text: str) -> None:
+#     """Send a message to a specific user."""
+#     await bot.send_message(chat_id=chat_id, text=message_text)
 
+# async def send_message_to_user(bot, chat_id: int, message_text: str) -> None:
+#     """Send a message to a specific user."""
+#     await bot.send_message(chat_id=chat_id, text=message_text)
 
 def main() -> None:
     """Run the bot."""
 
+
     # Create the Application and pass it your bot's token.
-    application = (
-        Application.builder()
-        .token("6182994088:AAFwEqBN16Yvudx85OkkQVpkiNwHmmO3GtY")
-        .arbitrary_callback_data(True)
-        .build()
-    )
+    application =  Application.builder().token("6182994088:AAFwEqBN16Yvudx85OkkQVpkiNwHmmO3GtY").build()
+
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("my_information", my_information))
     application.add_handler(CommandHandler("get_course_in_my_calender", get_course_in_my_calender))
 
+
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
+    # send_message_to_user(application.bot, 5066702945, "hello")
+
 
 
 if __name__ == "__main__":

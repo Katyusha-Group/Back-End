@@ -206,8 +206,6 @@ class CourseStudentCountView(APIView):
 
 class AllCourseDepartment(APIView):
     permission_classes = [IsAuthenticated]
-    from .pagination import DefaultPagination
-    pagination_class = DefaultPagination
 
 
     @staticmethod
