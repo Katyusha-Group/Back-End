@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment
 from custom_config.models import ModelTracker, FieldTracker
@@ -9,6 +9,8 @@ from custom_config.models import ModelTracker, FieldTracker
 @receiver(post_save, sender=Course)
 @receiver(post_save, sender=AllowedDepartment)
 def create_c_log(sender, **kwargs):
+    for key in kwargs:
+        print(key)
     if kwargs['created']:
         ModelTracker.objects.create(
             model=kwargs['instance'].__class__.__name__,
@@ -16,6 +18,16 @@ def create_c_log(sender, **kwargs):
             action='C',
             status='U',
         )
+
+
+@receiver(post_delete, sender=Course)
+def create_d_log(sender, **kwargs):
+    ModelTracker.objects.create(
+        model=kwargs['instance'].__class__.__name__,
+        instance_id=kwargs['instance'].id,
+        action='D',
+        status='U',
+    )
 
 
 @receiver(post_save, sender=Course)
