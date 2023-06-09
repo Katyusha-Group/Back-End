@@ -35,6 +35,16 @@ REGISTERED_COUNT_NOTIFICATION = 'تعداد ثبت نام شده'
 WAITING_COUNT_NOTIFICATION = 'تعداد لیست انتظار'
 TEACHER_NOTIFICATION = 'استاد'
 
+# population modes:
+POPULATION_INITIAL = 'initial'
+POPULATION_COURSE_CREATE = 'course_create'
+POPULATION_COURSE_UPDATE = 'course_update'
+
+# actions:
+CREATE = 'C'
+UPDATE = 'U'
+DELETE = 'D'
+
 # days:
 SAT = 'شنبه'
 SUN = 'یک شنبه'
@@ -124,4 +134,10 @@ start_time_mapper = {
     15: 5,
     16: 6,
     18: 7,
+}
+
+action_mapper = {
+    CREATE: 'اضافه شد',
+    UPDATE: 'ویرایش شد',
+    DELETE: 'حذف شد',
 }
