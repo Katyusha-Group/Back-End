@@ -131,10 +131,14 @@ class TelegramLink(APIView):
         hashed_number = hash_object.hexdigest()
 
         from .models import User_telegram
-        user_telegram = User_telegram.objects.create(
-            hashed_number=hashed_number[:10],
-            user_id=user_id,
-        )
+        if User_telegram.objects.filter(user_id=user_id).exists():
+            return Response({'status': 'OK', 'link telegram': f"https://t.me/katyushaiust_bot?start={hashed_number[:10]}"})
+        else:
+
+            user_telegram = User_telegram.objects.create(
+                hashed_number=hashed_number[:10],
+                user_id=user_id,
+            )
 
         # Take the first 10 characters of the hash
         return Response({'status': 'OK', 'link telegram': f"https://t.me/katyushaiust_bot?start={hashed_number[:10]}"})

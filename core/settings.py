@@ -245,7 +245,7 @@ CORS_EXPOSE_HEADERS = [
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'katyushaiust@gmail.com'
-EMAIL_HOST_PASSWORD = 'tysifiqazxifzbsi'
+EMAIL_HOST_PASSWORD = 'wsumkosjhltxfsox'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 

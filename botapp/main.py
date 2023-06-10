@@ -1,9 +1,9 @@
-from telegram.ext import (updater,
-                          CommandHandler,
-                          MessageHandler,
-                          CallbackContext,
-                          CallbackQueryHandler,
-                          ConversationHandler,)
+from botapp.telegram import (updater,
+                             CommandHandler,
+                             MessageHandler,
+                             CallbackContext,
+                             CallbackQueryHandler,
+                             ConversationHandler, )
 from start import *
 
 import os

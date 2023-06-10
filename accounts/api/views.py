@@ -230,6 +230,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class ActivationResend(generics.GenericAPIView):
     serializer_class = ActivationResendSerializer
+    permission_classes = []
 
     def post(self, request, *args, **kwargs):
         serializer = ActivationResendSerializer(data=request.data)

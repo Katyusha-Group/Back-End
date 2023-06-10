@@ -50,7 +50,6 @@ from telegram import (
     ReplyKeyboardRemove,
     Update,
 )
-from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -162,23 +161,6 @@ async def get_course_in_my_calender(update: Update, context: ContextTypes.DEFAUL
     else:
         await update.message.reply_text(formatted_data)
 
-# send notification to user
-# async def send_notification_to_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-#     """Sends information about the user and its chat."""
-#     user_id = sync_to_async(get_user_id)
-#     user_id_number = await user_id(str(update.message.chat.id))
-#     # get data of user
-#     data_user = requests.get(f"http://
-
-def send_notification_to_user(user, message):
-    pass
-# async def send_message_to_user(bot, chat_id: int, message_text: str) -> None:
-#     """Send a message to a specific user."""
-#     await bot.send_message(chat_id=chat_id, text=message_text)
-
-# async def send_message_to_user(bot, chat_id: int, message_text: str) -> None:
-#     """Send a message to a specific user."""
-#     await bot.send_message(chat_id=chat_id, text=message_text)
 
 def main() -> None:
     """Run the bot."""
