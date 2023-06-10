@@ -2,8 +2,7 @@
 import asyncio
 import json
 import logging
-from telegram import Bot, Update
-from telegram.ext import Updater, CommandHandler, PicklePersistence
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -12,12 +11,10 @@ logging.basicConfig(level=logging.INFO)
 
 import logging
 
-import jwt
 import requests
 import os
 from django import setup
-from asgiref.sync import sync_to_async
-from channels.db import database_sync_to_async
+
 
 
 from django.conf import settings
@@ -74,57 +71,82 @@ from asgiref.sync import sync_to_async
 
 
 
-def send_telegram_notification(course):
-    bot_token = '6182994088:AAFwEqBN16Yvudx85OkkQVpkiNwHmmO3GtY'
-    chat_id = '5066702945'
-    message = f"The capacity of the course '{course.name}' has been changed to {course.capacity}."
 
-    bot = Bot(token=bot_token)
-    bot.send_message(chat_id=chat_id, text=message)
+def is_user_in_databese(hashed_number=None, telegram_chat_id=None ,name= None):
+    if hashed_number is None:
+        logger.info("hashed_number is none, user didnt enter with url")
+        try:
+            user_telegram = User_telegram.objects.get(telegram_chat_id=telegram_chat_id)
+            logger.info(user_telegram)
+            return user_telegram, ""
+        except User_telegram.DoesNotExist:
+            logger.info("user doesnt exist, User never enter with url.")
+            return (None, "The user doesn't exist. You never entered with a URL.")
+
+    elif hashed_number is not None:
+        logger.info("hashed_number is not none, user entered with url")
+        try:
+            user_telegram = User_telegram.objects.get(hashed_number=hashed_number)
+        except User_telegram.DoesNotExist:
+            logger.info("user enter with invalid url")
+            return (None, "You entered with an invalid URL.")
+
+        if user_telegram.telegram_chat_id is None:
+            logger.info("user doesnt have telegram_chat_id")
+            user_telegram.telegram_chat_id = telegram_chat_id
+            user_telegram.telegram_name = name
+            user_telegram.save()
+            logger.info(f"{user_telegram} updated")
+            return user_telegram, ""
+
+        elif user_telegram.telegram_chat_id == telegram_chat_id:
+            logger.info("user already have telegram_chat_id")
+            return user_telegram, ""
+
+        elif user_telegram.telegram_chat_id != telegram_chat_id:
+            logger.info("user have different telegram_chat_id")
+            return (None, "The user doesn't exist. You entered with a URL.")
 
 
-def is_user_in_databese(hashed_number, telegram_chat_id):
-    try:
-        user_telegram = User_telegram.objects.get(hashed_number=hashed_number)
-        user_telegram.telegram_chat_id = telegram_chat_id
-        logger.info("changed telegram chat_id")
-        # Convert the synchronous save() operation to asynchronous using sync_to_async
-        user_telegram.save()
-        logger.info("saved")
-    except User_telegram.DoesNotExist:
-        user_telegram = None
 
-    return user_telegram
+
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.info(update.message.chat.id)
+    name = update.message.chat.first_name + " " + (update.message.chat.last_name if update.message.chat.last_name else "")
+
+
+    message_success = (f"Hello {name}, welcome to the Katyusha bot.\n"
+                       "Please select /my_information to get your information, /get_course_in_my_calender to get Courses that were added to the calendar.")
+
+    message_fail = (f"Hello {name}, welcome to the Katyusha bot.\n"
+                "You should first log in to the website and then access the Telegram bot through the link provided by the website in order to utilize the bot's features.\n"
+                "http://katyushaiust.ir/accounts/login/")
 
 
     if context.args:
-        hashed_number = context.args[0]
         logging.info(context.args)
-        create_func = sync_to_async(is_user_in_databese)
         logging.info("created user")
         logger.info(update.message.chat.id)
 
-        user_telegram = await create_func(hashed_number, str(update.message.chat.id))
+        create_func = sync_to_async(is_user_in_databese)
+        hashed_number = context.args[0]
+        user_telegram, message = await create_func(hashed_number, str(update.message.chat.id), name)
+
         if user_telegram:
-            await update.message.reply_text(
-                f"Hello {update.message.chat.first_name}, welcome to the Katyusha bot.\n"
-                "Please select /my_information to get your information, /get_course_in_my_calender to get Courses that were added to the calendar."
-            )
+            await update.message.reply_text(message_success)
         else:
-            await update.message.reply_text(
-                f"Hello {update.message.chat.first_name}, welcome to the Katyusha bot.\n"
-                "You should first log in to the website and then access the Telegram bot through the link provided by the website in order to utilize the bot's features.\n"
-                "http://katyushaiust.ir/accounts/login/"
-            )
+            await update.message.reply_text(message_fail + f'\n{message}')
+
     else:
-        await update.message.reply_text(
-            f"Hello {update.message.chat.first_name}, welcome to the Katyusha bot.\n"
-            "You should first log in to the website and then access the Telegram bot through the link provided by the website in order to utilize the bot's features.\n"
-            "http://katyushaiust.ir/accounts/login/"
-        )
+        create_func = sync_to_async(is_user_in_databese)
+        user_telegram, message = await create_func(hashed_number=None, telegram_chat_id=str(update.message.chat.id), name=name)
+        if message == "The user doesn't exist. You never entered with a URL.":
+            await update.message.reply_text(message_fail)
+
+        else:
+            await update.message.reply_text(message_success)
 
 def get_user_id(telegram_chat_id):
     try:
@@ -167,7 +189,7 @@ def main() -> None:
 
 
     # Create the Application and pass it your bot's token.
-    application =  Application.builder().token("6182994088:AAFwEqBN16Yvudx85OkkQVpkiNwHmmO3GtY").build()
+    application =  Application.builder().token("6182994088:AAFZbZ9_fMeWebvb4x9_vb3k4q74RYWAuOM").build()
 
 
     application.add_handler(CommandHandler("start", start))
@@ -177,7 +199,6 @@ def main() -> None:
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
-    # send_message_to_user(application.bot, 5066702945, "hello")
 
 
 

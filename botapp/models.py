@@ -11,4 +11,4 @@ class User_telegram(models.Model):
 
 
     def __str__(self):
-        return str(self.user_id)
+        return self.telegram_name
