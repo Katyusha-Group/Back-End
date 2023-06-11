@@ -202,15 +202,14 @@ class CourseGroupListView(ModelViewSet):
                               'students')
             .filter(base_course_id=base_course_id, semester_id=project_variables.CURRENT_SEMESTER,
                     sex__in=[user.gender, 'B'])
-            .annotate(empty_seats=ExpressionWrapper(F('capacity') - F('registered_count'), output_field=IntegerField()))
             .annotate(student_count=Count('students'))
             .annotate(
-                popularity_percentage=ExpressionWrapper(
+                color_intensity_percentage_first=ExpressionWrapper(
                     (((F('capacity') - F('registered_count') - F('waiting_count')) * 100) / (
                             F('capacity') + F('waiting_count') + (1.2 * F('student_count')))),
                     output_field=FloatField())
             )
-            .order_by('-empty_seats', '-popularity_percentage')
+            .order_by('color_intensity_percentage_first')
             .all()
         )
         if courses.exists():
@@ -256,7 +255,7 @@ class BaseAllCourseDepartment(APIView):
             .filter(base_course__department_id=department_id, semester=project_variables.CURRENT_SEMESTER)
             .select_related('teacher')
             .select_related('base_course')
-            .prefetch_related('course_times', 'exam_times', 'students', 'allowed_departments__department')
+            .prefetch_related('course_times', 'exam_times', 'students')
             .all()
         )
         return Response(AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)

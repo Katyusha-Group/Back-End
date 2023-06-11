@@ -35,9 +35,9 @@ python-decouple = "*"
 drf-nested-routers = "*"
 django-debug-toolbar = "==3.4.0"
 persiantools = "*"
-python-telegram-bot = "*"
 channels = "*"
 kavenegar = "*"
+python-telegram-bot = "*"
 
 [dev-packages]
 
