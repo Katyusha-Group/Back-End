@@ -186,6 +186,65 @@ class UpdateOrderSerializer(serializers.ModelSerializer):
         fields = ['payment_status']
 
 
+class CourseCartOrderInfoSerializer(serializers.ModelSerializer):
+    contain_telegram = serializers.SerializerMethodField(read_only=True)
+    contain_sms = serializers.SerializerMethodField(read_only=True)
+    contain_email = serializers.SerializerMethodField(read_only=True)
+    price = serializers.SerializerMethodField(read_only=True)
+    name = serializers.CharField(source='base_course.name', read_only=True)
+
+    def get_course_from_cart(self, course):
+        cart_id = self.context.get('cart_id')
+        if cart_id is None:
+            raise serializers.ValidationError('You need to send cart_id in context.')
+        cart = Cart.objects.filter(id=cart_id).first()
+        if cart is None:
+            raise serializers.ValidationError('Cart not found.')
+        course_cart_item = cart.items.filter(course=course).first()
+        return course_cart_item
+
+    def get_contain_telegram(self, course: Course):
+        course_cart_item = self.get_course_from_cart(course)
+        if course_cart_item is not None:
+            if course_cart_item.contain_telegram:
+                return 'C'
+        user = self.context.get('user')
+        if user.orders.filter(items__course=course, items__contain_telegram=True).first():
+            return 'O'
+        return 'N'
+
+    def get_contain_sms(self, course: Course):
+        course_cart_item = self.get_course_from_cart(course)
+        if course_cart_item is not None:
+            if course_cart_item.contain_sms:
+                return 'C'
+        user = self.context.get('user')
+        if user.orders.filter(items__course=course, items__contain_sms=True).first():
+            return 'O'
+        return 'N'
+
+    def get_contain_email(self, course: Course):
+        course_cart_item = self.get_course_from_cart(course)
+        if course_cart_item is not None:
+            if course_cart_item.contain_email:
+                return 'C'
+        user = self.context.get('user')
+        if user.orders.filter(items__course=course, items__contain_email=True).first():
+            return 'O'
+        return 'N'
+
+    def get_price(self, course: Course):
+        course_cart_item = self.get_course_from_cart(course)
+        if course_cart_item is not None:
+            return get_item_price(course_cart_item)
+        return 0
+
+    class Meta:
+        model = Course
+        fields = ['name', 'price', 'contain_telegram', 'contain_sms',
+                  'contain_email']
+
+
 class BaseFlatteningSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         representation = super().to_representation(obj)

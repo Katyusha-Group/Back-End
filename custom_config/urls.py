@@ -8,6 +8,9 @@ router.register(r'carts', viewset=views.CartViewSet, basename='carts')
 router.register(r'orders', viewset=views.OrderViewSet, basename='orders')
 router.register(r'teacher-reviews/(?P<teacher_pk>\d+)', viewset=views.TeacherReviewViewSet, basename='teacher-reviews')
 router.register(r'teacher-votes/(?P<teacher_pk>\d+)', viewset=views.TeacherVoteViewSet, basename='teacher-votes')
+router.register(r'course-cart-order-info',
+                viewset=views.CourseCartOrderInfoRetrieveViewSet,
+                basename='course-cart-order-info')
 
 carts_router = routers.NestedSimpleRouter(router, r'carts', lookup='cart')
 carts_router.register(r'items', viewset=views.CartItemViewSet, basename='cart-items')
