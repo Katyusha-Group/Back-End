@@ -19,3 +19,15 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class Wallet(models.Model):
+    user = models.OneToOneField(to=User, on_delete=models.CASCADE)
+    balance = models.DecimalField(max_digits=10, decimal_places=0, default=20000)
+
+    def __str__(self):
+        return self.user.email
+
+    def modify_balance(self, amount):
+        self.balance -= amount
+        self.save()

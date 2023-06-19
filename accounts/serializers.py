@@ -146,3 +146,34 @@ class SimpleUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['user_email']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email', 'department', 'gender']
+
+
+class WalletSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        user_representation = representation.pop('user')
+        for key in user_representation:
+            representation[key] = user_representation[key]
+        return representation
+
+    user = SimpleUserSerializer(read_only=True)
+    balance = serializers.DecimalField(decimal_places=0, max_digits=10, read_only=True)
+
+    class Meta:
+        model = Wallet
+        fields = ['id', 'user', 'balance']
+
+
+class ModifyWalletSerializer(serializers.Serializer):
+    amount = serializers.IntegerField()
+
+    def update(self, instance, validated_data):
+        instance.balance += validated_data['amount']
+        instance.save()
+        return instance

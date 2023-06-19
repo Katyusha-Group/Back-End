@@ -2,7 +2,7 @@ from django.db import transaction
 
 from rest_framework import serializers
 
-from accounts.api.serializers import SimpleUserSerializer
+from accounts.serializers import SimpleUserSerializer
 from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote
 
 from university.models import Course
