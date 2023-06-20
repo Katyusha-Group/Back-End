@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django_jalali.db import models as jmodels
 
 from core import settings
 from university.models import Department
@@ -43,14 +44,14 @@ class Wallet(models.Model):
         else:
             transaction_type = 'C'
         transaction_status = 'C'
-        wallet_transaction = WalletTransactions.objects.create(transaction_type=transaction_type,
-                                                               transaction_status=transaction_status,
-                                                               amount=amount,
-                                                               user=self.user)
+        wallet_transaction = WalletTransaction.objects.create(transaction_type=transaction_type,
+                                                              transaction_status=transaction_status,
+                                                              amount=amount,
+                                                              user=self.user)
         return wallet_transaction
 
 
-class WalletTransactions(models.Model):
+class WalletTransaction(models.Model):
     TRANSACTION_TYPE_CHOICES = (
         ('D', 'کاهش'),
         ('C', 'افزایش'),
@@ -62,11 +63,13 @@ class WalletTransactions(models.Model):
         ('F', 'ناموفق'),
     )
 
+    objects = jmodels.jManager()
+
     transaction_type = models.CharField(max_length=1, choices=TRANSACTION_TYPE_CHOICES, verbose_name='نوع تراکنش')
     transaction_status = models.CharField(max_length=1, choices=TRANSACTION_STATUS_CHOICES, verbose_name='وضعیت تراکنش')
     amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='wallet_transactions')
-    applied_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    applied_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
 
     def __str__(self):
         return str(self.transaction_type) + ' : ' + str(self.transaction_status) + ' : ' + str(self.amount)

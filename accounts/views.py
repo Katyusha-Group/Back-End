@@ -261,8 +261,8 @@ class WalletViewSet(viewsets.ModelViewSet):
         if self.action == 'me' and self.request.method == 'GET':
             return Wallet.objects.filter(user=self.request.user)
 
-    @action(detail=False, methods=['GET', 'PUT'])
-    def me(self, request):
+    @action(detail=False, methods=['GET'])
+    def see_wallet(self, request):
         user = self.request.user
         if request.method == 'GET':
             wallet = WalletSerializer(
@@ -270,9 +270,17 @@ class WalletViewSet(viewsets.ModelViewSet):
                 context=self.get_serializer_context()
             )
             return Response(status=status.HTTP_200_OK, data=wallet.data)
-        elif request.method == 'PUT':
-            serializer = ModifyWalletSerializer(data=request.data, context={'user_id': request.user.id})
-            serializer.is_valid(raise_exception=True)
-            wallet = serializer.update(self.request.user.wallet, serializer.validated_data)
-            wallet_updated_signal.send_robust(sender=Wallet, instance=wallet, amount=serializer.data['amount'])
-            return Response(status=status.HTTP_200_OK, data=WalletSerializer(wallet).data)
+
+    @action(detail=False, methods=['PUT'])
+    def update_wallet(self, request):
+        serializer = ModifyWalletSerializer(data=request.data, context={'user_id': request.user.id})
+        serializer.is_valid(raise_exception=True)
+        wallet = serializer.update(self.request.user.wallet, serializer.validated_data)
+        wallet_updated_signal.send_robust(sender=Wallet, instance=wallet, amount=serializer.data['amount'])
+        return Response(status=status.HTTP_200_OK, data=WalletSerializer(wallet).data)
+
+    @action(detail=False, methods=['GET'])
+    def transactions(self, request):
+        transactions = WalletTransaction.objects.filter(user=self.request.user)
+        serializer = WalletTransactionSerializer(transactions, many=True)
+        return Response(status=status.HTTP_200_OK, data=serializer.data)

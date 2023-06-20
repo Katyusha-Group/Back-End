@@ -180,3 +180,9 @@ class ModifyWalletSerializer(serializers.Serializer):
         instance.balance += validated_data['amount']
         instance.save()
         return instance
+
+
+class WalletTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WalletTransaction
+        fields = ['amount', 'transaction_type', 'applied_at']
