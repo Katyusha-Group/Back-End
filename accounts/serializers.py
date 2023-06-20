@@ -146,3 +146,43 @@ class SimpleUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['user_email']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email', 'department', 'gender']
+
+
+class WalletSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        user_representation = representation.pop('user')
+        for key in user_representation:
+            representation[key] = user_representation[key]
+        return representation
+
+    user = SimpleUserSerializer(read_only=True)
+    balance = serializers.DecimalField(decimal_places=0, max_digits=10, read_only=True)
+
+    class Meta:
+        model = Wallet
+        fields = ['user', 'balance']
+
+
+class ModifyWalletSerializer(serializers.Serializer):
+    amount = serializers.IntegerField()
+
+    def update(self, instance, validated_data):
+        amount = validated_data['amount']
+        if amount < 0 and instance.balance < abs(amount):
+            raise serializers.ValidationError({"detail": "insufficient funds."})
+        instance.balance += validated_data['amount']
+        instance.save()
+        return instance
+
+
+class WalletTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WalletTransaction
+        fields = ['amount', 'transaction_type', 'ref_code', 'applied_at']

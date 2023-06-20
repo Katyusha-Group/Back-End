@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 CURRENT_SEMESTER = 4012
 GOLESTAN_EXCEL_FILE_NAME = 'golestan_courses'
 NEW_GOLESTAN_EXCEL_FILE_NAME = 'new_golestan_courses'
@@ -76,6 +78,13 @@ SUN_NUMBER = 1
 MON_NUMBER = 2
 TUE_NUMBER = 3
 WED_NUMBER = 4
+
+# Business Rules
+INITIAL_WALLET_BALANCE = 20000
+TAX = 0.09
+EMAIL_PRICE = 1000
+SMS_PRICE = 2000
+TELEGRAM_PRICE = 1000
 
 # General Departments
 GENERAL_DEPARTMENTS_ID = [

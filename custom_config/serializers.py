@@ -2,13 +2,13 @@ from django.db import transaction
 
 from rest_framework import serializers
 
-from accounts.api.serializers import SimpleUserSerializer
+from accounts.serializers import SimpleUserSerializer
 from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote
+from custom_config.signals import order_created
 
 from university.models import Course
 from university.serializers import ShoppingCourseSerializer
 
-from custom_config.scripts.get_item_price import get_item_price
 from university.scripts.get_or_create import get_course
 from utils import project_variables
 
@@ -19,7 +19,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     teacher_image = serializers.ImageField(source='course.teacher.image', read_only=True)
 
     def get_price(self, obj: CartItem):
-        return get_item_price(obj)
+        return obj.get_item_price()
 
     class Meta:
         model = CartItem
@@ -30,7 +30,7 @@ class UpdateCartItemViewSerializer(serializers.ModelSerializer):
     total_price = serializers.SerializerMethodField(read_only=True)
 
     def get_total_price(self, obj: CartItem):
-        return get_item_price(obj)
+        return obj.get_item_price()
 
     class Meta:
         model = CartItem
@@ -112,7 +112,7 @@ class CartSerializer(serializers.ModelSerializer):
         return obj.items.count()
 
     def get_total_price(self, obj: Cart):
-        return sum([get_item_price(item) for item in obj.items.all()])
+        return sum([item.get_item_price() for item in obj.items.all()])
 
     class Meta:
         model = Cart
@@ -139,18 +139,28 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'placed_at', 'payment_status', 'user', 'items', 'total_number']
+        fields = ['id', 'placed_at', 'ref_code', 'payment_method', 'payment_status', 'user', 'items', 'total_number']
 
 
 class CreateOrderSerializer(serializers.Serializer):
     cart_id = serializers.UUIDField(write_only=True)
+    payment_method = serializers.ChoiceField(choices=Order.PAYMENT_METHOD_CHOICES, write_only=True)
 
-    def validate_cart_id(self, value):
-        if not Cart.objects.filter(id=value).exists():
-            raise serializers.ValidationError('This cart does not exist.')
-        if Cart.objects.get(id=value).items.count() == 0:
-            raise serializers.ValidationError('This cart is empty.')
-        return value
+    def validate(self, attrs):
+        cart_id = attrs['cart_id']
+        user = self.context['user']
+        cart = Cart.objects.filter(id=cart_id)
+        if not cart.exists():
+            raise serializers.ValidationError({'cart': 'امکان ثبت سفارش وجود ندارد. سبد خرید مورد نظر یافت نشد.'})
+        cart = cart.first()
+        if cart.items.count() == 0:
+            raise serializers.ValidationError({'cart': 'امکان ثبت سفارش وجود ندارد. سبد خرید شما خالی است.'})
+        payment_method = attrs['payment_method']
+        if payment_method == Order.PAY_WALLET:
+            if cart.total_price() > user.wallet.balance:
+                raise serializers.ValidationError(
+                    {'wallet': 'امکان ثبت سفارش وجود ندارد. موجودی کیف پول شما کافی نیست.'})
+        return attrs
 
     def save(self, **kwargs):
         user_id = self.context['user_id']
@@ -159,10 +169,14 @@ class CreateOrderSerializer(serializers.Serializer):
         for item in cart.items.select_related('course').all():
             if Order.objects.filter(user_id=user_id, items__course=item.course).exists():
                 raise serializers.ValidationError(
-                    'You have already course with with id {}. Delete it  from your cart and try again.'.format(
+                    'You have already course with with id {}. Delete it from your cart and try again.'.format(
                         item.course.id))
         with transaction.atomic():
-            order = Order.objects.create(user_id=user_id)
+            if self.validated_data['payment_method'] == Order.PAY_WALLET:
+                order = Order.objects.create(user_id=user_id, payment_method=self.validated_data['payment_method'],
+                                             payment_status=Order.PAYMENT_STATUS_COMPLETE)
+            else:
+                order = Order.objects.create(user_id=user_id, payment_method=self.validated_data['payment_method'])
             order_items = [
                 OrderItem(
                     order=order,
@@ -172,10 +186,11 @@ class CreateOrderSerializer(serializers.Serializer):
                     contain_telegram=item.contain_telegram,
                     contain_sms=item.contain_sms,
                     contain_email=item.contain_email,
-                    unit_price=get_item_price(item)
+                    unit_price=item.get_item_price()
                 ) for item in cart.items.select_related('course__base_course').all()
             ]
             OrderItem.objects.bulk_create(order_items)
+            order_created.send_robust(sender=Order, order=order, total_price=order.total_price())
             cart.delete()
             return order
 
@@ -236,7 +251,7 @@ class CourseCartOrderInfoSerializer(serializers.ModelSerializer):
     def get_price(self, course: Course):
         course_cart_item = self.get_course_from_cart(course)
         if course_cart_item is not None:
-            return get_item_price(course_cart_item)
+            return course_cart_item.get_item_price()
         return 0
 
     class Meta:
