@@ -174,6 +174,9 @@ class ModifyWalletSerializer(serializers.Serializer):
     amount = serializers.IntegerField()
 
     def update(self, instance, validated_data):
+        amount = validated_data['amount']
+        if amount < 0 and instance.balance < abs(amount):
+            raise serializers.ValidationError({"detail": "insufficient funds."})
         instance.balance += validated_data['amount']
         instance.save()
         return instance

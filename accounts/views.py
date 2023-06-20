@@ -18,6 +18,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework import status
 from mail_templated import EmailMessage
 from django.core.mail import send_mail
+
+from .signals import wallet_updated_signal
 from .utils import EmailThread
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -272,4 +274,5 @@ class WalletViewSet(viewsets.ModelViewSet):
             serializer = ModifyWalletSerializer(data=request.data, context={'user_id': request.user.id})
             serializer.is_valid(raise_exception=True)
             wallet = serializer.update(self.request.user.wallet, serializer.validated_data)
+            wallet_updated_signal.send_robust(sender=Wallet, instance=wallet, amount=serializer.data['amount'])
             return Response(status=status.HTTP_200_OK, data=WalletSerializer(wallet).data)

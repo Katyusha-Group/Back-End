@@ -77,6 +77,9 @@ MON_NUMBER = 2
 TUE_NUMBER = 3
 WED_NUMBER = 4
 
+# wallet
+INITIAL_WALLET_BALANCE = 20000
+
 # General Departments
 GENERAL_DEPARTMENTS_ID = [
     14,
