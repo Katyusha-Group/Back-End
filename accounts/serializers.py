@@ -185,4 +185,4 @@ class ModifyWalletSerializer(serializers.Serializer):
 class WalletTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = WalletTransaction
-        fields = ['amount', 'transaction_type', 'applied_at']
+        fields = ['amount', 'transaction_type', 'ref_code', 'applied_at']

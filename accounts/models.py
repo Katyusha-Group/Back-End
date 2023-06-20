@@ -7,6 +7,7 @@ from django_jalali.db import models as jmodels
 from core import settings
 from university.models import Department
 from utils import project_variables
+from utils.transaction_functions import create_ref_code
 
 
 class User(AbstractUser):
@@ -70,6 +71,7 @@ class WalletTransaction(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='wallet_transactions')
     applied_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    ref_code = models.CharField(max_length=20, default=create_ref_code, verbose_name='کد مرجع')
 
     def __str__(self):
         return str(self.transaction_type) + ' : ' + str(self.transaction_status) + ' : ' + str(self.amount)
