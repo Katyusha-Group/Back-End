@@ -1,34 +1,27 @@
 import random
 
-from rest_framework import generics, viewsets, mixins
+from rest_framework import generics, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .serializers import *
 from .serializers import LoginSerializer
 from accounts.models import User
-from django.contrib.sites.shortcuts import get_current_site  # for email
-from django.urls import reverse  # for email
 from django.conf import settings
-from django.http import JsonResponse
 from rest_framework.views import APIView
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404, get_list_or_404
+from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from mail_templated import EmailMessage
 from django.core.mail import send_mail
-
 from .signals import wallet_updated_signal
 from .utils import EmailThread
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import GenericAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import ActivationResendSerializer
 import jwt
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.exceptions import AuthenticationFailed
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 
 
