@@ -248,14 +248,10 @@ class ActivationResend(generics.GenericAPIView):
 class WalletViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'put', 'options', 'head']
     permission_classes = [IsAuthenticated]
+    serializer_class = WalletSerializer
 
     def get_serializer_context(self):
         return {'user': self.request.user}
-
-    def get_serializer_class(self):
-        if self.action == 'me':
-            return WalletSerializer
-        return WalletSerializer
 
     def get_queryset(self):
         if self.action == 'me' and self.request.method == 'GET':

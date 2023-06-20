@@ -151,15 +151,15 @@ class CreateOrderSerializer(serializers.Serializer):
         user = self.context['user']
         cart = Cart.objects.filter(id=cart_id)
         if not cart.exists():
-            raise serializers.ValidationError({'سبد خرید': 'امکان ثبت سفارش وجود ندارد. سبد خرید مورد نظر یافت نشد.'})
+            raise serializers.ValidationError({'cart': 'امکان ثبت سفارش وجود ندارد. سبد خرید مورد نظر یافت نشد.'})
         cart = cart.first()
         if cart.items.count() == 0:
-            raise serializers.ValidationError({'سبد خرید': 'امکان ثبت سفارش وجود ندارد. سبد خرید شما خالی است.'})
+            raise serializers.ValidationError({'cart': 'امکان ثبت سفارش وجود ندارد. سبد خرید شما خالی است.'})
         payment_method = attrs['payment_method']
         if payment_method == Order.PAY_WALLET:
             if cart.total_price() > user.wallet.balance:
                 raise serializers.ValidationError(
-                    {'موحودی کیف پول': 'امکان ثبت سفارش وجود ندارد. موجودی کیف پول شما کافی نیست.'})
+                    {'wallet': 'امکان ثبت سفارش وجود ندارد. موجودی کیف پول شما کافی نیست.'})
         return attrs
 
     def save(self, **kwargs):

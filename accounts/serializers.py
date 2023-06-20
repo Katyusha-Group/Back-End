@@ -167,7 +167,7 @@ class WalletSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Wallet
-        fields = ['id', 'user', 'balance']
+        fields = ['user', 'balance']
 
 
 class ModifyWalletSerializer(serializers.Serializer):
