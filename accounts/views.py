@@ -276,7 +276,7 @@ class WalletViewSet(viewsets.ModelViewSet):
         serializer = ModifyWalletSerializer(data=request.data, context={'user_id': request.user.id})
         serializer.is_valid(raise_exception=True)
         wallet = serializer.update(self.request.user.wallet, serializer.validated_data)
-        wallet_updated_signal.send_robust(sender=Wallet, instance=wallet, amount=serializer.data['amount'])
+        wallet_updated_signal.send_robust(sender=Wallet, wallet=wallet, amount=serializer.data['amount'])
         return Response(status=status.HTTP_200_OK, data=WalletSerializer(wallet).data)
 
     @action(detail=False, methods=['GET'])

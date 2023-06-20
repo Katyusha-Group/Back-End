@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import uuid4
 
 from django.conf import settings
@@ -5,6 +6,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 from university.models import Course, Teacher, AllowedDepartment, CourseTimePlace, ExamTimePlace
+from utils import project_variables
 
 
 class ModelTracker(models.Model):
@@ -62,6 +64,12 @@ class Cart(models.Model):
     def __str__(self):
         return str(self.id) + ' : ' + str(self.created_at)
 
+    def total_price(self):
+        total = 0
+        for item in self.items.all():
+            total += item.get_item_price()
+        return total * project_variables.TAX + total
+
     class Meta:
         verbose_name = 'سبد خرید'
         verbose_name_plural = 'سبدهای خرید'
@@ -76,6 +84,16 @@ class CartItem(models.Model):
 
     def __str__(self):
         return str(self.cart) + ' : ' + str(self.course)
+
+    def get_item_price(self):
+        total_price = 0
+        if self.contain_email:
+            total_price += project_variables.EMAIL_PRICE
+        if self.contain_sms:
+            total_price += project_variables.SMS_PRICE
+        if self.contain_telegram:
+            total_price += project_variables.TELEGRAM_PRICE
+        return total_price
 
     class Meta:
         unique_together = [['cart', 'course']]
@@ -92,14 +110,30 @@ class Order(models.Model):
         (PAYMENT_STATUS_COMPLETE, 'موفق'),
         (PAYMENT_STATUS_FAILED, 'ناموفق')
     ]
+    PAY_ONLINE = 'O'
+    PAY_WALLET = 'W'
+    PAYMENT_METHOD_CHOICES = (
+        (PAY_ONLINE, 'پرداخت آنلاین'),
+        (PAY_WALLET, 'پرداخت از طریق کیف پول'),
+    )
 
     placed_at = models.DateTimeField(auto_now_add=True)
     payment_status = models.CharField(
-        max_length=1, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_STATUS_PENDING)
+        max_length=1, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_STATUS_PENDING
+    )
+    payment_method = models.CharField(
+        max_length=1, choices=PAYMENT_METHOD_CHOICES, default='O'
+    )
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='orders')
 
     def __str__(self):
         return str(self.id) + ' : ' + self.payment_status
+
+    def total_price(self):
+        total = 0
+        for item in self.items.all():
+            total += item.get_item_price()
+        return total * project_variables.TAX + total
 
     class Meta:
         verbose_name = 'سفارش'
@@ -118,6 +152,16 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return str(self.id) + ' : ' + str(self.order.id) + ' : ' + str(self.course_number) + '_' + self.class_gp
+
+    def get_item_price(self):
+        total_price = 0
+        if self.contain_email:
+            total_price += project_variables.EMAIL_PRICE
+        if self.contain_sms:
+            total_price += project_variables.SMS_PRICE
+        if self.contain_telegram:
+            total_price += project_variables.TELEGRAM_PRICE
+        return total_price
 
     class Meta:
         verbose_name = 'سفارش'

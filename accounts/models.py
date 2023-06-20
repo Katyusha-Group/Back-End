@@ -42,7 +42,7 @@ class Wallet(models.Model):
         if amount < 0:
             transaction_type = 'D'
         else:
-            transaction_type = 'C'
+            transaction_type = 'I'
         transaction_status = 'C'
         wallet_transaction = WalletTransaction.objects.create(transaction_type=transaction_type,
                                                               transaction_status=transaction_status,
@@ -54,7 +54,7 @@ class Wallet(models.Model):
 class WalletTransaction(models.Model):
     TRANSACTION_TYPE_CHOICES = (
         ('D', 'کاهش'),
-        ('C', 'افزایش'),
+        ('I', 'افزایش'),
     )
 
     TRANSACTION_STATUS_CHOICES = (

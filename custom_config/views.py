@@ -64,7 +64,8 @@ class OrderViewSet(ModelViewSet):
         return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
-        serializer = CreateOrderSerializer(data=request.data, context={'user_id': request.user.id})
+        serializer = CreateOrderSerializer(data=request.data,
+                                           context={'user_id': request.user.id, 'user': request.user})
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
         serializer = OrderSerializer(order)
@@ -90,7 +91,7 @@ class CourseCartOrderInfoRetrieveViewSet(ModelViewSet):
 
     def get_serializer_context(self):
         return {'user': self.request.user, 'cart_id': self.request.query_params.get('cart_id', None), }
-    
+
     def get_queryset(self):
         complete_course_number = self.request.query_params.get('complete_course_number', None)
         if complete_course_number is None:
