@@ -161,11 +161,14 @@ class GolestanCrawler(SeleniumCrawler):
             cols = row.find_all('td')
             for i in range(len(cols)):
                 if i == 8:
-                    cols[i] = cols[i].contents
-            cols = [ele.contents.strip() for ele in cols]
+                    temp = cols[i].contents
+                    temp = [excel_handler.make_name_correct(temp[j].strip()) for j in range(0, len(temp), 2)]
+                    cols[i] = str.join('-', temp)
+                else:
+                    cols[i] = cols[i].text.strip()
+                    if i == 2:
+                        cols[i] = cols[i].replace('/', '.')
             if cols:
-                cols[8] = excel_handler.make_name_correct(cols[8])
-                cols[2] = cols[2].replace('/', '.')
                 courses.append(cols)
         return courses
 
@@ -201,3 +204,6 @@ class GolestanCrawler(SeleniumCrawler):
         if self.year == project_variables.CURRENT_SEMESTER:
             ExcelHandler().create_excel(data=data,
                                         file_name=project_variables.NEW_GOLESTAN_EXCEL_FILE_NAME + '_' + str(self.year))
+        else:
+            ExcelHandler().create_excel(data=data,
+                                        file_name=project_variables.GOLESTAN_EXCEL_FILE_NAME + '_' + str(self.year))

@@ -50,14 +50,18 @@ class ExcelHandler:
     def make_name_correct(name: str):
         if name.isspace() or name == '':
             return name
-        if 'سيد' in name:
-            if 'سيد ' not in name:
-                name = name.replace('سيد', 'سيد ')
-            parts = name.split()
-            name = parts[-2] + ' ' + parts[-1] + ' '.join(parts[:-2])
+        if 'سيده' in name:
+            parts = name.split('سيده')
+            name = 'سيده ' + parts[1].strip() + ' ' + parts[0].strip()
+        elif 'سيد' in name:
+            parts = name.split('سيد')
+            name = 'سيد ' + parts[1].strip() + ' ' + parts[0].strip()
         else:
             parts = name.split()
-            name = parts[-1] + ' ' + ' '.join(parts[:-1])
+            if 'سادات' in name:
+                name = parts[-2] + ' ' + parts[-1] + ' ' + ' '.join(parts[:-2])
+            else:
+                name = parts[-1] + ' ' + ' '.join(parts[:-1])
         return name
 
     def create_path(self):
