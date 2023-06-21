@@ -84,8 +84,8 @@ class GolestanCrawler(SeleniumCrawler):
         return captcha_text
 
     def verify_login(self) -> bool:
-        time.sleep(1)
-        logged_in = self.driver.find_elements(by=By.ID, value='_mt_usr')
+        time.sleep(2)
+        logged_in = self.driver.find_elements(by=By.ID, value='_mt_bou')
         return len(logged_in) > 0
 
     def login(self) -> bool:
@@ -111,8 +111,12 @@ class GolestanCrawler(SeleniumCrawler):
         time.sleep(3)
         i = 0
         next_captcha = 'a'
-        is_logged_in = False
-        while not is_logged_in and i < 5:
+        pre_page_title = self.driver.title
+        curr_page_title = self.driver.title
+        while i < 5:
+            if pre_page_title != curr_page_title:
+                return True
+            pre_page_title = curr_page_title
             curr_captcha = next_captcha
             next_captcha = self.get_captcha()
             time.sleep(1)
@@ -121,9 +125,10 @@ class GolestanCrawler(SeleniumCrawler):
                 self.driver.find_element(by=By.XPATH, value='//*[@id="dsetting"]/label[5]').click()
             else:
                 self.click_on_button("btnLog")
-            is_logged_in = self.verify_login()
+            time.sleep(2)
+            curr_page_title = self.driver.title
             i += 1
-        return is_logged_in
+        return False
 
     def go_to_102(self):
         self.switch_to_inner_frames(self.get_form_body(2))
@@ -154,7 +159,10 @@ class GolestanCrawler(SeleniumCrawler):
         rows = soup.find_all('tr')
         for row in rows:
             cols = row.find_all('td')
-            cols = [ele.text.strip() for ele in cols]
+            for i in range(len(cols)):
+                if i == 8:
+                    cols[i] = cols[i].contents
+            cols = [ele.contents.strip() for ele in cols]
             if cols:
                 cols[8] = excel_handler.make_name_correct(cols[8])
                 cols[2] = cols[2].replace('/', '.')
