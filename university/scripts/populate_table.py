@@ -74,7 +74,13 @@ def populate_teacher(golestan_data, teachers_data, ignore_conflicts=True):
     if golestan_data.empty or teachers_data.empty:
         return
     df = pd.DataFrame(golestan_data[project_variables.TEACHER].unique())
-    names = [name for name in df.iloc[:, 0].values]
+    teacher_names = [name for name in df.iloc[:, 0].values]
+    names = []
+    for name in teacher_names:
+        row_names = name.split('-')
+        for row_name in row_names:
+            names.append(row_name)
+    names = list(set(names))
     names = pd.DataFrame({'name': names})
     df = pd.merge(names, teachers_data, on='name', how='left').values
     Teacher.objects.bulk_create([Teacher(name=row[0],
@@ -105,12 +111,11 @@ def populate_course(data, ignore_conflicts=True, population_mode=project_variabl
     if data.empty:
         return
     df = pd.DataFrame(data.iloc[:, [0, 5, 9, 10, 11, 12, 13, 14, 15, 19, 22, 23, 16]]).values
-    if population_mode == project_variables.POPULATION_INITIAL or\
+    if population_mode == project_variables.POPULATION_INITIAL or \
             population_mode == project_variables.POPULATION_COURSE_UPDATE:
-        Course.objects.bulk_create(
+        courses = Course.objects.bulk_create(
             [Course(semester_id=row[0],
                     base_course_id=clean_data.get_course_code(entry=row[1])[0],
-                    teacher=Teacher.objects.get(name=row[6]),
                     sex=clean_data.determine_sex(sex=row[5]),
                     presentation_type=clean_data.determine_presentation_type(
                         presentation_type=row[9]),
@@ -120,18 +125,20 @@ def populate_course(data, ignore_conflicts=True, population_mode=project_variabl
                     waiting_count=row[4], description=row[11])
              for row in df],
             ignore_conflicts=ignore_conflicts)
+        for i in range(len(courses)):
+            courses[i].teachers.set(Teacher.objects.filter(name__in=df[i][6].split('-')))
     else:
         for row in df:
-            Course.objects.create(semester_id=row[0],
-                                  base_course_id=clean_data.get_course_code(entry=row[1])[0],
-                                  teacher=Teacher.objects.get(name=row[6]),
-                                  sex=clean_data.determine_sex(sex=row[5]),
-                                  presentation_type=clean_data.determine_presentation_type(
-                                      presentation_type=row[9]),
-                                  guest_able=clean_data.determine_true_false(entry=row[10]),
-                                  class_gp=clean_data.get_course_code(entry=row[1])[1],
-                                  capacity=row[2], registered_count=row[3], registration_limit=row[12],
-                                  waiting_count=row[4], description=row[11])
+            course = Course.objects.create(semester_id=row[0],
+                                           base_course_id=clean_data.get_course_code(entry=row[1])[0],
+                                           sex=clean_data.determine_sex(sex=row[5]),
+                                           presentation_type=clean_data.determine_presentation_type(
+                                               presentation_type=row[9]),
+                                           guest_able=clean_data.determine_true_false(entry=row[10]),
+                                           class_gp=clean_data.get_course_code(entry=row[1])[1],
+                                           capacity=row[2], registered_count=row[3], registration_limit=row[12],
+                                           waiting_count=row[4], description=row[11])
+            course.teachers.set(Teacher.objects.filter(name__in=row[6].split('-')))
 
 
 def populate_course_class_time(data, ignore_conflicts=True, population_mode=project_variables.POPULATION_INITIAL):
@@ -139,7 +146,7 @@ def populate_course_class_time(data, ignore_conflicts=True, population_mode=proj
         return
     class_times = get_data.get_data_from_course_time(data=data)
     if class_times:
-        if population_mode == project_variables.POPULATION_INITIAL or\
+        if population_mode == project_variables.POPULATION_INITIAL or \
                 population_mode == project_variables.POPULATION_COURSE_CREATE:
             CourseTimePlace.objects.bulk_create(class_times, ignore_conflicts=ignore_conflicts)
         else:

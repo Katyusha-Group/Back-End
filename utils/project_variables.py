@@ -9,6 +9,7 @@ NEW_GOLESTAN_EXCEL_FILE = 'new_golestan_courses.xlsx'
 DATA_DIRECTORY_NAME = 'data'
 DATA_DIRECTORY = './data/'
 TEACHERS_EXCEL_FILE = 'teachers_info.xlsx'
+TEACHERS_EXCEL_NAME = 'teachers_info'
 
 # columns:
 SEMESTER = 'ترم ارائه درس'

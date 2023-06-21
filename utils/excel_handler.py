@@ -11,7 +11,7 @@ from utils import project_variables
 
 
 class ExcelHandler:
-    DIR = "../data/"
+    DIR = "./data/"
 
     def __init__(self):
         self.create_path()
@@ -34,6 +34,7 @@ class ExcelHandler:
         print("Excel file created successfully")
 
     def replace_arabian_with_persian(self, file_name):
+        print(os.getcwd())
         path = self.get_path(file_name)
         workbook = openpyxl.load_workbook(path)
         worksheet = workbook.active
@@ -44,6 +45,24 @@ class ExcelHandler:
                         cell.value = characters.ar_to_fa(cell.value)
                         if not cell.value.isalpha():
                             cell.value = digits.fa_to_en(cell.value)
+        workbook.save(path)
+
+    def fix_lms_teachers_name(self):
+        path = self.get_path(project_variables.TEACHERS_EXCEL_NAME)
+        workbook = openpyxl.load_workbook(path)
+        worksheet = workbook.active
+        for row in worksheet.iter_rows():
+            for cell in row:
+                if cell.value is not None:
+                    if type(cell.value) == str:
+                        teacher_name = cell.value
+                        if 'سیده' in teacher_name:
+                            teacher_names = teacher_name.split('سیده')
+                            teacher_name = 'سیده ' + teacher_names[1].strip()
+                        elif 'سید' in teacher_name:
+                            teacher_names = teacher_name.split('سید')
+                            teacher_name = 'سید ' + teacher_names[1].strip()
+                        cell.value = teacher_name
         workbook.save(path)
 
     @staticmethod

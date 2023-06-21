@@ -123,8 +123,7 @@ class Course(models.Model):
     presentation_type = models.CharField(choices=PRESENTATION_TYPE_CHOICES, max_length=1, verbose_name='نحوه ارائه درس')
     base_course = models.ForeignKey(to=BaseCourse, on_delete=models.CASCADE, verbose_name='درس پایه',
                                     related_name='courses')
-    teacher = models.ForeignKey(to=Teacher, on_delete=models.DO_NOTHING, verbose_name='استاد درس',
-                                related_name='courses')
+    teachers = models.ManyToManyField(to=Teacher, verbose_name='اساتید', related_name='courses')
     students = models.ManyToManyField(to=settings.AUTH_USER_MODEL, related_name='courses')
     semester = models.ForeignKey(to=Semester, on_delete=models.CASCADE, verbose_name='ترم ارائه',
                                  related_name='courses')
