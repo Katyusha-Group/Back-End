@@ -86,6 +86,8 @@ EMAIL_PRICE = 1000
 SMS_PRICE = 2000
 TELEGRAM_PRICE = 1000
 
+DOMAIN = 'https://www.katyushaiust.ir'
+
 # General Departments
 GENERAL_DEPARTMENTS_ID = [
     14,

@@ -60,6 +60,11 @@ class SemesterSerializer(serializers.ModelSerializer):
 
 
 class TeacherSerializer(serializers.ModelSerializer):
+    teacher_image = serializers.SerializerMethodField(read_only=True)
+
+    def get_teacher_image(self, obj: Teacher):
+        return project_variables.DOMAIN + obj.teacher_image.url if obj.teacher_image else None
+
     class Meta:
         model = Teacher
         fields = ['id', 'name', 'teacher_image']
