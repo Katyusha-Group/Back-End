@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.hashers import make_password
 from rest_framework import generics, viewsets
 from rest_framework.decorators import action
+from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from .serializers import *
 from .serializers import LoginSerializer
@@ -240,7 +241,7 @@ class ActivationResend(generics.GenericAPIView):
         return str(refresh.access_token)
 
 
-class WalletViewSet(viewsets.ModelViewSet):
+class WalletViewSet(viewsets.GenericViewSet, ListModelMixin):
     http_method_names = ['get', 'put', 'options', 'head']
     permission_classes = [IsAuthenticated]
     serializer_class = WalletSerializer
