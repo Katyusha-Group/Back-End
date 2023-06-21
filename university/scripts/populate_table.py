@@ -22,6 +22,7 @@ def populate_all_tables(golestan_data, teachers_data, population_mode=project_va
         populate_course_class_time(golestan_data, False, population_mode)
         populate_exam_time(golestan_data, False, population_mode)
         populate_allowed_departments(golestan_data, False, population_mode)
+        delete_additional_data()
 
 
 def populate_semester(data, ignore_conflicts=True):
@@ -175,3 +176,7 @@ def populate_allowed_departments(data, ignore_conflicts=True, population_mode=pr
             for allowed_department in allowed_departments:
                 AllowedDepartment.objects.create(department=allowed_department.department,
                                                  course=allowed_department.course)
+
+
+def delete_additional_data():
+    Department.objects.filter(department_number=25).first().delete()
