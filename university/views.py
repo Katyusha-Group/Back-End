@@ -204,6 +204,10 @@ class CourseGroupListView(ModelViewSet):
                               'students')
             .filter(base_course_id=base_course_id, semester_id=project_variables.CURRENT_SEMESTER,
                     sex__in=[user.gender, 'B'])
+            .annotate(empty_capacity=ExpressionWrapper(
+                F('capacity') - F('registered_count'),
+                output_field=IntegerField()
+            ))
             .annotate(student_count=Count('students'))
             .annotate(
                 color_intensity_percentage_first=ExpressionWrapper(
@@ -211,7 +215,7 @@ class CourseGroupListView(ModelViewSet):
                             F('capacity') + F('waiting_count') + (1.2 * F('student_count')))),
                     output_field=FloatField())
             )
-            .order_by('color_intensity_percentage_first')
+            .order_by('-empty_capacity', 'color_intensity_percentage_first')
             .all()
         )
         if courses.exists():
