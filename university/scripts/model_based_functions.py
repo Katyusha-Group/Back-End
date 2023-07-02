@@ -19,7 +19,7 @@ def get_color_intensity_percentage(obj: Course):
 
     color_intensity_percentage = ((((obj.capacity - obj.registered_count) - obj.waiting_count) * 100) / (
             obj.capacity + obj.waiting_count + (1.2 * obj.students.count())))
-    if color_intensity_percentage < 0:
+    if color_intensity_percentage <= 0:
         return 0
     return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
 
