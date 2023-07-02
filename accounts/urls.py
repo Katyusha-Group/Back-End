@@ -22,4 +22,5 @@ urlpatterns = [
       path('create/', views.CustomTokenObtainPairView.as_view(), name='create-token'),
       path('refresh/', TokenRefreshView.as_view(), name='refresh-token'),
       path('verify/', TokenVerifyView.as_view(), name='verify-token'),
+      path('reset-password/', views.ForgotPasswordView.as_view())
 ]

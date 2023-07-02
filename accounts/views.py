@@ -273,3 +273,38 @@ class WalletViewSet(viewsets.ModelViewSet):
         transactions = WalletTransaction.objects.filter(user=self.request.user)
         serializer = WalletTransactionSerializer(transactions, many=True)
         return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+
+class ForgotPasswordView(APIView):
+    authentication_classes = []
+    permission_classes = []
+    serializer_class = ForgotPasswordSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+
+        # Check if the maximum of emails has been reached
+        # if self.exceeds_email_limit(email):
+        #     return Response('detail': 'You have made more than 3 attempts to recover your forgotten password.Please contact support.')
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'detail': 'User not found'}, status=404)
+
+        verification_code = str(random.randint(1000, 9999))
+
+
+        return Response({'detail': 'Password reset link sent'})
+
+
+    # def exceeds_email_limit(self, email):
+    #     # Implement your logic to check if the email limit has been reached
+    #     # You can query a database or use any other method to track the count
+    #     # Return True if the limit has been exceeded, otherwise False
+    #     # Example code:
+    #     email_count = EmailTrackingModel.objects.filter(email=email).count()
+    #     return email_count >= 3
+
