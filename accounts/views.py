@@ -6,6 +6,8 @@ from rest_framework import generics, viewsets
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
+
+from utils import email_handler
 from .serializers import *
 from .serializers import LoginSerializer
 from accounts.models import User
@@ -17,7 +19,6 @@ from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from mail_templated import EmailMessage
-from django.core.mail import send_mail
 from .signals import wallet_updated_signal
 from .utils import EmailThread
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -57,13 +58,17 @@ class SignUpView(APIView):
             password=make_password(validated_data['password1']),
             verification_code=verification_code,
         )
+
         token = self.get_token_for_user(user)
-        #
-        subject = 'Verify your email'
-        message = f'Your verification code is {verification_code}. Please enter this code in the verification page to complete your registration.'
-        from_email = 'noreply@example.com'
-        recipient_list = [user.email]
-        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+        subject = 'تایید ایمیل ثبت نام'
+        message = 'سلام! به کاتیوشا خوش آمدید.\n'
+        message += 'با تشکر از ثبت‌نام شما در کاتیوشا، لطفاً برای تایید ایمیل خود و فعال‌سازی حساب کاربری‌تان، کد تایید زیر را در سایت وارد کنید:\n'
+        message += f'{verification_code}\n'
+        message += 'با تشکر،\n'
+        message += 'تیم کاتیوشا'
+        email_handler.send_verification_message(subject=subject,
+                                                recipient_list=[user.email],
+                                                verification_token=verification_code)
 
         return Response({
             "user": {"department": user.department.name, "email": email,
