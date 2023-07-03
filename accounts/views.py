@@ -77,7 +77,6 @@ class SignUpView(APIView):
             "code": verification_code,
             "url": f'http://katyushaiust.ir/accounts/activation-confirm/{token}',
             "token": token,
-
         }, status=201)
 
     def get_token_for_user(self, user):
