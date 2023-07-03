@@ -2,6 +2,7 @@ from decimal import Decimal
 
 CURRENT_SEMESTER = 4012
 GOLESTAN_EXCEL_FILE_NAME = 'golestan_courses'
+GOLESTAN_EXCEL_COMPLETE_FILE_NAME = 'golestan_courses.xlsx'
 NEW_GOLESTAN_EXCEL_FILE_NAME = 'new_golestan_courses'
 ALL_GOLESTAN_EXCEL_FILE = 'all_golestan_courses.xlsx'
 ALL_GOLESTAN_COURSES = 'all_golestan_courses'

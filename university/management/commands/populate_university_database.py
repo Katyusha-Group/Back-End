@@ -2,7 +2,6 @@ import os
 import time
 
 import pandas as pd
-from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
@@ -12,10 +11,10 @@ from utils.get_data_path import get_teachers_data, get_path_to_data_directory
 
 
 class Command(BaseCommand):
-    help = "Populates university models' database, with golestan's data and LMS teachers' data."
+    help = "Populates university models' database, with Golestan's data and LMS teachers' data."
 
     def add_arguments(self, parser):
-        parser.add_argument('file_name', type=str, default=project_variables.GOLESTAN_EXCEL_FILE_NAME,
+        parser.add_argument('file_name', type=str, default=project_variables.GOLESTAN_EXCEL_COMPLETE_FILE_NAME,
                             help='Name of excel file.')
 
     def handle(self, *args, **options):
