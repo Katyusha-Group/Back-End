@@ -215,7 +215,14 @@ class CourseGroupListView(ModelViewSet):
                             F('capacity') + F('waiting_count') + (1.2 * F('student_count')))),
                     output_field=FloatField())
             )
-            .order_by('-empty_capacity', 'color_intensity_percentage_first')
+            .annotate(
+                capacity_is_less_zero=Case(
+                    When(empty_capacity__lte=0, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                )
+            )
+            .order_by('capacity_is_less_zero', 'empty_capacity', 'color_intensity_percentage_first')
             .all()
         )
         if courses.exists():
