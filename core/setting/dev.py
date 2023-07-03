@@ -16,7 +16,7 @@ DEBUG = True
 
 SECRET_KEY = 'django-insecure-v&!uiuu&^nb0rn@2e0u3-&qnt0g8@f+wt02z3du7@21t0klum-'
 
-ALLOWED_HOSTS = ['katyushaiust.ir', 'www.katyushaiust.ir', '127.0.0.1']
+ALLOWED_HOSTS = ['www.katyushaiust.ir', 'katyushaiust.ir', '127.0.0.1']
 
 # SITE_ID = 2
 

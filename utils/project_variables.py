@@ -2,6 +2,7 @@ from decimal import Decimal
 
 CURRENT_SEMESTER = 4012
 GOLESTAN_EXCEL_FILE_NAME = 'golestan_courses'
+GOLESTAN_EXCEL_COMPLETE_FILE_NAME = 'golestan_courses.xlsx'
 NEW_GOLESTAN_EXCEL_FILE_NAME = 'new_golestan_courses'
 ALL_GOLESTAN_EXCEL_FILE = 'all_golestan_courses.xlsx'
 ALL_GOLESTAN_COURSES = 'all_golestan_courses'
@@ -9,6 +10,7 @@ NEW_GOLESTAN_EXCEL_FILE = 'new_golestan_courses.xlsx'
 DATA_DIRECTORY_NAME = 'data'
 DATA_DIRECTORY = './data/'
 TEACHERS_EXCEL_FILE = 'teachers_info.xlsx'
+TEACHERS_EXCEL_NAME = 'teachers_info'
 
 # columns:
 SEMESTER = 'ترم ارائه درس'
@@ -86,6 +88,8 @@ EMAIL_PRICE = 1000
 SMS_PRICE = 2000
 TELEGRAM_PRICE = 1000
 
+DOMAIN = 'https://www.katyushaiust.ir'
+
 # General Departments
 GENERAL_DEPARTMENTS_ID = [
     14,
@@ -94,6 +98,28 @@ GENERAL_DEPARTMENTS_ID = [
     27,
     28,
     90,
+]
+
+ADDITIONAL_DEPARTMENTS_ID = [
+    34,  # Pardis
+    24,  # Amoozesh Electronic
+    25,  # Damavand
+]
+
+TEACHERS_NAME_INCORRECT_TO_CORRECT = {
+    'آموزشی اساتید گروه': 'اساتید گروه آموزشی',
+}
+
+TEACHERS_NAME_INCORRECT_SUBSTRING = [
+    'اله',
+    'الله',
+    'الدین',
+    'سا',
+    'آ',
+]
+
+ADDITIONAL_TEACHERS_NAME = [
+    '0 0',
 ]
 
 course_field_mapper_fa_to_en = {
