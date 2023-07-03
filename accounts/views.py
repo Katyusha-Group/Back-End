@@ -1,5 +1,4 @@
 import random
-
 from rest_framework import generics, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -285,26 +284,114 @@ class ForgotPasswordView(APIView):
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
 
-        # Check if the maximum of emails has been reached
-        # if self.exceeds_email_limit(email):
-        #     return Response('detail': 'You have made more than 3 attempts to recover your forgotten password.Please contact support.')
-
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response({'detail': 'User not found'}, status=404)
 
+        if user.count_of_verification_code_sent >= 3:
+            return Response({'detail': 'You have made more than 3 attempts to recover your forgotten password.Please contact support.'}, status=429)
+
         verification_code = str(random.randint(1000, 9999))
 
+        token = self.get_token_for_user(user)
 
-        return Response({'detail': 'Password reset link sent'})
+        user.verification_code = verification_code
+        user.count_of_verification_code_sent  = user.count_of_verification_code_sent + 1
+        user.save()
+
+        return Response({'detail': 'Code ',
+                         'link' : f'http://katyushaiust.ir/accounts/code_verification_view/{token}/'
+                         })
+
+    def get_token_for_user(self, user):
+        refresh = RefreshToken.for_user(user)
+        return str(refresh.access_token)
 
 
-    # def exceeds_email_limit(self, email):
-    #     # Implement your logic to check if the email limit has been reached
-    #     # You can query a database or use any other method to track the count
-    #     # Return True if the limit has been exceeded, otherwise False
-    #     # Example code:
-    #     email_count = EmailTrackingModel.objects.filter(email=email).count()
-    #     return email_count >= 3
+class PasswordChangeAPIView(APIView):
+    authentication_classes = []
+    permission_classes = []
+    serializer_class = ResetPasswordSerializer
 
+    def post(self, request, token):
+        serializer = ResetPasswordSerializer(data=request.data)
+        try:
+            self.is_valid_token(token)
+        except:
+            return Response({'detail': 'URL is not valid.'})
+
+        user = self.get_user_from_token(token)
+
+
+        if serializer.is_valid():
+            # user = request.user
+            password_1 = serializer.validated_data['new_password']
+
+            user.set_password(password_1)
+            user.save()
+
+            return Response({'detail': 'Password successfully changed.'}, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @staticmethod
+    def is_valid_token(token):
+
+        # Decode the token with the secret key
+        decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+
+    @staticmethod
+    def get_user_from_token(token):
+        # decode the token
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        # get the user
+        user = User.objects.filter(id=payload['user_id']).first()
+        return user
+
+class CodeVerificationView(APIView):
+    authentication_classes = []
+    permission_classes = []
+    serializer_class = CodeVerificationSerializer
+
+    def post(self, request, token):
+        try:
+            self.is_valid_token(token)
+        except:
+            return Response({'detail': 'URL is not valid.'})
+
+        serializer = CodeVerificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = self.get_user_from_token(token)
+
+        if request.data.get('verification_code') != user.verification_code:
+            return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_obj = get_object_or_404(User, email=user.email)
+        user.verification_code = None
+        user.delete()
+        user_obj.save()
+
+        return Response({'message': 'code is valid', 'link':f'http://katyushaiust.ir/accounts/change-password/{token}/'}, status=status.HTTP_200_OK)
+
+    @staticmethod
+    def get_user_from_token(token):
+        # decode the token
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        # get the user
+        user = User.objects.filter(id=payload['user_id']).first()
+        return user
+
+    @staticmethod
+    def is_valid_token(token):
+
+        # Decode the token with the secret key
+        decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+
+    # def get(self, request, token):
+    #     try:
+    #         decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+    #     except:
+    #         return Response({'message': 'Invalid URL'}, status=status.HTTP_400_BAD_REQUEST)
+    #     return Response({'message': 'Please enter code verification'}, status=status.HTTP_200_OK)
+    #

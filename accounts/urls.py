@@ -10,6 +10,9 @@ router = routers.DefaultRouter()
 router.register(r'wallet', viewset=views.WalletViewSet, basename='wallet')
 
 
+
+
+
 urlpatterns = [
       path('', include(router.urls)),
       path('signup/', views.SignUpView.as_view(), name='signup'),
@@ -22,5 +25,7 @@ urlpatterns = [
       path('create/', views.CustomTokenObtainPairView.as_view(), name='create-token'),
       path('refresh/', TokenRefreshView.as_view(), name='refresh-token'),
       path('verify/', TokenVerifyView.as_view(), name='verify-token'),
-      path('reset-password/', views.ForgotPasswordView.as_view())
+      path('reset-password/', views.ForgotPasswordView.as_view()),
+      path('change-password/<str:token>/', views.PasswordChangeAPIView.as_view()),
+      path('code_verification_view/<str:token>/', views.CodeVerificationView.as_view())
 ]
