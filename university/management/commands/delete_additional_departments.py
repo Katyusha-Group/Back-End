@@ -1,8 +1,4 @@
-import os
 import time
-
-import pandas as pd
-from pathlib import Path
 
 from django.core.management.base import BaseCommand
 

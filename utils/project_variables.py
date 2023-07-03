@@ -105,6 +105,22 @@ ADDITIONAL_DEPARTMENTS_ID = [
     25,  # Damavand
 ]
 
+TEACHERS_NAME_INCORRECT_TO_CORRECT = {
+    'آموزشی اساتید گروه': 'اساتید گروه آموزشی',
+}
+
+TEACHERS_NAME_INCORRECT_SUBSTRING = [
+    'اله',
+    'الله',
+    'الدین',
+    'سا',
+    'آ',
+]
+
+ADDITIONAL_TEACHERS_NAME = [
+    '0 0',
+]
+
 course_field_mapper_fa_to_en = {
     CAPACITY: 'capacity',
     REGISTERED_COUNT: 'registered_count',
