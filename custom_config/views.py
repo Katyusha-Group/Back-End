@@ -112,7 +112,7 @@ class GetPricesView(APIView):
             'S': project_variables.SMS_PRICE,
             'E': project_variables.EMAIL_PRICE,
         }
-        return Response(data)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class BaseVoteReviewViewSet(ModelViewSet):
