@@ -300,7 +300,13 @@ class ForgotPasswordView(APIView):
         user.count_of_verification_code_sent  = user.count_of_verification_code_sent + 1
         user.save()
 
-        return Response({'detail': 'Code ',
+        subject = 'Verify your email'
+        message = f'Your verification code is {verification_code}. Please enter this code in the verification page to complete your registration.'
+        from_email = 'noreply@example.com'
+        recipient_list = [user.email]
+        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+
+        return Response({'detail': 'Code Sent',
                          'link' : f'http://katyushaiust.ir/accounts/code_verification_view/{token}/'
                          })
 
