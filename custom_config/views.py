@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
@@ -100,6 +101,18 @@ class CourseCartOrderInfoRetrieveViewSet(ModelViewSet):
         if course is None:
             raise ValidationError('Course not found.')
         return Course.objects.filter(id=course.id).prefetch_related('order_items__order', 'cart_items')
+
+
+class GetPricesView(APIView):
+    http_method_names = ['get', 'options', 'head']
+
+    def get(self, request, *args, **kwargs):
+        data = {
+            'T': project_variables.TELEGRAM_PRICE,
+            'S': project_variables.SMS_PRICE,
+            'E': project_variables.EMAIL_PRICE,
+        }
+        return Response(data)
 
 
 class BaseVoteReviewViewSet(ModelViewSet):

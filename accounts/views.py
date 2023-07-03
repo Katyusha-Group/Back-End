@@ -2,7 +2,6 @@ import random
 from datetime import datetime, timedelta
 
 from django.contrib.auth.hashers import make_password
-from django.core.mail import send_mail
 from rest_framework import generics, viewsets
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
