@@ -184,3 +184,32 @@ class WalletTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = WalletTransaction
         fields = ['amount', 'transaction_type', 'ref_code', 'applied_at']
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(write_only=True, required=True)
+    confirm_password = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        new_password = attrs.get('new_password')
+        confirm_password = attrs.get('confirm_password')
+
+        if new_password != confirm_password:
+            raise serializers.ValidationError("New password and confirm password do not match.")
+
+
+        # Validate password complexity using Django's built-in password validators
+        try:
+            validate_password(new_password)
+        except serializers.ValidationError as validation_error:
+            raise serializers.ValidationError({"new_password": validation_error})
+
+        return attrs
+
+
+class CodeVerificationSerializer(serializers.Serializer):
+    verification_code = serializers.CharField(max_length=4, min_length=4)
