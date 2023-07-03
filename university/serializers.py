@@ -344,9 +344,6 @@ class TeacherTimeLineSerializer(serializers.ModelSerializer):
                     new_data)
         DATA_KEY = 'data'
         for semester in representation[DATA_KEY]:
-            total_capacity = 0
-            total_registered_count = 0
-            total_count = 0
             for course in representation[DATA_KEY][semester]['courses']:
                 representation[DATA_KEY][semester]['courses'][course]['course_total_capacity'] = sum(
                     [item['capacity'] for item in representation[DATA_KEY][semester]['courses'][course]['detail']]
@@ -360,15 +357,6 @@ class TeacherTimeLineSerializer(serializers.ModelSerializer):
                      representation[DATA_KEY][semester]['courses'][course]['course_total_capacity'] * 100) // 1
                 representation[DATA_KEY][semester]['courses'][course]['course_total_classes'] = len(
                     representation[DATA_KEY][semester]['courses'][course])
-                total_capacity += representation[DATA_KEY][semester]['courses'][course]['course_total_capacity']
-                total_registered_count += representation[DATA_KEY][semester]['courses'][course][
-                    'course_total_registered_count']
-                total_count += representation[DATA_KEY][semester]['courses'][course]['course_total_classes']
-            representation[DATA_KEY][semester]['courses']['total_capacity'] = total_capacity
-            representation[DATA_KEY][semester]['courses']['total_registered_count'] = total_registered_count
-            representation[DATA_KEY][semester]['courses']['popularity'] = \
-                (total_registered_count / total_capacity * 100) // 1
-            representation[DATA_KEY][semester]['courses']['total_classes'] = total_count
         return representation
 
     courses = CourseWithoutTeacherTimeLineSerializer(many=True, read_only=True)
