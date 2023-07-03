@@ -99,6 +99,12 @@ GENERAL_DEPARTMENTS_ID = [
     90,
 ]
 
+ADDITIONAL_DEPARTMENTS_ID = [
+    34,  # Pardis
+    24,  # Amoozesh Electronic
+    25,  # Damavand
+]
+
 course_field_mapper_fa_to_en = {
     CAPACITY: 'capacity',
     REGISTERED_COUNT: 'registered_count',
