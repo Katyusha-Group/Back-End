@@ -2,6 +2,7 @@ import random
 from datetime import datetime, timedelta
 
 from django.contrib.auth.hashers import make_password
+from django.core.mail import send_mail
 from rest_framework import generics, viewsets
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
@@ -298,24 +299,25 @@ class ForgotPasswordView(APIView):
             return Response({'detail': 'User not found'}, status=404)
 
         if user.count_of_verification_code_sent >= 3:
-            return Response({'detail': 'You have made more than 3 attempts to recover your forgotten password.Please contact support.'}, status=429)
+            return Response({
+                'detail': 'You have made more than 3 attempts to recover your forgotten password.Please contact support.'},
+                status=429)
 
         verification_code = str(random.randint(1000, 9999))
 
         token = self.get_token_for_user(user)
 
         user.verification_code = verification_code
-        user.count_of_verification_code_sent  = user.count_of_verification_code_sent + 1
+        user.count_of_verification_code_sent = user.count_of_verification_code_sent + 1
         user.save()
 
-        subject = 'Verify your email'
-        message = f'Your verification code is {verification_code}. Please enter this code in the verification page to complete your registration.'
-        from_email = 'noreply@example.com'
-        recipient_list = [user.email]
-        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+        subject = 'بازیابی رمز عبور'
+        email_handler.send_forget_password_verification_message(subject=subject,
+                                                                verification_token=verification_code,
+                                                                recipient_list=[user.email])
 
         return Response({'detail': 'Code Sent',
-                         'link' : f'http://katyushaiust.ir/accounts/code_verification_view/{token}/'
+                         'link': f'http://katyushaiust.ir/accounts/code_verification_view/{token}/'
                          })
 
     def get_token_for_user(self, user):
@@ -336,7 +338,6 @@ class PasswordChangeAPIView(APIView):
             return Response({'detail': 'URL is not valid.'})
 
         user = self.get_user_from_token(token)
-
 
         if serializer.is_valid():
             # user = request.user
@@ -363,6 +364,7 @@ class PasswordChangeAPIView(APIView):
         user = User.objects.filter(id=payload['user_id']).first()
         return user
 
+
 class CodeVerificationView(APIView):
     authentication_classes = []
     permission_classes = []
@@ -386,7 +388,9 @@ class CodeVerificationView(APIView):
         user.delete()
         user_obj.save()
 
-        return Response({'message': 'code is valid', 'link':f'http://katyushaiust.ir/accounts/change-password/{token}/'}, status=status.HTTP_200_OK)
+        return Response(
+            {'message': 'code is valid', 'link': f'http://katyushaiust.ir/accounts/change-password/{token}/'},
+            status=status.HTTP_200_OK)
 
     @staticmethod
     def get_user_from_token(token):

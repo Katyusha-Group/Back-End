@@ -10,3 +10,11 @@ def send_verification_message(subject, recipient_list, verification_token):
     }
     html_message = render_to_string('activation_template.html', context)
     send_mail(subject, "", EMAIL_HOST, recipient_list, html_message=html_message)
+
+
+def send_forget_password_verification_message(subject, recipient_list, verification_token):
+    context = {
+        'email_verification_token': verification_token,
+    }
+    html_message = render_to_string('forget_password.html', context)
+    send_mail(subject, "", EMAIL_HOST, recipient_list, html_message=html_message)
