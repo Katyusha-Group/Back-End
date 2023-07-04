@@ -69,8 +69,7 @@ class SignUpView(APIView):
                 gender=validated_data['gender'],
                 password=make_password(validated_data['password1']),
                 verification_code=verification_code,
-                registration_tries=1,
-                last_registration_sent=datetime.now(),
+                verification_tries_count=1,
                 last_verification_sent=datetime.now(),
             )
 
