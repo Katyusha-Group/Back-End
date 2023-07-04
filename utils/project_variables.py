@@ -37,7 +37,7 @@ DESCRIPTION = 'توضیحات'
 ALLOWED_DEPARTMENTS = 'محدودیت دانشکده ها'
 REGISTERED_COUNT_NOTIFICATION = 'تعداد ثبت نام شده'
 WAITING_COUNT_NOTIFICATION = 'تعداد لیست انتظار'
-TEACHER_NOTIFICATION = 'استاد'
+TEACHER_NOTIFICATION = 'اساتید'
 
 # population modes:
 POPULATION_INITIAL = 'initial'
@@ -143,7 +143,7 @@ course_field_mapper_en_to_fa_notification = {
     'registered_count': REGISTERED_COUNT_NOTIFICATION,
     'waiting_count': WAITING_COUNT_NOTIFICATION,
     'sex': SEX,
-    'teacher_id': TEACHER_NOTIFICATION,
+    'teachers': TEACHER_NOTIFICATION,
     'registration_limit': REGISTRATION_LIMIT,
     'presentation_type': PRESENTATION_TYPE,
     'guest_able': GUEST_ABLE,
