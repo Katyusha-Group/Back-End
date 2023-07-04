@@ -11,17 +11,18 @@ from custom_config.signals import order_created
 @receiver(post_save, sender=User)
 def create_profile(sender, **kwargs):
     user = kwargs['instance']
-    if user.gender == 'M':
-        profile = Profile(
-            user=user,
-            image='images/profile_pics/male_default.png'
-        )
-    else:
-        profile = Profile(
-            user=user,
-            image='images/profile_pics/female_default.png'
-        )
-    profile.save()
+    if kwargs['created']:
+        if user.gender == 'M':
+            profile = Profile(
+                user=user,
+                image='images/profile_pics/male_default.png'
+            )
+        else:
+            profile = Profile(
+                user=user,
+                image='images/profile_pics/female_default.png'
+            )
+        profile.save()
 
 
 @receiver(post_save, sender=User)
