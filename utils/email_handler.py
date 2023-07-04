@@ -6,9 +6,9 @@ from utils import project_variables
 
 
 def send_verification_message(subject, recipient_list, verification_token, registration_tries, show_text):
-    remaining_registration_tries = project_variables.MAX_REGISTRATION_TRIES - registration_tries
+    remaining_registration_tries = project_variables.MAX_VERIFICATION_TRIES - registration_tries
     if show_text:
-        if remaining_registration_tries < project_variables.MAX_REGISTRATION_TRIES:
+        if remaining_registration_tries < project_variables.MAX_VERIFICATION_TRIES:
             remaining_text = f'تا کنون به تعداد {registration_tries}بار، ' \
                              f'درخواست ثبت نام داشته اید. به تعداد {remaining_registration_tries} ' \
                              f'دفعۀ دیگر میتوانید برای دریافت کد تایید، درخواست نمایید. ' \
@@ -32,8 +32,8 @@ def send_verification_message(subject, recipient_list, verification_token, regis
 
 
 def send_forget_password_verification_message(subject, recipient_list, verification_token, verification_tries):
-    remaining_verification_tries = project_variables.MAX_FORGET_PASSWORD_TRIES - verification_tries
-    if remaining_verification_tries < project_variables.MAX_FORGET_PASSWORD_TRIES:
+    remaining_verification_tries = project_variables.MAX_VERIFICATION_TRIES - verification_tries
+    if remaining_verification_tries < project_variables.MAX_VERIFICATION_TRIES:
         remaining_text = f'تا کنون به تعداد {verification_tries}بار، ' \
                          f'درخواست تغییر رمز عبور داشته اید. به تعداد {remaining_verification_tries} ' \
                          f'دفعۀ دیگر می توانید برای دریافت کد تایید، درخواست نمایید. ' \
@@ -50,6 +50,19 @@ def send_forget_password_verification_message(subject, recipient_list, verificat
         'image_header': 'http://katyushaiust.ir/static/Back-End/Reset_password-bro.png',
     }
     html_message = render_to_string('forget_password.html', context)
+    email = EmailMultiAlternatives(subject, '', EMAIL_HOST, recipient_list)
+    email.attach_alternative(html_message, "text/html")
+    email.send()
+
+
+def send_modification_message(subject, recipient_list, message):
+    context = {
+        'message': message,
+        'image_icon': 'http://katyushaiust.ir/static/Back-End/kat_1.png',
+        'image_header': 'http://katyushaiust.ir/static/Back-End/announcement.png',
+        'image_footer': 'http://katyushaiust.ir/static/Back-End/feedback.png',
+    }
+    html_message = render_to_string('modifications.html', context)
     email = EmailMultiAlternatives(subject, '', EMAIL_HOST, recipient_list)
     email.attach_alternative(html_message, "text/html")
     email.send()

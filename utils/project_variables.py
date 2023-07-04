@@ -37,7 +37,7 @@ DESCRIPTION = 'توضیحات'
 ALLOWED_DEPARTMENTS = 'محدودیت دانشکده ها'
 REGISTERED_COUNT_NOTIFICATION = 'تعداد ثبت نام شده'
 WAITING_COUNT_NOTIFICATION = 'تعداد لیست انتظار'
-TEACHER_NOTIFICATION = 'استاد'
+TEACHER_NOTIFICATION = 'اساتید'
 
 # population modes:
 POPULATION_INITIAL = 'initial'
@@ -87,8 +87,7 @@ TAX = 0.09
 EMAIL_PRICE = 1000
 SMS_PRICE = 2000
 TELEGRAM_PRICE = 1000
-MAX_REGISTRATION_TRIES = 3
-MAX_FORGET_PASSWORD_TRIES = 5
+MAX_VERIFICATION_TRIES = 5
 
 DOMAIN = 'https://www.katyushaiust.ir'
 
@@ -144,7 +143,7 @@ course_field_mapper_en_to_fa_notification = {
     'registered_count': REGISTERED_COUNT_NOTIFICATION,
     'waiting_count': WAITING_COUNT_NOTIFICATION,
     'sex': SEX,
-    'teacher_id': TEACHER_NOTIFICATION,
+    'teachers': TEACHER_NOTIFICATION,
     'registration_limit': REGISTRATION_LIMIT,
     'presentation_type': PRESENTATION_TYPE,
     'guest_able': GUEST_ABLE,

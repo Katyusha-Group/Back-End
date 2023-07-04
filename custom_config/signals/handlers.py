@@ -1,10 +1,11 @@
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.dispatch import receiver
 
 from custom_config.signals import order_created
 from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment
 from custom_config.models import FieldTracker
 import custom_config.scripts.signals_requirements as requirements
+from university.signals import course_teachers_changed
 
 
 @receiver(post_save, sender=Course)
@@ -33,8 +34,6 @@ def create_u_log(sender, **kwargs):
             fields_list = []
 
             for field in kwargs['update_fields']:
-                if field == 'teacher':
-                    field = 'teacher_id'
                 fields_list.append(FieldTracker(
                     field=field,
                     value=kwargs['instance'].__dict__[field],
@@ -42,3 +41,16 @@ def create_u_log(sender, **kwargs):
                 ))
 
             FieldTracker.objects.bulk_create(fields_list)
+
+
+@receiver(course_teachers_changed, sender=Course)
+def teachers_changed(sender, **kwargs):
+    is_course, course_name, course_number = requirements.get_course_info(kwargs['course'])
+    tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', kwargs['course'])
+    teacher_names = list(kwargs['course'].teachers.all().values_list('name', flat=True))
+    teacher_names = '-'.join(teacher_names)
+    FieldTracker.objects.create(
+        field='teachers',
+        value=teacher_names,
+        tracker=tracker,
+    )

@@ -5,6 +5,7 @@ from pandas import DataFrame
 
 from university.models import Course, Teacher
 from university.scripts import populate_table, get_or_create, clean_data, delete_from_table
+from university.signals import course_teachers_changed
 from utils import project_variables
 from utils.get_data_path import get_teachers_data
 
@@ -63,7 +64,9 @@ def update(data: pd.DataFrame):
     old_data = data[::2]
     new_data = data[1::2]
     populate_table.populate_teacher(new_data, get_teachers_data())
-    diff = old_data.compare(new_data, keep_shape=False)
+    old_data_cleaned = old_data.reset_index(drop=True)
+    new_data_cleaned = new_data.reset_index(drop=True)
+    diff = old_data_cleaned.compare(new_data_cleaned, keep_shape=True)
     columns = [col[0] for col in diff.columns.values.tolist()[::2]]
     new_exam_times, new_class_times, new_allowed_departments, \
     old_class_times, old_exam_times, old_allowed_departments = _extract_courses(
@@ -140,11 +143,22 @@ def _update_column(course: Course, column: str, value):
         course.waiting_count = value
         course.save(update_fields=['waiting_count'])
     elif column == project_variables.SEX:
+        if value == project_variables.MAN:
+            value = 'M'
+        elif value == project_variables.WOMAN:
+            value = 'F'
+        else:
+            value = 'B'
         course.sex = value
         course.save(update_fields=['sex'])
     elif column == project_variables.TEACHER:
-        course.teacher = Teacher.objects.get(name=value)
-        course.save(update_fields=['teacher'])
+        names = value.split('-')
+        course.teachers.clear()
+        for name in names:
+            teacher = Teacher.objects.get(name=name)
+            course.teachers.add(teacher)
+        course.save()
+        course_teachers_changed.send_robust(sender=Course, course=course)
     elif column == project_variables.REGISTRATION_LIMIT:
         course.registration_limit = value
         course.save(update_fields=['registration_limit'])

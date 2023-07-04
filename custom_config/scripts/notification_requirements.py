@@ -4,13 +4,22 @@ from django.db import transaction
 from django.db.models import Q, Manager
 from django.core.mail import send_mail
 
-from botapp import telegram_bot
+from botapp import telegram_notification
 from core.settings import EMAIL_HOST
 from custom_config.models import ModelTracker, OrderItem
 from university.models import Course, AllowedDepartment, CourseTimePlace, ExamTimePlace, Teacher
 from university.scripts.get_or_create import get_course
-from utils import project_variables
+from utils import project_variables, email_handler
 from utils.project_variables import course_field_mapper_en_to_fa_notification as course_field_mapper
+
+
+def get_int(s):
+    try:
+        int(s)
+    except ValueError:
+        return -1, False
+    else:
+        return int(s), True
 
 
 def find_untracked_courses():
@@ -37,8 +46,9 @@ def find_reference_course(course_related: ModelTracker) -> Course | None:
 
 
 def prepare_message_field(field):
-    if field.field == 'teacher_id':
-        field.value = Teacher.objects.get(pk=field.value).name
+    value, flag = get_int(field.value)
+    if flag:
+        return course_field_mapper[field.field] + ' : ' + str(value) + '\n'
     return course_field_mapper[field.field] + ' : ' + field.value + '\n'
 
 
@@ -80,18 +90,15 @@ def send_notification_to_user(order_item: OrderItem, message: str):
         return
     if order_item.contain_email:
         print('Sending email to: ' + order_item.order.user.email)
-        # send_mail(
-        #     recipient_list=[order_item.order.user.email],
-        #     subject='تغییر در واحد های گلستان',
-        #     message=message,
-        #     from_email=EMAIL_HOST
-        # )
+        email_handler.send_modification_message('تغییرات جدید',
+                                                message,
+                                                order_item.order.user.email)
     if order_item.contain_sms:
         print('Sending SMS to: ', order_item.order.user)
         # send_sms(order_item, message)
     if order_item.contain_telegram:
         print('Sending Telegram to: ', order_item.order.user)
-        telegram_bot.send_notification_to_user(user=order_item.order.user, message=message)
+        # telegram_notification.send_telegram_notification(user_id=order_item.order.user.id, changes=message)
 
 
 def send_message_to_all(order_items, message):
@@ -119,8 +126,8 @@ def send_notification_for_courses():
                                                                 related=False)
                         order_items = find_updated_course_references_completed_orders(course)
             send_message_to_all(message=message, order_items=order_items)
-            course_instance.status = project_variables.CREATE
-            course_instance.save()
+            # course_instance.status = project_variables.CREATE
+            # course_instance.save()
 
 
 def send_notification_for_course_related():
@@ -128,8 +135,8 @@ def send_notification_for_course_related():
         untracked_course_related = find_untracked_course_references()
         pks = {}
         for course_related in untracked_course_related:
-            course_related.status = project_variables.CREATE
-            course_related.save()
+            # course_related.status = project_variables.CREATE
+            # course_related.save()
             course = find_reference_course(course_related)
             append_or_create_dict(course, course_related, pks)
         for pk in pks:
