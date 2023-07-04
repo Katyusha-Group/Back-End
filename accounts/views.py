@@ -3,8 +3,10 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth.hashers import make_password
 from rest_framework import generics, viewsets
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 
 from utils import email_handler
@@ -14,7 +16,7 @@ from accounts.models import User
 from django.conf import settings
 from rest_framework.views import APIView
 from django.contrib.auth import login, logout
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
 from rest_framework import status
@@ -48,27 +50,38 @@ class SignUpView(APIView):
         email = serializer.validated_data['email']
 
         verification_code = str(random.randint(1000, 9999))
-
-        # Save user
-        user = User.objects.create(
-            department=validated_data['department'],
-            username=validated_data['email'],
-            email=validated_data['email'],
-            gender=validated_data['gender'],
-            password=make_password(validated_data['password1']),
-            verification_code=verification_code,
-        )
+        user = User.objects.filter(email=email)
+        if user.exists():
+            user = user.first()
+            user.department = validated_data['department']
+            user.gender = validated_data['gender']
+            user.password = make_password(validated_data['password1'])
+            user.verification_code = verification_code
+            user.registration_tries += 1
+            user.last_registration_sent = datetime.now()
+            user.save()
+        else:
+            # Save user
+            user = User.objects.create(
+                department=validated_data['department'],
+                username=validated_data['email'],
+                email=validated_data['email'],
+                gender=validated_data['gender'],
+                password=make_password(validated_data['password1']),
+                verification_code=verification_code,
+                registration_tries=1,
+                last_registration_sent=datetime.now(),
+                last_verification_sent=datetime.now(),
+            )
 
         token = self.get_token_for_user(user)
         subject = 'تایید ایمیل ثبت نام'
-        message = 'سلام! به کاتیوشا خوش آمدید.\n'
-        message += 'با تشکر از ثبت‌نام شما در کاتیوشا، لطفاً برای تایید ایمیل خود و فعال‌سازی حساب کاربری‌تان، کد تایید زیر را در سایت وارد کنید:\n'
-        message += f'{verification_code}\n'
-        message += 'با تشکر،\n'
-        message += 'تیم کاتیوشا'
+        show_text = user.has_registration_tries_reset or user.registration_tries > 1
         email_handler.send_verification_message(subject=subject,
                                                 recipient_list=[user.email],
-                                                verification_token=verification_code)
+                                                verification_token=verification_code,
+                                                registration_tries=user.registration_tries,
+                                                show_text=show_text)
 
         return Response({
             "user": {"department": user.department.name, "email": email,
@@ -295,12 +308,13 @@ class ForgotPasswordView(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({'detail': 'User not found'}, status=404)
+            return Response({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if user.count_of_verification_code_sent >= 3:
+        if user.count_of_verification_code_sent >= project_variables.MAX_FORGET_PASSWORD_TRIES:
             return Response({
-                'detail': 'You have made more than 3 attempts to recover your forgotten password.Please contact support.'},
-                status=429)
+                'detail': f'You have made more than {project_variables.MAX_FORGET_PASSWORD_TRIES}'
+                          f' attempts to recover your forgotten password.Please contact support.'},
+                status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         verification_code = str(random.randint(1000, 9999))
 
@@ -308,12 +322,14 @@ class ForgotPasswordView(APIView):
 
         user.verification_code = verification_code
         user.count_of_verification_code_sent = user.count_of_verification_code_sent + 1
+        user.last_verification_sent = datetime.now()
         user.save()
 
         subject = 'بازیابی رمز عبور'
         email_handler.send_forget_password_verification_message(subject=subject,
                                                                 verification_token=verification_code,
-                                                                recipient_list=[user.email])
+                                                                recipient_list=[user.email],
+                                                                verification_tries=user.count_of_verification_code_sent)
 
         return Response({'detail': 'Code Sent',
                          'link': f'http://katyushaiust.ir/accounts/code_verification_view/{token}/'
@@ -412,3 +428,41 @@ class CodeVerificationView(APIView):
     #         return Response({'message': 'Invalid URL'}, status=status.HTTP_400_BAD_REQUEST)
     #     return Response({'message': 'Please enter code verification'}, status=status.HTTP_200_OK)
     #
+
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'delete', 'patch', 'head', 'options']
+    serializer_class = ProfileSerializer
+    queryset = Profile.objects.all()
+    parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == 'delete':
+            return [IsAdminUser()]
+        if self.action == 'retrieve':
+            return [IsAdminUser()]
+        return super().get_permissions()
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        if user.is_staff:
+            return super().list(request, *args, **kwargs)
+        profile = Profile.objects.filter(user=user).first()
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['patch'], serializer_class=ProfileSerializer, permission_classes=[IsAuthenticated])
+    def update_profile(self, request, *args, **kwargs):
+        user = request.user
+        profile = Profile.objects.filter(user=user).first()
+        serializer = self.get_serializer(profile, data=request.data, partial=True, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+    def get_object(self):
+        return get_object_or_404(self.get_queryset(), user=self.request.user)

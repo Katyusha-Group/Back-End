@@ -8,9 +8,7 @@ from rest_framework_simplejwt.views import (
 
 router = routers.DefaultRouter()
 router.register(r'wallet', viewset=views.WalletViewSet, basename='wallet')
-
-
-
+router.register(r'profile', viewset=views.ProfileViewSet, basename='profile')
 
 
 urlpatterns = [

@@ -29,8 +29,13 @@ class SignUpSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email already exists.")
+        user = User.objects.filter(email=value)
+        if user.exists():
+            user = user.first()
+            if user.is_email_verified:
+                raise serializers.ValidationError("Email already exists.")
+            if user.registration_tries >= project_variables.MAX_REGISTRATION_TRIES:
+                raise serializers.ValidationError("You have reached the maximum number of registration tries.")
         return value
 
 
@@ -149,7 +154,33 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email', 'department', 'gender']
+        fields = ['email', 'department', 'gender', 'first_name', 'last_name']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    email = serializers.CharField(source='user.email', read_only=True)
+    department = serializers.CharField(source='user.department', read_only=True)
+    gender = serializers.CharField(source='user.gender', read_only=True)
+
+    def update(self, instance, validated_data):
+        for field, value in validated_data.items():
+            if field == 'user':
+                user = instance.user
+                fields = []
+                for user_field, user_value in value.items():
+                    setattr(user, user_field, user_value)
+                    fields += [user_field]
+                user.save()
+            else:
+                setattr(instance, field, value)
+        instance.save()
+        return instance
+
+    class Meta:
+        model = Profile
+        fields = ['first_name', 'last_name', 'email', 'department', 'gender', 'image', 'telegram_id']
 
 
 class WalletSerializer(serializers.ModelSerializer):
