@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 
 from django.db import models
@@ -25,7 +26,7 @@ class User(AbstractUser):
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     verification_code = models.CharField(max_length=4, null=True, blank=True)
     verification_tries_count = models.IntegerField(default=0)
-    last_verification_sent = models.DateTimeField(null=True, blank=True)
+    last_verification_sent = models.DateTimeField(null=True, blank=True, default=datetime.now)
     has_verification_tries_reset = models.BooleanField(default=False)
 
     def __str__(self):
