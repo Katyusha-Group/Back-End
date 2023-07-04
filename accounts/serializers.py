@@ -155,9 +155,23 @@ class UserSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name')
     last_name = serializers.CharField(source='user.last_name')
-    email = serializers.CharField(source='user.email')
-    department = serializers.CharField(source='user.department')
-    gender = serializers.CharField(source='user.gender')
+    email = serializers.CharField(source='user.email', read_only=True)
+    department = serializers.CharField(source='user.department', read_only=True)
+    gender = serializers.CharField(source='user.gender', read_only=True)
+
+    def update(self, instance, validated_data):
+        for field, value in validated_data.items():
+            if field == 'user':
+                user = instance.user
+                fields = []
+                for user_field, user_value in value.items():
+                    setattr(user, user_field, user_value)
+                    fields += [user_field]
+                user.save()
+            else:
+                setattr(instance, field, value)
+        instance.save()
+        return instance
 
     class Meta:
         model = Profile
