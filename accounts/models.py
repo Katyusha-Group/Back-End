@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.db import models
+from django.core.validators import MinLengthValidator, RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django_jalali.db import models as jmodels
 
@@ -27,6 +28,18 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='profile_pics', default='default.jpg')
+    telegram_id = models.CharField(max_length=32, null=True, blank=True, validators=[
+        RegexValidator(regex=r'^[a-zA-Z0-9_]+$',
+                                message='telegram id must be alphanumeric or contain underscores'),
+        MinLengthValidator(5, message='telegram id must be at least 5 characters long.')])
+
+    def __str__(self):
+        return self.user.email
 
 
 class Wallet(models.Model):
