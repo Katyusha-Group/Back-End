@@ -53,3 +53,16 @@ def send_forget_password_verification_message(subject, recipient_list, verificat
     email = EmailMultiAlternatives(subject, '', EMAIL_HOST, recipient_list)
     email.attach_alternative(html_message, "text/html")
     email.send()
+
+
+def send_modification_message(subject, recipient_list, message):
+    context = {
+        'message': message,
+        'image_icon': 'http://katyushaiust.ir/static/Back-End/kat_1.png',
+        'image_header': 'http://katyushaiust.ir/static/Back-End/announcement.png',
+        'image_footer': 'http://katyushaiust.ir/static/Back-End/feedback.png',
+    }
+    html_message = render_to_string('modifications.html', context)
+    email = EmailMultiAlternatives(subject, '', EMAIL_HOST, recipient_list)
+    email.attach_alternative(html_message, "text/html")
+    email.send()
