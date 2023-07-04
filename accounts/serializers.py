@@ -29,8 +29,13 @@ class SignUpSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email already exists.")
+        user = User.objects.filter(email=value)
+        if user.exists():
+            user = user.first()
+            if user.is_email_verified:
+                raise serializers.ValidationError("Email already exists.")
+            if user.registration_tries >= project_variables.MAX_REGISTRATION_TRIES:
+                raise serializers.ValidationError("You have reached the maximum number of registration tries.")
         return value
 
 

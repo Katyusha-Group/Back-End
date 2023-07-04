@@ -25,6 +25,7 @@ class User(AbstractUser):
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     verification_code = models.CharField(max_length=4, null=True, blank=True)
     count_of_verification_code_sent = models.IntegerField(default=0)
+    registration_tries = models.IntegerField(default=0)
 
     def __str__(self):
         return self.email

@@ -50,24 +50,28 @@ class SignUpView(APIView):
         email = serializer.validated_data['email']
 
         verification_code = str(random.randint(1000, 9999))
-
-        # Save user
-        user = User.objects.create(
-            department=validated_data['department'],
-            username=validated_data['email'],
-            email=validated_data['email'],
-            gender=validated_data['gender'],
-            password=make_password(validated_data['password1']),
-            verification_code=verification_code,
-        )
+        user = User.objects.filter(email=email)
+        if user.exists():
+            user = user.first()
+            user.department = validated_data['department']
+            user.gender = validated_data['gender']
+            user.password = make_password(validated_data['password1'])
+            user.verification_code = verification_code
+            user.registration_tries += 1
+            user.save()
+        else:
+            # Save user
+            user = User.objects.create(
+                department=validated_data['department'],
+                username=validated_data['email'],
+                email=validated_data['email'],
+                gender=validated_data['gender'],
+                password=make_password(validated_data['password1']),
+                verification_code=verification_code,
+            )
 
         token = self.get_token_for_user(user)
         subject = 'تایید ایمیل ثبت نام'
-        message = 'سلام! به کاتیوشا خوش آمدید.\n'
-        message += 'با تشکر از ثبت‌نام شما در کاتیوشا، لطفاً برای تایید ایمیل خود و فعال‌سازی حساب کاربری‌تان، کد تایید زیر را در سایت وارد کنید:\n'
-        message += f'{verification_code}\n'
-        message += 'با تشکر،\n'
-        message += 'تیم کاتیوشا'
         email_handler.send_verification_message(subject=subject,
                                                 recipient_list=[user.email],
                                                 verification_token=verification_code)
