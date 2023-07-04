@@ -20,9 +20,11 @@ def send_verification_message(subject, recipient_list, verification_token, regis
     email.send()
 
 
-def send_forget_password_verification_message(subject, recipient_list, verification_token):
+def send_forget_password_verification_message(subject, recipient_list, verification_token, verification_tries):
     context = {
         'email_verification_token': verification_token,
+        'verification_tries': verification_tries,
+        'remaining_verification_tries': project_variables.MAX_FORGET_PASSWORD_TRIES - verification_tries,
         'image_bg': 'http://katyushaiust.ir/static/Back-End/ResetPassword_BG_2.png',
         'image_icon': 'http://katyushaiust.ir/static/Back-End/kat_1.png',
         'image_header': 'http://katyushaiust.ir/static/Back-End/Reset_password-bro.png',
