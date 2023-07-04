@@ -57,8 +57,8 @@ class SignUpView(APIView):
             user.gender = validated_data['gender']
             user.password = make_password(validated_data['password1'])
             user.verification_code = verification_code
-            user.registration_tries += 1
-            user.last_registration_sent = datetime.now()
+            user.verification_tries_count += 1
+            user.last_verification_sent = datetime.now()
             user.save()
         else:
             # Save user
@@ -76,11 +76,11 @@ class SignUpView(APIView):
 
         token = self.get_token_for_user(user)
         subject = 'تایید ایمیل ثبت نام'
-        show_text = user.has_registration_tries_reset or user.registration_tries > 1
+        show_text = user.has_verification_tries_reset or user.verification_tries_count > 1
         email_handler.send_verification_message(subject=subject,
                                                 recipient_list=[user.email],
                                                 verification_token=verification_code,
-                                                registration_tries=user.registration_tries,
+                                                registration_tries=user.verification_tries_count,
                                                 show_text=show_text)
 
         return Response({
@@ -310,9 +310,9 @@ class ForgotPasswordView(APIView):
         except User.DoesNotExist:
             return Response({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if user.count_of_verification_code_sent >= project_variables.MAX_FORGET_PASSWORD_TRIES:
+        if user.verification_tries_count >= project_variables.MAX_VERIFICATION_TRIES:
             return Response({
-                'detail': f'You have made more than {project_variables.MAX_FORGET_PASSWORD_TRIES}'
+                'detail': f'You have made more than {project_variables.MAX_VERIFICATION_TRIES}'
                           f' attempts to recover your forgotten password.Please contact support.'},
                 status=status.HTTP_429_TOO_MANY_REQUESTS)
 
@@ -321,7 +321,7 @@ class ForgotPasswordView(APIView):
         token = self.get_token_for_user(user)
 
         user.verification_code = verification_code
-        user.count_of_verification_code_sent = user.count_of_verification_code_sent + 1
+        user.verification_tries_count = user.verification_tries_count + 1
         user.last_verification_sent = datetime.now()
         user.save()
 
@@ -329,7 +329,7 @@ class ForgotPasswordView(APIView):
         email_handler.send_forget_password_verification_message(subject=subject,
                                                                 verification_token=verification_code,
                                                                 recipient_list=[user.email],
-                                                                verification_tries=user.count_of_verification_code_sent)
+                                                                verification_tries=user.verification_tries_count)
 
         return Response({'detail': 'Code Sent',
                          'link': f'http://katyushaiust.ir/accounts/code_verification_view/{token}/'

@@ -34,7 +34,7 @@ class SignUpSerializer(serializers.ModelSerializer):
             user = user.first()
             if user.is_email_verified:
                 raise serializers.ValidationError("Email already exists.")
-            if user.registration_tries >= project_variables.MAX_REGISTRATION_TRIES:
+            if user.verification_tries_count >= project_variables.MAX_VERIFICATION_TRIES:
                 raise serializers.ValidationError("You have reached the maximum number of registration tries.")
         return value
 
