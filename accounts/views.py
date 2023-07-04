@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth.hashers import make_password
 from rest_framework import generics, viewsets
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
@@ -14,7 +15,7 @@ from accounts.models import User
 from django.conf import settings
 from rest_framework.views import APIView
 from django.contrib.auth import login, logout
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
 from rest_framework import status
@@ -412,3 +413,25 @@ class CodeVerificationView(APIView):
     #         return Response({'message': 'Invalid URL'}, status=status.HTTP_400_BAD_REQUEST)
     #     return Response({'message': 'Please enter code verification'}, status=status.HTTP_200_OK)
     #
+
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'post', 'delete', 'patch', 'head', 'options']
+    serializer_class = ProfileSerializer
+    queryset = Profile.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == 'delete':
+            return [IsAdminUser()]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+    def get_object(self):
+        return get_object_or_404(self.get_queryset(), user=self.request.user)
+
+    def perform_create(self, serializer):
+        print(serializer.validated_data)
+        serializer.save(user=self.request.user)

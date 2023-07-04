@@ -31,8 +31,8 @@ class User(AbstractUser):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='profile_pics', default='default.jpg')
+    user = models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    image = models.ImageField(upload_to='images/profile_pics', default='images/profile_pics/default.png')
     telegram_id = models.CharField(max_length=32, null=True, blank=True, validators=[
         RegexValidator(regex=r'^[a-zA-Z0-9_]+$',
                                 message='telegram id must be alphanumeric or contain underscores'),
