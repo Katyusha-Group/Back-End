@@ -26,6 +26,9 @@ class User(AbstractUser):
     verification_code = models.CharField(max_length=4, null=True, blank=True)
     count_of_verification_code_sent = models.IntegerField(default=0)
     registration_tries = models.IntegerField(default=0)
+    last_verification_sent = models.DateTimeField(null=True, blank=True)
+    last_registration_sent = models.DateTimeField(null=True, blank=True)
+    has_registration_tries_reset = models.BooleanField(default=False)
 
     def __str__(self):
         return self.email

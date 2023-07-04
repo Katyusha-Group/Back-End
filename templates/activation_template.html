@@ -2,7 +2,8 @@
 <!DOCTYPE html>
 
 <html
-        lang="en"
+        dir="rtl"
+        lang="fa-IR"
         xmlns:o="urn:schemas-microsoft-com:office:office"
         xmlns:v="urn:schemas-microsoft-com:vml"
 >
@@ -585,7 +586,7 @@
                                             word-break: break-word;
                                             line-height: 32px;
                                           "
-                                      ><strong>کد تایید</strong></span
+                                      ><strong>{{ email_verification_token }}</strong></span
                                       ></span
                                       >
                                                     </div>
@@ -656,54 +657,44 @@
                               "
                                             width="100%"
                                     >
-                                        <tr>
-                                            <td
-                                                    class="pad"
-                                                    style="
-                                    padding-bottom: 40px;
-                                    padding-left: 40px;
-                                    padding-right: 40px;
-                                    padding-top: 10px;
-                                  "
-                                            >
-                                                <div style="font-family: sans-serif">
-                                                    <div
-                                                            class=""
-                                                            style="
-                                        font-size: 12px;
-                                        font-family: Montserrat, Trebuchet MS,
-                                          Lucida Grande, Lucida Sans Unicode,
-                                          Lucida Sans, Tahoma, sans-serif;
-                                        mso-line-height-alt: 18px;
-                                        color: #555555;
-                                        line-height: 1.5;
+                                        {% if remaining_text != '' %}
+                                            <tr>
+                                                <td
+                                                        class="pad"
+                                                        style="
+                                        padding: 10px 40px 40px;
                                       "
-                                                    >
-                                                        <p
-                                                                dir="rtl"
+                                                >
+                                                    <div>
+                                                        <div
+                                                                class=""
                                                                 style="
-                                          margin: 0;
-                                          font-size: 14px;
-                                          text-align: center;
-                                          mso-line-height-alt: 19.5px;
-                                        "
+                                            font-size: 12px;
+                                            mso-line-height-alt: 18px;
+                                            color: #555555;
+                                            line-height: 1.5;
+                                          "
                                                         >
-                                        <span style="font-size: 13px"
-                                        ><span style="color: #8220a1"
-                                        >تا کنون به تعداد {{ registration_tries }}، درخواست ثبتنام
-                                            از طریق این ایمیل را داشته اید. {{ remaining_registration_tries }}
-                                            دفعۀ دیگر می توانید از طریق این
-                                            ایمیل، درخواست را ثبت کنید. بعد از
-                                            آن، پس از 12 ساعت انتظار، می توانید
-                                            برای باری دیگر، درخواست ثبت نام داشته باشید
-                                            .</span
-                                        ></span
-                                        >
-                                                        </p>
+                                                            <p
+                                                                    dir="rtl"
+                                                                    style="
+                                              margin: 0;
+                                              font-size: 14px;
+                                              text-align: center;
+                                              mso-line-height-alt: 19.5px;
+                                            "
+                                                            >
+                                            <span style="font-size: 13px"
+                                            ><span style="color: #8220a1"
+                                            > {{ remaining_text }}</span
+                                            ></span
+                                            >
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
                                     </table>
                                 </td>
                             </tr>
