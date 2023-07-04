@@ -74,7 +74,8 @@ class SignUpView(APIView):
         subject = 'تایید ایمیل ثبت نام'
         email_handler.send_verification_message(subject=subject,
                                                 recipient_list=[user.email],
-                                                verification_token=verification_code)
+                                                verification_token=verification_code,
+                                                registration_tries=user.registration_tries)
 
         return Response({
             "user": {"department": user.department.name, "email": email,
@@ -303,7 +304,7 @@ class ForgotPasswordView(APIView):
         except User.DoesNotExist:
             return Response({'detail': 'User not found'}, status=404)
 
-        if user.count_of_verification_code_sent >= 3:
+        if user.count_of_verification_code_sent >= project_variables.MAX_FORGET_PASSWORD_TRIES:
             return Response({
                 'detail': 'You have made more than 3 attempts to recover your forgotten password.Please contact support.'},
                 status=429)
