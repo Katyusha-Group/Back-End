@@ -15,7 +15,7 @@ def watch_golestan():
     path = Path(path.parent.absolute())
     print(os.path.join(path, 'project'))
     suffix = '_' + str(project_variables.CURRENT_SEMESTER) + '.xlsx'
-    old_file_name = project_variables.NEW_GOLESTAN_EXCEL_FILE_NAME + suffix
+    old_file_name = project_variables.GOLESTAN_EXCEL_FILE_NAME + suffix
     new_file_name = project_variables.NEW_GOLESTAN_EXCEL_FILE_NAME + suffix
     old_file = os.path.join(path, project_variables.DATA_DIRECTORY_NAME, old_file_name)
     new_file = os.path.join(path, project_variables.DATA_DIRECTORY_NAME, new_file_name)
@@ -35,3 +35,7 @@ def watch_golestan():
 
     post = time.time()
     print('Time elapsed: ' + str(post - pre) + ' seconds')
+
+
+if __name__ == '__main__':
+    watch_golestan()

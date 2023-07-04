@@ -23,7 +23,7 @@ class SimpleDepartmentSerializer(serializers.ModelSerializer):
         fields = ['label', 'value']
 
 
-class DepartmentSerializer(serializers.ModelSerializer):
+class DepartmentCourseBasedSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='department_number', read_only=True)
     base_courses = serializers.SerializerMethodField(read_only=True)
 

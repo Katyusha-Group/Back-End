@@ -14,7 +14,7 @@ from university.models import Course, Department, Semester, ExamTimePlace, BaseC
     AllowedDepartment
 from university.scripts.get_or_create import get_course
 from university.scripts.views_scripts import get_user_department, sort_departments_by_user_department
-from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
+from university.serializers import DepartmentCourseBasedSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
     CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, \
     CourseGroupSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer, BaseCourseTimeLineSerializer, \
     TeacherSerializer, TeacherTimeLineSerializer
@@ -34,7 +34,7 @@ class SignupDepartmentListView(ListAPIView):
 class DepartmentListView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
-    serializer_class = DepartmentSerializer
+    serializer_class = DepartmentCourseBasedSerializer
 
     def get_serializer_context(self):
         return {'user': self.request.user, 'api': 'allowed'}
@@ -48,7 +48,7 @@ class DepartmentListView(ListAPIView):
 class AllDepartmentsListView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
-    serializer_class = DepartmentSerializer
+    serializer_class = DepartmentCourseBasedSerializer
 
     def get_serializer_context(self):
         return {'user': self.request.user, 'api': 'all'}
@@ -182,18 +182,35 @@ class TeacherProfileRetrieveAPIView(RetrieveAPIView):
         return Teacher.objects.all()
 
 
+def get_sorted_courses(courses):
+    return (courses.annotate(empty_capacity=ExpressionWrapper(
+        F('capacity') - F('registered_count'),
+        output_field=IntegerField()
+    ))
+            .annotate(student_count=Count('students'))
+            .annotate(
+        color_intensity_percentage_first=ExpressionWrapper(
+            (((F('capacity') - F('registered_count') - F('waiting_count')) * 100) / (
+                    F('capacity') + F('waiting_count') + (1.2 * F('student_count')))),
+            output_field=FloatField())
+    )
+            .annotate(
+        capacity_is_less_zero=Case(
+            When(empty_capacity__lte=0, then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField()
+        )
+    )
+            .order_by('capacity_is_less_zero', 'empty_capacity', 'color_intensity_percentage_first')
+            .all())
+
+
 class CourseGroupListView(ModelViewSet):
     serializer_class = CourseGroupSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        base_course_id = self.kwargs['base_course_id']
-        if base_course_id is None:
-            raise ValidationError({'detail': 'Enter course_number as query string in the url.'}, )
-        elif base_course_id.isdigit() is True:
-            base_course_id = int(base_course_id)
-        else:
-            raise ValidationError({'detail': 'Enter course_number as query number in the url.'}, )
+        base_course_id = self.kwargs['pk']
         user = self.request.user
         courses = (
             Course.objects
@@ -204,28 +221,34 @@ class CourseGroupListView(ModelViewSet):
                               'students')
             .filter(base_course_id=base_course_id, semester_id=project_variables.CURRENT_SEMESTER,
                     sex__in=[user.gender, 'B'])
-            .annotate(empty_capacity=ExpressionWrapper(
-                F('capacity') - F('registered_count'),
-                output_field=IntegerField()
-            ))
-            .annotate(student_count=Count('students'))
-            .annotate(
-                color_intensity_percentage_first=ExpressionWrapper(
-                    (((F('capacity') - F('registered_count') - F('waiting_count')) * 100) / (
-                            F('capacity') + F('waiting_count') + (1.2 * F('student_count')))),
-                    output_field=FloatField())
-            )
-            .annotate(
-                capacity_is_less_zero=Case(
-                    When(empty_capacity__lte=0, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField()
-                )
-            )
-            .order_by('capacity_is_less_zero', 'empty_capacity', 'color_intensity_percentage_first')
-            .all()
         )
+        courses = get_sorted_courses(courses)
         if courses.exists():
+            return courses
+        else:
+            raise ValidationError({'detail': 'No course with this course_number in database.'}, )
+
+
+class TeacherCourseGroupsListView(ModelViewSet):
+    serializer_class = CourseGroupSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        teacher_id = self.kwargs['pk']
+        teachers = Teacher.objects.filter(pk=teacher_id).all()
+        user = self.request.user
+        courses = (
+            Course.objects
+            .select_related('base_course', 'semester')
+            .prefetch_related('teachers',
+                              'course_times',
+                              'exam_times',
+                              'students')
+            .filter(teachers__in=teachers, semester_id=project_variables.CURRENT_SEMESTER,
+                    sex__in=[user.gender, 'B'])
+        )
+        courses = get_sorted_courses(courses)
+        if courses.count() != 0:
             return courses
         else:
             raise ValidationError({'detail': 'No course with this course_number in database.'}, )
