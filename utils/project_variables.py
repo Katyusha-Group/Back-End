@@ -29,6 +29,7 @@ SEX = 'جنس'
 TEACHER = 'نام استاد'
 COURSE_TIME_PLACE = 'زمان و مکان ارائه'
 EXAM_TIME_PLACE = 'زمان و مکان امتحان'
+EXAM_TIME_PLACE_NOTIF = 'زمان امتحان'
 REGISTRATION_LIMIT = 'محدودیت اخذ'
 PRESENTATION_TYPE = 'نحوه ارائه درس'
 EMERGENCY_DELETION = 'امکان حذف اضطراری'
@@ -149,7 +150,7 @@ course_field_mapper_en_to_fa_notification = {
     'guest_able': GUEST_ABLE,
     'description': DESCRIPTION,
     'AllowedDepartment': ALLOWED_DEPARTMENTS,
-    'ExamTimePlace': EXAM_TIME_PLACE,
+    'ExamTimePlace': EXAM_TIME_PLACE_NOTIF,
     'CourseTimePlace': COURSE_TIME_PLACE,
 }
 

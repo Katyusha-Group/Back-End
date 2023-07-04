@@ -15,11 +15,11 @@ from utils.project_variables import course_field_mapper_en_to_fa_notification as
 
 def get_int(s):
     try:
-        int(s)
+        int(float(s))
     except ValueError:
         return -1, False
     else:
-        return int(s), True
+        return int(float(s)), True
 
 
 def find_untracked_courses():
@@ -90,9 +90,9 @@ def send_notification_to_user(order_item: OrderItem, message: str):
         return
     if order_item.contain_email:
         print('Sending email to: ' + order_item.order.user.email)
-        email_handler.send_modification_message('تغییرات جدید',
-                                                message,
-                                                order_item.order.user.email)
+        email_handler.send_modification_message(subject='تغییرات جدید',
+                                                message=message,
+                                                recipient_list=[order_item.order.user.email])
     if order_item.contain_sms:
         print('Sending SMS to: ', order_item.order.user)
         # send_sms(order_item, message)

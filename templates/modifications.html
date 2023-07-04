@@ -655,40 +655,25 @@
                                         line-height: 1.5;
                                       "
                                     >
-                                      <p
+                                      <div
                                         dir="rtl"
                                         style="
                                           margin: 0;
                                           text-align: center;
                                           mso-line-height-alt: 24px;
-                                        "
-                                      >
-                                        <span
-                                          style="
-                                            font-size: 16px;
+                                          font-size: 16px;
                                             color: #635169;
-                                          "
-                                          >
-                                            {{ message }}
-                                        </span
-                                        >
-                                      </p>
-                                      <p
-                                        dir="rtl"
-                                        style="
-                                          margin: 0;
+                                        ">
+                                          {% for line in message_lines %}
+                                            <p style="
+                                          margin: 2px;
                                           text-align: center;
                                           mso-line-height-alt: 24px;
-                                        "
-                                      >
-                                        <span
-                                          style="
-                                            font-size: 16px;
+                                          font-size: 16px;
                                             color: #635169;
-                                          "
-                                          >[]</span
-                                        >
-                                      </p>
+                                        ">{{ line }}</p>
+                                          {% endfor %}
+                                      </div>
                                     </div>
                                   </div>
                                 </td>
@@ -781,69 +766,6 @@
                                       "
                                       width="224"
                                     />
-                                  </div>
-                                </td>
-                              </tr>
-                            </table>
-                            <table
-                              border="0"
-                              cellpadding="0"
-                              cellspacing="0"
-                              class="text_block block-7"
-                              role="presentation"
-                              style="
-                                mso-table-lspace: 0pt;
-                                mso-table-rspace: 0pt;
-                                word-break: break-word;
-                              "
-                              width="100%"
-                            >
-                              <tr>
-                                <td
-                                  class="pad"
-                                  style="
-                                    padding-bottom: 10px;
-                                    padding-left: 40px;
-                                    padding-right: 40px;
-                                    padding-top: 20px;
-                                  "
-                                >
-                                  <div
-                                    style="
-                                    "
-                                  >
-                                    <div
-                                      class=""
-                                      style="
-                                        font-size: 12px;
-                                        mso-line-height-alt: 14.399999999999999px;
-                                        color: #555555;
-                                        line-height: 1.2;
-                                      "
-                                    >
-                                      <p
-                                        dir="rtl"
-                                        style="
-                                          margin: 0;
-                                          font-size: 16px;
-                                          text-align: center;
-                                          mso-line-height-alt: 19.2px;
-                                        "
-                                      >
-                                        <span
-                                          style="
-                                            font-size: 20px;
-                                            color: #003188;
-                                          "
-                                          ><strong
-                                            >کنجکاویم که نظرتون رو در رابطه با
-                                            فرآیند اطلاع رسانی سایتمون بدونیم.
-                                            پس هر انتقاد یا پیشنهادی که دارین،
-                                            حتماً با ما در میون بذارین.</strong
-                                          ></span
-                                        >
-                                      </p>
-                                    </div>
                                   </div>
                                 </td>
                               </tr>
@@ -1043,6 +965,69 @@
                                       title="Image"
                                       width="288"
                                     />
+                                  </div>
+                                </td>
+                              </tr>
+                            </table>
+                              <table
+                              border="0"
+                              cellpadding="0"
+                              cellspacing="0"
+                              class="text_block block-7"
+                              role="presentation"
+                              style="
+                                mso-table-lspace: 0pt;
+                                mso-table-rspace: 0pt;
+                                word-break: break-word;
+                              "
+                              width="100%"
+                            >
+                              <tr>
+                                <td
+                                  class="pad"
+                                  style="
+                                    padding-bottom: 10px;
+                                    padding-left: 40px;
+                                    padding-right: 40px;
+                                    padding-top: 20px;
+                                  "
+                                >
+                                  <div
+                                    style="
+                                    "
+                                  >
+                                    <div
+                                      class=""
+                                      style="
+                                        font-size: 12px;
+                                        mso-line-height-alt: 14.399999999999999px;
+                                        color: #555555;
+                                        line-height: 1.2;
+                                      "
+                                    >
+                                      <p
+                                        dir="rtl"
+                                        style="
+                                          margin: 0;
+                                          font-size: 16px;
+                                          text-align: center;
+                                          mso-line-height-alt: 19.2px;
+                                        "
+                                      >
+                                        <span
+                                          style="
+                                            font-size: 20px;
+                                            color: #003188;
+                                          "
+                                          ><strong
+                                            >کنجکاویم که نظرتون رو در رابطه با
+                                            فرآیند اطلاع رسانی سایتمون بدونیم.
+                                            پس هر انتقاد یا پیشنهادی که دارین،
+                                            حتماً با ما در میون بذارین.</strong
+                                          ></span
+                                        >
+                                      </p>
+                                    </div>
                                   </div>
                                 </td>
                               </tr>

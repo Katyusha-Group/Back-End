@@ -56,8 +56,9 @@ def send_forget_password_verification_message(subject, recipient_list, verificat
 
 
 def send_modification_message(subject, recipient_list, message):
+    message_lines = message.split('\n')
     context = {
-        'message': message,
+        'message_lines': message_lines,
         'image_icon': 'http://katyushaiust.ir/static/Back-End/kat_1.png',
         'image_header': 'http://katyushaiust.ir/static/Back-End/announcement.png',
         'image_footer': 'http://katyushaiust.ir/static/Back-End/feedback.png',
