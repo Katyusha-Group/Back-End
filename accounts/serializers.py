@@ -149,7 +149,19 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email', 'department', 'gender']
+        fields = ['email', 'department', 'gender', 'first_name', 'last_name']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    email = serializers.CharField(source='user.email')
+    department = serializers.CharField(source='user.department')
+    gender = serializers.CharField(source='user.gender')
+
+    class Meta:
+        model = Profile
+        fields = ['first_name', 'last_name', 'email', 'department', 'gender', 'image', 'telegram_id']
 
 
 class WalletSerializer(serializers.ModelSerializer):
