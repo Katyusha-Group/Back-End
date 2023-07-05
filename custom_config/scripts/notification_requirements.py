@@ -31,7 +31,7 @@ def find_base_course_references_completed_orders(course: ModelTracker):
         'order__user').all()
 
 
-def find_reference_course(course_related: ModelTracker) -> Course | None:
+def find_reference_course(course_related: ModelTracker):
     course = get_course(course_code=course_related.course_number, semester=project_variables.CURRENT_SEMESTER)
     return course
 
@@ -78,7 +78,7 @@ def send_notification_to_user(order_item: OrderItem, message: str):
 
 
 def send_message_to_all(order_items, message):
-    if message is not None or message != '':
+    if message is not None or message != '' and len(order_items) > 0:
         for order_item in order_items:
             send_notification_to_user(order_item=order_item, message=message)
 
@@ -88,6 +88,7 @@ def send_notification_for_courses():
         untracked_courses = find_untracked_courses()
         for course_instance in untracked_courses:
             message = None
+            order_items = []
             if course_instance.action == project_variables.DELETE or course_instance.action == project_variables.CREATE:
                 message = (prepare_header_create_delete_message(
                     course_instance=course_instance))

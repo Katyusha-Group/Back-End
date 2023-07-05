@@ -15,6 +15,7 @@ class Command(BaseCommand):
     help = 'Start golestan watcher service'
 
     def handle(self, *args, **options):
+        pre = time.time()
         path = Path(os.path.basename(__file__))
         path = Path(path.parent.absolute())
         suffix = '_' + str(project_variables.CURRENT_SEMESTER) + '.xlsx'
@@ -34,3 +35,4 @@ class Command(BaseCommand):
             course_updater.delete(data=modification_lists['delete'])
             df_new.to_excel(old_path, index=False)
             print('Excel file updated successfully')
+        print('Total time taken for storing differences:', time.time() - pre)
