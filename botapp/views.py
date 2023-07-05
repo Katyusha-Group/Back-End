@@ -149,22 +149,21 @@ class TelegramLink(APIView):
 
 def is_user_in_databese(hashed_number=None, telegram_chat_id=None, name=None):
 
-    message_success = (f"Hello {name}, welcome to the Katyusha bot.\n"
-                       "Please select /my_information to get your information, /get_course_in_my_calender to get Courses that were added to the calendar.")
+    message_success = (f"  سلام {name} به کاتیوشا خوش آمدی. \n  "
+                       " /my_information برای دیدن اطلاعاتتون\n /get_course_in_my_calender برای مشاهده درس های اضافه شده به کلندرتون")
 
-    message_fail = (f"Hello {name}, welcome to the Katyusha bot.\n"
-                "You should first log in to the website and then access the Telegram bot through the link provided by the website in order to utilize the bot's features.\n"
-                "http://katyushaiust.ir/accounts/login/")
+    message_fail = (f"   سلام  {name} \n به کاتیوشا خوش اومدی \n"
+                "برای این که بتونی از امکانات ربات استفاده کنی، باید توی سایت لاگین کنی و از طریق لینکی که بهت میدیم وارد ربات بشی"
+                "\n http://katyushaiust.ir/accounts/login/")
 
     if hashed_number is None:
         print("hashed_number is none, user didnt enter with url")
         try:
             user_telegram = User_telegram.objects.get(telegram_chat_id=telegram_chat_id)
-            print(user_telegram)
-            return user_telegram, ""
+            return user_telegram, message_success
         except User_telegram.DoesNotExist:
             print("user doesnt exist, User never enter with url.")
-            return (None, "The user doesn't exist. You never entered with a URL.")
+            return (None, message_fail)
 
     elif hashed_number is not None:
         print("hashed_number is not none, user entered with url")
@@ -172,7 +171,7 @@ def is_user_in_databese(hashed_number=None, telegram_chat_id=None, name=None):
             user_telegram = User_telegram.objects.get(hashed_number=hashed_number)
         except User_telegram.DoesNotExist:
             print("user enter with invalid url")
-            return (None, "You entered with an invalid URL.")
+            return (None, message_fail)
 
         if user_telegram.telegram_chat_id is None:
             print("user doesnt have telegram_chat_id")
@@ -180,15 +179,15 @@ def is_user_in_databese(hashed_number=None, telegram_chat_id=None, name=None):
             user_telegram.telegram_name = name
             user_telegram.save()
             print(f"{user_telegram} updated")
-            return user_telegram, ""
+            return user_telegram, message_success
 
         elif user_telegram.telegram_chat_id == telegram_chat_id:
             print("user already have telegram_chat_id")
-            return user_telegram, ""
+            return user_telegram, message_success
 
         elif user_telegram.telegram_chat_id != telegram_chat_id:
             print("user have different telegram_chat_id")
-            return (None, "The user doesn't exist. You entered with a URL.")
+            return (None, message_fail)
 
 
 class IsItInDatabase(APIView):
@@ -200,23 +199,8 @@ class IsItInDatabase(APIView):
         hashed_number = serializer.validated_data.get('hashed_number')
         telegram_chat_id = serializer.validated_data.get('telegram_chat_id')
         name = serializer.validated_data.get('name')
-        print( hashed_number, telegram_chat_id, name)
         user_telegram , message = is_user_in_databese(hashed_number=hashed_number, telegram_chat_id=telegram_chat_id, name=name)
-        print("--->", user_telegram, message)
-        if message == "":
-            message = (f"Hello {name}, welcome to the Katyusha bot.\n"
-                       "Please select /my_information to get your information, /get_course_in_my_calender to get Courses that were added to the calendar.")
-        else:
-            message = (f"Hello {name}, welcome to the Katyusha bot.\n"
-                "You should first log in to the website and then access the Telegram bot through the link provided by the website in order to utilize the bot's features.\n"
-                "http://katyushaiust.ir/accounts/login/")
-
-        user_id = request.user.id
-        from .models import User_telegram
-        if User_telegram.objects.filter(user_id=user_id).exists():
-            return Response({'message': message, 'user_telegram': user_telegram})
-        else:
-            return Response({'message': message, 'user_telegram': user_telegram})
+        return Response({'status': 'OK', 'message': message})
 
 
 
@@ -227,9 +211,22 @@ class GetChatIdView(APIView):
         # Retrieve the user ID associated with the provided email
         user_id = None
 
-        user = User_telegram.objects.get(email=email)
+        user = get_object_or_404(User_telegram, email=email)
         user_id = user.telegram_chat_id
+
+
 
         # Return the user ID as JSON response
         response = {'user_id': user_id}
         return Response(response)
+
+
+class GetInformationView(APIView):
+    permission_classes = []
+
+    def get(self, request, telegram_chat_id):
+        telegram_user = get_object_or_404(User_telegram, telegram_chat_id=telegram_chat_id)
+        email = telegram_user.email
+        user = get_object_or_404(User, email=email)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)

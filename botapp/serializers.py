@@ -37,7 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
         return Department.objects.get(pk=obj.department_id).name
     class Meta:
         model = User
-        fields = ('id', 'username', 'department_name' )
+        fields = ('id', 'username', 'department_name',  )
         read_only_fields = ('id',)
 
 class TeacherSerializer(serializers.ModelSerializer):
@@ -88,8 +88,8 @@ class ModifyMyCourseSerializer(serializers.Serializer):
         return attrs
 
 class IsItInDatabaseSerializer(serializers.Serializer):
-    hashed_number = serializers.CharField(max_length=10, min_length=10, allow_null=True, allow_blank=True)
-    telegram_chat_id = serializers.CharField(max_length=10, min_length=10, allow_null=True, allow_blank=True)
+    hashed_number = serializers.CharField(max_length=10, min_length=10, allow_null=True, allow_blank=True, required=False)
+    telegram_chat_id = serializers.CharField(max_length=10, allow_null=True, allow_blank=True)
     name = serializers.CharField(max_length=100, allow_null=True, allow_blank=True)
 
 
