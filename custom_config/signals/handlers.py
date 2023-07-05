@@ -3,7 +3,7 @@ from django.dispatch import receiver
 
 from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment
 from custom_config.models import FieldTracker
-import custom_config.scripts.signals_requirements as requirements
+import custom_config.scripts.signals_scripts as requirements
 from university.signals import course_teachers_changed
 from utils import project_variables
 

@@ -4,7 +4,8 @@ from datetime import timedelta
 from django.utils import timezone
 
 from custom_config.models import Order, Cart
-from custom_config.scripts.notification_requirements import send_notification_for_courses
+from custom_config.scripts.golestan import watch_golestan
+from custom_config.scripts.notification import send_notification_for_courses
 
 
 def delete_pending_orders():
@@ -35,9 +36,16 @@ def delete_expired_carts():
             cart.delete()
 
 
-def send_notifications():
+def watch_and_send_notifications():
     pre = time.time()
 
+    # watch_golestan()
+    # print('Completed watching golestan in', time.time() - pre)
+
+    post = time.time()
     send_notification_for_courses()
 
-    print('Completed sending notification in', time.time() - pre)
+    print('Completed sending notification in', time.time() - post)
+
+    print('Total time:', time.time() - pre)
+

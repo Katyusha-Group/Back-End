@@ -2,7 +2,7 @@ import time
 
 from django.core.management.base import BaseCommand
 
-from custom_config.scripts.notification_requirements import send_notification_for_courses
+from custom_config.scripts.notification import send_notification_for_courses
 
 
 class Command(BaseCommand):
