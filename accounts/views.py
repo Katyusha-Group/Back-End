@@ -300,8 +300,8 @@ class ForgotPasswordView(APIView):
         user.count_of_verification_code_sent  = user.count_of_verification_code_sent + 1
         user.save()
 
-        subject = 'Verify your email'
-        message = f'Your verification code is {verification_code}. Please enter this code in the verification page to complete your registration.'
+        subject = 'Verification Code for Password Change'
+        message = f'To change your password, please use the following verification code:" {verification_code} ". Please enter this code in the provided field to proceed with the password change process. If you did nott initiate this request, please ignore this message.Thank you for using our services'
         from_email = 'noreply@example.com'
         recipient_list = [user.email]
         send_mail(subject, message, from_email, recipient_list, fail_silently=False)
