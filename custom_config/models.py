@@ -147,7 +147,7 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name='items')
-    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='order_items')
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, related_name='order_items')
     class_gp = models.CharField(max_length=2, default='00')
     course_number = models.PositiveIntegerField()
     contain_telegram = models.BooleanField(default=False)
