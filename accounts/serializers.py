@@ -244,3 +244,4 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 class CodeVerificationSerializer(serializers.Serializer):
     verification_code = serializers.CharField(max_length=4, min_length=4)
+

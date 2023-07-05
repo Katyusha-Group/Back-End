@@ -8,6 +8,7 @@ class User_telegram(models.Model):
     user_id = models.IntegerField(blank=True, null=True)
     telegram_chat_id = models.CharField(blank=True, null=True, max_length=10)
     telegram_name = models.CharField(blank=True, null=True, max_length=100)
+    email = models.EmailField(blank=True, null=True)
 
 
     def __str__(self):
