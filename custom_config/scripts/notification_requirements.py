@@ -1,13 +1,8 @@
-import codecs
-
 from django.db import transaction
-from django.db.models import Q, Manager
-from django.core.mail import send_mail
+from django.db.models import Q
 
-from botapp import telegram_notification
-from core.settings import EMAIL_HOST
 from custom_config.models import ModelTracker, OrderItem
-from university.models import Course, AllowedDepartment, CourseTimePlace, ExamTimePlace, Teacher
+from university.models import Course
 from university.scripts.get_or_create import get_course
 from utils import project_variables, email_handler
 from utils.project_variables import course_field_mapper_en_to_fa_notification as course_field_mapper
@@ -69,8 +64,6 @@ def prepare_header_create_delete_message(course_instance):
 
 
 def send_notification_to_user(order_item: OrderItem, message: str):
-    if message is None or message == '':
-        return
     if order_item.contain_email:
         print('Sending email to: ' + order_item.order.user.email)
         email_handler.send_modification_message(subject='تغییرات جدید',
@@ -85,7 +78,7 @@ def send_notification_to_user(order_item: OrderItem, message: str):
 
 
 def send_message_to_all(order_items, message):
-    if message is not None:
+    if message is not None or message != '':
         for order_item in order_items:
             send_notification_to_user(order_item=order_item, message=message)
 
