@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     # 'debug_toolbar',
+    'botapp',
     "django_filters",
     'mail_templated',
     'drf_yasg',
@@ -43,7 +44,6 @@ INSTALLED_APPS = [
     'accounts',
     'university',
     'custom_config',
-    'botapp',
 ]
 
 MIDDLEWARE = [

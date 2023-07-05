@@ -86,3 +86,12 @@ class ModifyMyCourseSerializer(serializers.Serializer):
         #         detail='This course can not be added, due to its department incompatibility with allowed departments',
         #     )
         return attrs
+
+class IsItInDatabaseSerializer(serializers.Serializer):
+    hashed_number = serializers.CharField(max_length=10, min_length=10, allow_null=True, allow_blank=True)
+    telegram_chat_id = serializers.CharField(max_length=10, min_length=10, allow_null=True, allow_blank=True)
+    name = serializers.CharField(max_length=100, allow_null=True, allow_blank=True)
+
+
+class GetChatIderializer(serializers.Serializer):
+    email = serializers.EmailField()
