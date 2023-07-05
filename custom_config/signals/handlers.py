@@ -11,21 +11,21 @@ from utils import project_variables
 @receiver(post_save, sender=Course)
 def create_c_log(sender, **kwargs):
     if kwargs['created']:
-        is_course, course_name, course_number = requirements.get_course_info(kwargs['instance'])
-        requirements.create_model_tracker(is_course, course_name, course_number, 'C', kwargs['instance'])
+        is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['instance'])
+        requirements.create_model_tracker(is_course, course_name, course_number, 'C', course_pk)
 
 
 @receiver(pre_delete, sender=Course)
 def create_d_log(sender, **kwargs):
-    is_course, course_name, course_number = requirements.get_course_info(kwargs['instance'])
-    requirements.create_model_tracker(is_course, course_name, course_number, 'D', kwargs['instance'])
+    is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['instance'])
+    requirements.create_model_tracker(is_course, course_name, course_number, 'D', course_pk)
 
 
 @receiver(post_save, sender=Course)
 def create_u_log(sender, **kwargs):
     if not kwargs['created']:
-        is_course, course_name, course_number = requirements.get_course_info(kwargs['instance'])
-        tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', kwargs['instance'])
+        is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['instance'])
+        tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', course_pk)
 
         if 'update_fields' in kwargs and kwargs['update_fields'] is not None:
             fields_list = []
@@ -58,8 +58,8 @@ def create_u_log(sender, **kwargs):
 @receiver(post_save, sender=AllowedDepartment)
 def create_u_log_for_course_related(sender, **kwargs):
     if kwargs['created']:
-        is_course, course_name, course_number = requirements.get_course_info(kwargs['instance'])
-        tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', kwargs['instance'])
+        is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['instance'])
+        tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', course_pk)
 
         field = ''
 
@@ -71,10 +71,12 @@ def create_u_log_for_course_related(sender, **kwargs):
             field = 'course_time_place'
 
         value = ''
-        for tracker_field in tracker.fields.all():
+        for tracker_field in tracker.fields.all().reverse():
             if field == tracker_field.field:
                 value += tracker_field.value + '، '
                 tracker_field.delete()
+                if field == 'exam_time_place' or field == 'course_time_place':
+                    break
         value += kwargs['instance'].__str__()
 
         FieldTracker.objects.create(
