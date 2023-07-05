@@ -22,4 +22,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('', include(carts_router.urls)),
     path('', include(reviews_router.urls)),
+    path('get-prices/', views.GetPricesView.as_view(), name='get-prices'),
 ]

@@ -1,6 +1,8 @@
+from datetime import datetime
 from decimal import Decimal
 
 from django.db import models
+from django.core.validators import MinLengthValidator, RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django_jalali.db import models as jmodels
 
@@ -23,10 +25,24 @@ class User(AbstractUser):
     department = models.ForeignKey(to=Department, on_delete=models.DO_NOTHING)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     verification_code = models.CharField(max_length=4, null=True, blank=True)
-    count_of_verification_code_sent = models.IntegerField(default=0)
+    verification_tries_count = models.IntegerField(default=0)
+    last_verification_sent = models.DateTimeField(null=True, blank=True, default=datetime.now)
+    has_verification_tries_reset = models.BooleanField(default=False)
 
     def __str__(self):
         return self.email
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    image = models.ImageField(upload_to='images/profile_pics', default='images/profile_pics/default.png')
+    telegram_id = models.CharField(max_length=32, null=True, blank=True, validators=[
+        RegexValidator(regex=r'^[a-zA-Z0-9_]+$',
+                                message='telegram id must be alphanumeric or contain underscores'),
+        MinLengthValidator(5, message='telegram id must be at least 5 characters long.')])
+
+    def __str__(self):
+        return self.user.email
 
 
 class Wallet(models.Model):

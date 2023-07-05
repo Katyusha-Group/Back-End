@@ -7,7 +7,7 @@ from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview
 from custom_config.signals import order_created
 
 from university.models import Course
-from university.serializers import ShoppingCourseSerializer
+from university.serializers import ShoppingCourseSerializer, TeacherSerializer
 
 from university.scripts.get_or_create import get_course
 from utils import project_variables
@@ -16,14 +16,13 @@ from utils import project_variables
 class CartItemSerializer(serializers.ModelSerializer):
     course = ShoppingCourseSerializer(read_only=True)
     price = serializers.SerializerMethodField(read_only=True)
-    teacher_image = serializers.ImageField(source='course.teacher.image', read_only=True)
 
     def get_price(self, obj: CartItem):
         return obj.get_item_price()
 
     class Meta:
         model = CartItem
-        fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'price', 'teacher_image']
+        fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'price']
 
 
 class UpdateCartItemViewSerializer(serializers.ModelSerializer):

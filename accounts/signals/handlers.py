@@ -1,12 +1,28 @@
 from decimal import Decimal
 
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save
 from django.dispatch import receiver
-from accounts.models import User, Wallet
-import custom_config.scripts.signals_requirements as requirements
+from accounts.models import User, Wallet, Profile
 from accounts.signals import wallet_updated_signal
 from custom_config.models import Order
 from custom_config.signals import order_created
+
+
+@receiver(post_save, sender=User)
+def create_profile(sender, **kwargs):
+    user = kwargs['instance']
+    if kwargs['created']:
+        if user.gender == 'M':
+            profile = Profile(
+                user=user,
+                image='images/profile_pics/male_default.png'
+            )
+        else:
+            profile = Profile(
+                user=user,
+                image='images/profile_pics/female_default.png'
+            )
+        profile.save()
 
 
 @receiver(post_save, sender=User)

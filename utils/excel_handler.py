@@ -11,7 +11,7 @@ from utils import project_variables
 
 
 class ExcelHandler:
-    DIR = "../data/"
+    DIR = "./data/"
 
     def __init__(self):
         self.create_path()
@@ -34,6 +34,7 @@ class ExcelHandler:
         print("Excel file created successfully")
 
     def replace_arabian_with_persian(self, file_name):
+        print(os.getcwd())
         path = self.get_path(file_name)
         workbook = openpyxl.load_workbook(path)
         worksheet = workbook.active
@@ -46,18 +47,40 @@ class ExcelHandler:
                             cell.value = digits.fa_to_en(cell.value)
         workbook.save(path)
 
+    def fix_lms_teachers_name(self):
+        path = self.get_path(project_variables.TEACHERS_EXCEL_NAME)
+        workbook = openpyxl.load_workbook(path)
+        worksheet = workbook.active
+        for row in worksheet.iter_rows():
+            for cell in row:
+                if cell.value is not None:
+                    if type(cell.value) == str:
+                        teacher_name = cell.value
+                        if 'سیده' in teacher_name:
+                            teacher_names = teacher_name.split('سیده')
+                            teacher_name = 'سیده ' + teacher_names[1].strip()
+                        elif 'سید' in teacher_name:
+                            teacher_names = teacher_name.split('سید')
+                            teacher_name = 'سید ' + teacher_names[1].strip()
+                        cell.value = teacher_name
+        workbook.save(path)
+
     @staticmethod
     def make_name_correct(name: str):
         if name.isspace() or name == '':
             return name
-        if 'سيد' in name:
-            if 'سيد ' not in name:
-                name = name.replace('سيد', 'سيد ')
-            parts = name.split()
-            name = parts[-2] + ' ' + parts[-1] + ' '.join(parts[:-2])
+        if 'سيده' in name:
+            parts = name.split('سيده')
+            name = 'سيده ' + parts[1].strip() + ' ' + parts[0].strip()
+        elif 'سيد' in name:
+            parts = name.split('سيد')
+            name = 'سيد ' + parts[1].strip() + ' ' + parts[0].strip()
         else:
             parts = name.split()
-            name = parts[-1] + ' ' + ' '.join(parts[:-1])
+            if 'سادات' in name:
+                name = parts[-2] + ' ' + parts[-1] + ' ' + ' '.join(parts[:-2])
+            else:
+                name = parts[-1] + ' ' + ' '.join(parts[:-1])
         return name
 
     def create_path(self):

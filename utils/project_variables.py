@@ -2,6 +2,7 @@ from decimal import Decimal
 
 CURRENT_SEMESTER = 4012
 GOLESTAN_EXCEL_FILE_NAME = 'golestan_courses'
+GOLESTAN_EXCEL_COMPLETE_FILE_NAME = 'golestan_courses.xlsx'
 NEW_GOLESTAN_EXCEL_FILE_NAME = 'new_golestan_courses'
 ALL_GOLESTAN_EXCEL_FILE = 'all_golestan_courses.xlsx'
 ALL_GOLESTAN_COURSES = 'all_golestan_courses'
@@ -9,6 +10,7 @@ NEW_GOLESTAN_EXCEL_FILE = 'new_golestan_courses.xlsx'
 DATA_DIRECTORY_NAME = 'data'
 DATA_DIRECTORY = './data/'
 TEACHERS_EXCEL_FILE = 'teachers_info.xlsx'
+TEACHERS_EXCEL_NAME = 'teachers_info'
 
 # columns:
 SEMESTER = 'ترم ارائه درس'
@@ -27,6 +29,7 @@ SEX = 'جنس'
 TEACHER = 'نام استاد'
 COURSE_TIME_PLACE = 'زمان و مکان ارائه'
 EXAM_TIME_PLACE = 'زمان و مکان امتحان'
+EXAM_TIME_PLACE_NOTIF = 'زمان امتحان'
 REGISTRATION_LIMIT = 'محدودیت اخذ'
 PRESENTATION_TYPE = 'نحوه ارائه درس'
 EMERGENCY_DELETION = 'امکان حذف اضطراری'
@@ -35,7 +38,7 @@ DESCRIPTION = 'توضیحات'
 ALLOWED_DEPARTMENTS = 'محدودیت دانشکده ها'
 REGISTERED_COUNT_NOTIFICATION = 'تعداد ثبت نام شده'
 WAITING_COUNT_NOTIFICATION = 'تعداد لیست انتظار'
-TEACHER_NOTIFICATION = 'استاد'
+TEACHER_NOTIFICATION = 'اساتید'
 
 # population modes:
 POPULATION_INITIAL = 'initial'
@@ -85,6 +88,9 @@ TAX = 0.09
 EMAIL_PRICE = 1000
 SMS_PRICE = 2000
 TELEGRAM_PRICE = 1000
+MAX_VERIFICATION_TRIES = 5
+
+DOMAIN = 'https://www.katyushaiust.ir'
 
 # General Departments
 GENERAL_DEPARTMENTS_ID = [
@@ -94,6 +100,28 @@ GENERAL_DEPARTMENTS_ID = [
     27,
     28,
     90,
+]
+
+ADDITIONAL_DEPARTMENTS_ID = [
+    34,  # Pardis
+    24,  # Amoozesh Electronic
+    25,  # Damavand
+]
+
+TEACHERS_NAME_INCORRECT_TO_CORRECT = {
+    'آموزشی اساتید گروه': 'اساتید گروه آموزشی',
+}
+
+TEACHERS_NAME_INCORRECT_SUBSTRING = [
+    'اله',
+    'الله',
+    'الدین',
+    'سا',
+    'آ',
+]
+
+ADDITIONAL_TEACHERS_NAME = [
+    '0 0',
 ]
 
 course_field_mapper_fa_to_en = {
@@ -116,13 +144,13 @@ course_field_mapper_en_to_fa_notification = {
     'registered_count': REGISTERED_COUNT_NOTIFICATION,
     'waiting_count': WAITING_COUNT_NOTIFICATION,
     'sex': SEX,
-    'teacher_id': TEACHER_NOTIFICATION,
+    'teachers': TEACHER_NOTIFICATION,
     'registration_limit': REGISTRATION_LIMIT,
     'presentation_type': PRESENTATION_TYPE,
     'guest_able': GUEST_ABLE,
     'description': DESCRIPTION,
     'AllowedDepartment': ALLOWED_DEPARTMENTS,
-    'ExamTimePlace': EXAM_TIME_PLACE,
+    'ExamTimePlace': EXAM_TIME_PLACE_NOTIF,
     'CourseTimePlace': COURSE_TIME_PLACE,
 }
 

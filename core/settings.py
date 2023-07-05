@@ -106,15 +106,15 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ],
-}
+#
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework.authentication.SessionAuthentication',
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#         'rest_framework.authentication.TokenAuthentication',
+#         'rest_framework.authentication.BasicAuthentication',
+#     ],
+# }
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -196,7 +196,7 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=15),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
@@ -251,9 +251,11 @@ EMAIL_USE_TLS = True
 
 CRONJOBS = [
     ('30 2 * * *', 'university.cron.watch_golestan'),
-    ('*/5 * * * *', 'custom_config.cron.delete_pending_orders'),
-    ('0 0 * * 6', 'custom_config.cron.delete_failed_orders'),
-    ('0 0 * * *', 'custom_config.cron.delete_expired_orders'),
-    ('0 0 * * *', 'custom_config.cron.delete_expired_carts'),
+    ('*/10 * * * *', 'accounts.cron.reset_registration_tries'),
+    ('*/10 * * * *', 'accounts.cron.reset_verification_tries'),
+    # ('*/5 * * * *', 'custom_config.cron.delete_pending_orders'),
+    # ('0 0 * * 6', 'custom_config.cron.delete_failed_orders'),
+    # ('0 0 * * *', 'custom_config.cron.delete_expired_orders'),
+    # ('0 0 * * *', 'custom_config.cron.delete_expired_carts'),
 ]
 
