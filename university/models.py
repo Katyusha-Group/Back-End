@@ -98,9 +98,9 @@ class Teacher(models.Model):
 
 class Course(models.Model):
     SEX_CHOICES = (
-        ('M', project_variables.MAN),
-        ('F', project_variables.WOMAN),
-        ('B', project_variables.BOTH_SEX),
+        ('M', project_variables.MAN_FA),
+        ('F', project_variables.WOMAN_FA),
+        ('B', project_variables.BOTH_SEX_FA),
     )
 
     PRESENTATION_TYPE_CHOICES = (
@@ -185,7 +185,7 @@ class AllowedDepartment(models.Model):
                                related_name='allowed_departments')
 
     def __str__(self):
-        return str(self.course.base_course_id) + ' - ' + str(self.department_id)
+        return str(self.department.name)
 
     class Meta:
         verbose_name = 'دانشکدۀ مجاز و غیر مجاز'

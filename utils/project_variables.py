@@ -58,9 +58,19 @@ TUE = 'سه شنبه'
 WED = 'چهارشنبه'
 
 # sex choices:
-MAN = 'مرد'
-WOMAN = 'زن'
-BOTH_SEX = 'مختلط'
+MAN_FA = 'مرد'
+WOMAN_FA = 'زن'
+BOTH_SEX_FA = 'مختلط'
+SEX_FA_TO_EN = {
+    MAN_FA: 'M',
+    WOMAN_FA: 'F',
+    BOTH_SEX_FA: 'B',
+}
+SEX_EN_TO_FA = {
+    'M': MAN_FA,
+    'F': WOMAN_FA,
+    'B': BOTH_SEX_FA
+}
 
 # presentation type choices:
 NORMAL = 'عادی'
@@ -149,9 +159,9 @@ course_field_mapper_en_to_fa_notification = {
     'presentation_type': PRESENTATION_TYPE,
     'guest_able': GUEST_ABLE,
     'description': DESCRIPTION,
-    'AllowedDepartment': ALLOWED_DEPARTMENTS,
-    'ExamTimePlace': EXAM_TIME_PLACE_NOTIF,
-    'CourseTimePlace': COURSE_TIME_PLACE,
+    'allowed_department': ALLOWED_DEPARTMENTS,
+    'exam_time_place': EXAM_TIME_PLACE_NOTIF,
+    'course_time_place': COURSE_TIME_PLACE,
 }
 
 day_mapper = {

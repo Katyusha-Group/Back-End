@@ -143,9 +143,9 @@ def _update_column(course: Course, column: str, value):
         course.waiting_count = value
         course.save(update_fields=['waiting_count'])
     elif column == project_variables.SEX:
-        if value == project_variables.MAN:
+        if value == project_variables.MAN_FA:
             value = 'M'
-        elif value == project_variables.WOMAN:
+        elif value == project_variables.WOMAN_FA:
             value = 'F'
         else:
             value = 'B'

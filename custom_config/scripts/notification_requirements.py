@@ -1,13 +1,8 @@
-import codecs
-
 from django.db import transaction
-from django.db.models import Q, Manager
-from django.core.mail import send_mail
+from django.db.models import Q
 
-from botapp import telegram_notification
-from core.settings import EMAIL_HOST
 from custom_config.models import ModelTracker, OrderItem
-from university.models import Course, AllowedDepartment, CourseTimePlace, ExamTimePlace, Teacher
+from university.models import Course
 from university.scripts.get_or_create import get_course
 from utils import project_variables, email_handler
 from utils.project_variables import course_field_mapper_en_to_fa_notification as course_field_mapper
@@ -26,10 +21,6 @@ def find_untracked_courses():
     return ModelTracker.objects.filter(Q(status='U') & Q(is_course=True)).all()
 
 
-def find_untracked_course_references():
-    return ModelTracker.objects.filter(Q(status='U') & Q(is_course=False)).all()
-
-
 def find_updated_course_references_completed_orders(course: Course):
     return course.order_items.select_related('order').filter(order__payment_status='C').all()
 
@@ -46,17 +37,10 @@ def find_reference_course(course_related: ModelTracker) -> Course | None:
 
 
 def prepare_message_field(field):
-    value, flag = get_int(field.value)
-    if flag:
-        return course_field_mapper[field.field] + ' : ' + str(value) + '\n'
     return course_field_mapper[field.field] + ' : ' + field.value + '\n'
 
 
-def prepare_related_message_field(field):
-    return course_field_mapper[field.model] + ' : ' + str(field) + '\n'
-
-
-def prepare_header_update_message(course, related, fields):
+def prepare_header_update_message(course, fields):
     message = 'درس با شماره درس ' + str(course.base_course_id) + '_' + course.class_gp + ' و نام ' + \
               course.base_course.name + ' در گلستان ' + project_variables.action_mapper[
                   project_variables.UPDATE] + '.\n'
@@ -64,14 +48,8 @@ def prepare_header_update_message(course, related, fields):
     count = 0
     if fields is not None:
         for field in fields:
-            try:
-                if related:
-                    message += prepare_related_message_field(field)
-                else:
-                    message += prepare_message_field(field)
-                count += 1
-            except AllowedDepartment.DoesNotExist or CourseTimePlace.DoesNotExist or ExamTimePlace.DoesNotExist:
-                continue
+            message += prepare_message_field(field)
+            count += 1
     if count > 0:
         return message
     else:
@@ -86,8 +64,6 @@ def prepare_header_create_delete_message(course_instance):
 
 
 def send_notification_to_user(order_item: OrderItem, message: str):
-    if message is None or message == '':
-        return
     if order_item.contain_email:
         print('Sending email to: ' + order_item.order.user.email)
         email_handler.send_modification_message(subject='تغییرات جدید',
@@ -102,7 +78,7 @@ def send_notification_to_user(order_item: OrderItem, message: str):
 
 
 def send_message_to_all(order_items, message):
-    if message is not None:
+    if message is not None or message != '':
         for order_item in order_items:
             send_notification_to_user(order_item=order_item, message=message)
 
@@ -122,30 +98,11 @@ def send_notification_for_courses():
                     modified_fields = course_instance.fields.all()
                     if not len(modified_fields) == 0:
                         message = prepare_header_update_message(course=course,
-                                                                fields=modified_fields,
-                                                                related=False)
+                                                                fields=modified_fields)
                         order_items = find_updated_course_references_completed_orders(course)
             send_message_to_all(message=message, order_items=order_items)
             # course_instance.status = project_variables.CREATE
             # course_instance.save()
-
-
-def send_notification_for_course_related():
-    with transaction.atomic():
-        untracked_course_related = find_untracked_course_references()
-        pks = {}
-        for course_related in untracked_course_related:
-            # course_related.status = project_variables.CREATE
-            # course_related.save()
-            course = find_reference_course(course_related)
-            append_or_create_dict(course, course_related, pks)
-        for pk in pks:
-            course_related_list = pks.get(pk)
-            course = Course.objects.filter(pk=pk).first()
-            if course:
-                order_items = find_updated_course_references_completed_orders(course)
-                message = prepare_header_update_message(course=course, related=True, fields=course_related_list)
-                send_message_to_all(order_items, message)
 
 
 def append_or_create_dict(course, course_related, pks):
