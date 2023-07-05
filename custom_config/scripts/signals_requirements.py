@@ -3,8 +3,11 @@ from university.models import Course
 
 
 def create_model_tracker(is_course, course_name, course_number, action, instance):
+    courses = ModelTracker.objects.filter(course_number=course_number, status='U', model=Course.__name__)
+    if courses.exists():
+        return courses.first()
     return ModelTracker.objects.create(
-        model=instance.__class__.__name__,
+        model=Course.__name__,
         instance_id=instance.id,
         action=action,
         status='U',
@@ -22,4 +25,4 @@ def get_course_info(instance):
     else:
         course_number = str(instance.course.base_course.course_number) + '_' + str(instance.course.class_gp)
         course_name = str(instance.course.base_course.name)
-    return is_course, course_name, course_number
+    return True, course_name, course_number

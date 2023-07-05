@@ -58,9 +58,19 @@ TUE = 'سه شنبه'
 WED = 'چهارشنبه'
 
 # sex choices:
-MAN = 'مرد'
-WOMAN = 'زن'
-BOTH_SEX = 'مختلط'
+MAN_FA = 'مرد'
+WOMAN_FA = 'زن'
+BOTH_SEX_FA = 'مختلط'
+SEX_FA_TO_EN = {
+    MAN_FA: 'M',
+    WOMAN_FA: 'F',
+    BOTH_SEX_FA: 'B',
+}
+SEX_EN_TO_FA = {
+    'M': MAN_FA,
+    'F': WOMAN_FA,
+    'B': BOTH_SEX_FA
+}
 
 # presentation type choices:
 NORMAL = 'عادی'
