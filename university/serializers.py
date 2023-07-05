@@ -275,7 +275,6 @@ class CourseWithoutTeacherTimeLineSerializer(serializers.ModelSerializer):
 class BaseCourseTimeLineSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         representation = super().to_representation(obj)
-        print(representation)
         representation['data'] = {}
         if 'courses' in representation:
             courses_representation = representation.pop('courses')
