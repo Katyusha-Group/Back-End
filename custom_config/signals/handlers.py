@@ -88,8 +88,8 @@ def create_u_log_for_course_related(sender, **kwargs):
 
 @receiver(course_teachers_changed, sender=Course)
 def teachers_changed(sender, **kwargs):
-    is_course, course_name, course_number = requirements.get_course_info(kwargs['course'])
-    tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', kwargs['course'])
+    is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['course'])
+    tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', course_pk)
     for tracker_field in tracker.fields.all():
         if tracker_field.field == 'teachers':
             tracker_field.delete()
