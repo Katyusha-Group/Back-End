@@ -158,6 +158,15 @@ class OrderItem(models.Model):
     def __str__(self):
         return str(self.id) + ' : ' + str(self.order.id) + ' : ' + str(self.course_number) + '_' + self.class_gp
 
+    @staticmethod
+    def get_same_items_with_same_course_user(user, course):
+        return (OrderItem.objects
+                .prefetch_related('order__user')
+                .filter(order__user=user,
+                        order__payment_status=Order.PAYMENT_STATUS_COMPLETED,
+                        course=course)
+                .first())
+
     class Meta:
         verbose_name = 'سفارش'
         verbose_name_plural = 'آیتم های سفارش'

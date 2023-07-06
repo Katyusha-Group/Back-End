@@ -74,14 +74,7 @@ class AddCartItemSerializer(serializers.ModelSerializer):
         if not contain_email and not contain_sms and not contain_telegram:
             raise serializers.ValidationError({'notification': 'حداقل یکی از روش های ارتباطی را انتخاب کنید.'})
         course = get_course(course_code=complete_course_number, semester=project_variables.CURRENT_SEMESTER)
-        order_item = (
-            OrderItem.objects
-            .prefetch_related('order__user')
-            .filter(order__user=user,
-                    order__payment_status=Order.PAYMENT_STATUS_COMPLETED,
-                    course=course)
-            .first()
-        )
+        order_item = OrderItem.get_same_items_with_same_course_user(user=user, course=course)
         if order_item:
             if contain_telegram and order_item.contain_telegram or \
                     contain_sms and order_item.contain_sms or \
@@ -189,11 +182,6 @@ class CreateOrderSerializer(serializers.Serializer):
         user_id = self.context['user_id']
         cart_id = self.validated_data['cart_id']
         cart = Cart.objects.get(id=cart_id)
-        for item in cart.items.select_related('course').all():
-            if Order.objects.filter(user_id=user_id, items__course=item.course).exists():
-                raise serializers.ValidationError(
-                    'You have already course with with id {}. Delete it from your cart and try again.'.format(
-                        item.course.id))
         with transaction.atomic():
             if self.validated_data['payment_method'] == Order.PAY_WALLET:
                 order = Order.objects.create(user_id=user_id, payment_method=self.validated_data['payment_method'],
