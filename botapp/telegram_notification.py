@@ -7,7 +7,6 @@ from telegram import Bot
 
 async def send_telegram_message(token, user_id, message):
     bot = Bot(token=token)
-    user_id = '968800834'
     await bot.send_message(chat_id=user_id, text=message)
 
 
@@ -24,11 +23,11 @@ def send_telegram_notification(email = None, changes= None):
     #     raise ValueError('changes is required')
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(send_telegram_message(token, 968800834, changes))
+    loop.run_until_complete(send_telegram_message(token, response['user_id'], changes))
     loop.close()
 
 if __name__ == '__main__':
-    send_telegram_notification( email='ali.dada.28880@gmail.com', changes= 'بیبی')
+    send_telegram_notification( email='ali.dada.28880@gmail.com', changes= 'خوبی؟')
 #
 
 
