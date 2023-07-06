@@ -36,14 +36,16 @@ class CartItemViewSet(ModelViewSet):
         return CartItemSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, context={'cart_id': self.kwargs['cart_pk']})
+        serializer = self.get_serializer(data=request.data,
+                                         context={'cart_id': self.kwargs['cart_pk'], 'request': self.request})
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
         serializer = UpdateCartItemViewSerializer(instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, context={'cart_id': self.kwargs['cart_pk']})
+        serializer = self.get_serializer(data=request.data,
+                                         context={'cart_id': self.kwargs['cart_pk'], 'request': self.request})
         serializer.is_valid(raise_exception=True)
         instance = serializer.update(self.get_object(), serializer.validated_data)
         serializer = UpdateCartItemViewSerializer(instance)

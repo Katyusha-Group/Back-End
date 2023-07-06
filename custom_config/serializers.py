@@ -1,8 +1,10 @@
+import requests
 from django.db import transaction
 
 from rest_framework import serializers
 
 from accounts.serializers import SimpleUserSerializer
+from botapp.models import User_telegram
 from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote
 from custom_config.signals import order_created
 
@@ -66,12 +68,19 @@ class AddCartItemSerializer(serializers.ModelSerializer):
         contain_telegram = attrs['contain_telegram']
         contain_sms = attrs['contain_sms']
         contain_email = attrs['contain_email']
+        user = self.context['request'].user
         if not Course.objects.filter(base_course_id=base_course_id, class_gp=class_gp).exists():
-            raise serializers.ValidationError('This course does not exist.')
+            raise serializers.ValidationError({'course': 'درس مورد نظر یافت نشد.'})
         if not contain_email and not contain_sms and not contain_telegram:
-            raise serializers.ValidationError('You must choose at least one notification method.')
-        course_id = get_course(course_code=complete_course_number, semester=project_variables.CURRENT_SEMESTER).id
-        attrs['course_id'] = course_id
+            raise serializers.ValidationError({'notification': 'حداقل یکی از روش های ارتباطی را انتخاب کنید.'})
+        course = get_course(course_code=complete_course_number, semester=project_variables.CURRENT_SEMESTER)
+        order_item = OrderItem.get_same_items_with_same_course_user(user=user, course=course)
+        if order_item:
+            if contain_telegram and order_item.contain_telegram or \
+                    contain_sms and order_item.contain_sms or \
+                    contain_email and order_item.contain_email:
+                raise serializers.ValidationError({'order': 'این درس با این روش اطلاع رسانی، قبلاً خریداری شده است.'})
+        attrs['course_id'] = course.id
         return attrs
 
     def save(self, **kwargs):
@@ -154,6 +163,14 @@ class CreateOrderSerializer(serializers.Serializer):
         cart = cart.first()
         if cart.items.count() == 0:
             raise serializers.ValidationError({'cart': 'امکان ثبت سفارش وجود ندارد. سبد خرید شما خالی است.'})
+        for item in cart.items.all():
+            if item.contain_telegram and not User_telegram.objects.filter(email=user.email).exists():
+                raise serializers.ValidationError(
+                    {
+                        'telegram': 'امکان ثبت سفارش وجود ندارد. شما تلگرام خود را فعال نکرده اید.',
+                        'telegram_link': requests.get(f'https://katyushaiust.ir/bot/get_user_id/{user.email}').json()
+                    }
+                )
         payment_method = attrs['payment_method']
         if payment_method == Order.PAY_WALLET:
             if cart.total_price() > user.wallet.balance:
@@ -165,15 +182,10 @@ class CreateOrderSerializer(serializers.Serializer):
         user_id = self.context['user_id']
         cart_id = self.validated_data['cart_id']
         cart = Cart.objects.get(id=cart_id)
-        for item in cart.items.select_related('course').all():
-            if Order.objects.filter(user_id=user_id, items__course=item.course).exists():
-                raise serializers.ValidationError(
-                    'You have already course with with id {}. Delete it from your cart and try again.'.format(
-                        item.course.id))
         with transaction.atomic():
             if self.validated_data['payment_method'] == Order.PAY_WALLET:
                 order = Order.objects.create(user_id=user_id, payment_method=self.validated_data['payment_method'],
-                                             payment_status=Order.PAYMENT_STATUS_COMPLETE)
+                                             payment_status=Order.PAYMENT_STATUS_COMPLETED)
             else:
                 order = Order.objects.create(user_id=user_id, payment_method=self.validated_data['payment_method'])
             order_items = [
