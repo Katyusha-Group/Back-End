@@ -1,11 +1,8 @@
-from custom_config.models import ModelTracker
+from custom_config.models import ModelTracker, Notification, OrderItem, Order
 from university.models import Course
 
 
 def create_model_tracker(is_course, course_name, course_number, action, pk):
-    courses = ModelTracker.objects.filter(course_number=course_number, status='U', model=Course.__name__)
-    if courses.exists():
-        return courses.first()
     return ModelTracker.objects.create(
         model=Course.__name__,
         instance_id=pk,
@@ -28,3 +25,21 @@ def get_course_info(instance):
         course_name = str(instance.course.base_course.name)
         course_id = instance.course.id
     return True, course_name, course_number, course_id
+
+
+def create_notification(title, text, model_tracker):
+    course_number, class_gp = model_tracker.course_number.split('_')
+
+    order_items = (OrderItem.objects
+                   .prefetch_related('order')
+                   .filter(course_number=course_number,
+                           class_gp=class_gp,
+                           order__payment_status=Order.PAYMENT_STATUS_COMPLETED)
+                   .all())
+
+    for order_item in order_items:
+        notification = Notification.objects.create(
+            title=title,
+            text=text,
+        )
+        notification.order_items.add(order_item)

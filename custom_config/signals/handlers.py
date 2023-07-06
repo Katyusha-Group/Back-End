@@ -1,9 +1,12 @@
+from django.contrib.auth import get_user_model
+from django.db.models import Case, When, Value, BooleanField
 from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.dispatch import receiver
 
 from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment
-from custom_config.models import FieldTracker
+from custom_config.models import FieldTracker, ModelTracker, Notification, OrderItem, Order
 import custom_config.scripts.signals_scripts as requirements
+from university.scripts import get_or_create
 from university.signals import course_teachers_changed
 from utils import project_variables
 
@@ -24,10 +27,10 @@ def create_d_log(sender, **kwargs):
 @receiver(post_save, sender=Course)
 def create_u_log(sender, **kwargs):
     if not kwargs['created']:
-        is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['instance'])
-        tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', course_pk)
-
         if 'update_fields' in kwargs and kwargs['update_fields'] is not None:
+            is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['instance'])
+            tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', course_pk)
+
             fields_list = []
 
             for field in kwargs['update_fields']:
@@ -101,3 +104,33 @@ def teachers_changed(sender, **kwargs):
         value=teacher_names,
         tracker=tracker,
     )
+
+
+@receiver(post_save, sender=ModelTracker)
+def notification_handler(sender, **kwargs):
+    if kwargs['created']:
+        model_tracker = kwargs['instance']
+        title = ''
+        text = ''
+        if model_tracker.action == ModelTracker.ACTION_CREATED:
+            title = 'ایجاد درس جدید'
+            text = 'درس {} با شماره {} ایجاد شد.'.format(model_tracker.course_name, model_tracker.course_number)
+        elif model_tracker.action == ModelTracker.ACTION_DELETED:
+            title = 'حذف درس'
+            text = 'درس {} با شماره {} حذف شد.'.format(model_tracker.course_name, model_tracker.course_number)
+        else:
+            return
+        requirements.create_notification(title, text, model_tracker)
+
+
+@receiver(post_save, sender=FieldTracker)
+def notification_update_handler(sender, **kwargs):
+    if kwargs['created']:
+        field_tracker = kwargs['instance']
+        title = 'ویرایش درس'
+        text = 'درس {} با شماره {} ویرایش شد:'.format(field_tracker.tracker.course_name,
+                                                      field_tracker.tracker.course_number)
+        text += '\n'
+        text += '{}: {}'.format(project_variables.course_field_mapper_en_to_fa_notification(field_tracker.field),
+                                field_tracker.value)
+        requirements.create_notification(title, text, field_tracker.tracker)
