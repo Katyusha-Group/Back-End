@@ -5,6 +5,8 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
+from django_jalali.db import models as jmodels
+
 from university.models import Course, Teacher, AllowedDepartment, CourseTimePlace, ExamTimePlace
 from utils import project_variables
 from utils.transaction_functions import create_ref_code
@@ -118,7 +120,9 @@ class Order(models.Model):
         (PAY_WALLET, 'پرداخت از طریق کیف پول'),
     )
 
-    placed_at = models.DateTimeField(auto_now_add=True)
+    objects = jmodels.jManager
+
+    placed_at = jmodels.jDateTimeField(auto_now_add=True)
     payment_status = models.CharField(
         max_length=1, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_STATUS_PENDING
     )
