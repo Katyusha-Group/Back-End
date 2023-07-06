@@ -13,15 +13,22 @@ from utils.transaction_functions import create_ref_code
 
 
 class ModelTracker(models.Model):
+    ACTION_CREATED = 'C'
+    ACTION_UPDATED = 'U'
+    ACTION_DELETED = 'D'
+
     ACTION_CHOICES = (
-        ('C', 'ایجاد'),
-        ('U', 'بروزرسانی'),
-        ('D', 'حذف'),
+        (ACTION_CREATED, 'ایجاد'),
+        (ACTION_UPDATED, 'بروزرسانی'),
+        (ACTION_DELETED, 'حذف'),
     )
 
+    STATUS_UNCOMMITTED = 'U'
+    STATUS_COMMITTED = 'T'
+
     STATUS_CHOICES = (
-        ('U', 'اعمال نشده'),
-        ('C', 'اعمال شده'),
+        (STATUS_UNCOMMITTED, 'اعمال نشده'),
+        (STATUS_COMMITTED, 'اعمال شده'),
     )
 
     model = models.CharField(max_length=255, verbose_name='مدل')
@@ -177,6 +184,24 @@ class OrderItem(models.Model):
         indexes = [
             models.Index(fields=['course_number', 'class_gp']),
         ]
+
+
+class Notification(models.Model):
+    objects = jmodels.jManager()
+
+    is_read = models.BooleanField(default=False)
+    is_sent_to_telegram = models.BooleanField(default=False)
+    order_items = models.ManyToManyField(OrderItem, related_name='notifications')
+    title = models.CharField(max_length=100)
+    text = models.TextField()
+    applied_at = jmodels.jDateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.id) + ' : ' + self.title
+
+    class Meta:
+        verbose_name = 'اعلان'
+        verbose_name_plural = 'اعلانات'
 
 
 class TeacherReview(models.Model):
