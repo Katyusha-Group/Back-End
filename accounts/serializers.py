@@ -1,3 +1,4 @@
+import requests
 from rest_framework import serializers
 from accounts.models import *
 from django.contrib.auth import authenticate
@@ -163,6 +164,10 @@ class ProfileSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source='user.email', read_only=True)
     department = serializers.CharField(source='user.department', read_only=True)
     gender = serializers.CharField(source='user.gender', read_only=True)
+    telegram_link = serializers.SerializerMethodField(read_only=True)
+
+    def get_telegram_link(self, obj: Profile):
+        return f'{project_variables.DOMAIN}/bot/get_user_id/{obj.user.email}'
 
     def update(self, instance, validated_data):
         for field, value in validated_data.items():
@@ -180,7 +185,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['first_name', 'last_name', 'email', 'department', 'gender', 'image', 'telegram_id']
+        fields = ['first_name', 'last_name', 'email', 'department', 'gender', 'image', 'telegram_link']
 
 
 class WalletSerializer(serializers.ModelSerializer):
