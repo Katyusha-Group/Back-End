@@ -30,14 +30,14 @@ class SignUpSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_email(self, value):
-        user = User.objects.filter(email=value)
+        user = User.objects.filter(email__iexact=value)
         if user.exists():
             user = user.first()
             if user.is_email_verified:
                 raise serializers.ValidationError("Email already exists.")
             if user.verification_tries_count >= project_variables.MAX_VERIFICATION_TRIES:
                 raise serializers.ValidationError("You have reached the maximum number of registration tries.")
-        return value
+        return str.lower(value)
 
 
 class LoginSerializer(serializers.Serializer):
@@ -62,6 +62,7 @@ class LoginSerializer(serializers.Serializer):
         password = attrs.get('password', None)
 
         if username and password:
+            username = str.lower(username)
             user = authenticate(request=self.context.get('request'),
                                 username=username, password=password)
 
@@ -129,7 +130,7 @@ class ActivationResendSerializer(serializers.Serializer):
         email = attrs.get('email', None)
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
             raise serializers.ValidationError({"detail": "user does not exist."})
 

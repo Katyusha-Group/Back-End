@@ -46,10 +46,10 @@ class SignUpView(APIView):
             validate_password(request.data['password1'])
         except exception.ValidationError as e:
             return Response({"password": e.messages}, status=400)
-        email = serializer.validated_data['email']
+        email = str.lower(validated_data['email'])
 
         verification_code = str(random.randint(1000, 9999))
-        user = User.objects.filter(email=email)
+        user = User.objects.filter(email__iexact=email)
         if user.exists():
             user = user.first()
             user.department = validated_data['department']
@@ -63,8 +63,8 @@ class SignUpView(APIView):
             # Save user
             user = User.objects.create(
                 department=validated_data['department'],
-                username=validated_data['email'],
-                email=validated_data['email'],
+                username=email,
+                email=email,
                 gender=validated_data['gender'],
                 password=make_password(validated_data['password1']),
                 verification_code=verification_code,
@@ -82,7 +82,8 @@ class SignUpView(APIView):
                                                 show_text=show_text)
 
         return Response({
-            "user": {"department": user.department.name, "email": email,
+            "user": {"department": user.department.name,
+                     "email": email,
                      "gender": user.gender},
             "message": "User created successfully. Please check your email to activate your account. ",
             "code": verification_code,
@@ -244,7 +245,9 @@ class ActivationResend(generics.GenericAPIView):
         if serializer.is_valid():
             user_obj = serializer.validated_data['user']
             token = self.get_token_for_user(user_obj)
-            email_obj = EmailMessage('email/activation_email.tpl', {'token': token}, 'asad@asd.com',
+            email_obj = EmailMessage('email/activation_email.tpl',
+                                     {'token': token},
+                                     'asad@asd.com',
                                      to=[user_obj.email])
             EmailThread(email_obj).start()
             return Response({"message": "email sent"})
@@ -271,12 +274,11 @@ class WalletViewSet(viewsets.GenericViewSet, ListModelMixin):
     @action(detail=False, methods=['GET'])
     def see_wallet(self, request):
         user = self.request.user
-        if request.method == 'GET':
-            wallet = WalletSerializer(
-                Wallet.objects.filter(user=self.request.user).first(),
-                context=self.get_serializer_context()
-            )
-            return Response(status=status.HTTP_200_OK, data=wallet.data)
+        wallet = WalletSerializer(
+            Wallet.objects.filter(user=user).first(),
+            context=self.get_serializer_context()
+        )
+        return Response(status=status.HTTP_200_OK, data=wallet.data)
 
     @action(detail=False, methods=['PUT'])
     def update_wallet(self, request):
@@ -304,7 +306,7 @@ class ForgotPasswordView(APIView):
         email = serializer.validated_data['email']
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
             return Response({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -329,9 +331,12 @@ class ForgotPasswordView(APIView):
                                                                 recipient_list=[user.email],
                                                                 verification_tries=user.verification_tries_count)
 
-        return Response({'detail': 'Code Sent',
-                         'link': f'http://katyushaiust.ir/accounts/code_verification_view/{token}/'
-                         })
+        return Response(
+            {
+                'detail': 'Code Sent',
+                'link': f'http://katyushaiust.ir/accounts/code_verification_view/{token}/'
+            }
+        )
 
     def get_token_for_user(self, user):
         refresh = RefreshToken.for_user(user)
@@ -351,7 +356,6 @@ class PasswordChangeAPIView(APIView):
             return Response({'detail': 'URL is not valid.'})
 
         user = self.get_user_from_token(token)
-
 
         if serializer.is_valid():
             # user = request.user
@@ -388,7 +392,7 @@ class CodeVerificationView(APIView):
         try:
             self.is_valid_token(token)
         except:
-            return Response({'detail': 'URL is not valid.'})
+            return Response({'detail': 'You have to put token inside the url.'})
 
         serializer = CodeVerificationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
