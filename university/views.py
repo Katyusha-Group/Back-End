@@ -181,6 +181,9 @@ class CourseGroupListView(ModelViewSet):
     serializer_class = CourseGroupSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_serializer_context(self):
+        return {'user': self.request.user}
+
     def get_queryset(self):
         base_course_id = self.kwargs['base_course_id']
         if base_course_id is None:
