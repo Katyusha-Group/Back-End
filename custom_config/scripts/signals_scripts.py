@@ -1,4 +1,7 @@
-from custom_config.models import ModelTracker, Notification, OrderItem, Order
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+
+from custom_config.models import ModelTracker, WebNotification, OrderItem, Order
 from university.models import Course
 
 
@@ -30,16 +33,15 @@ def get_course_info(instance):
 def create_notification(title, text, model_tracker):
     course_number, class_gp = model_tracker.course_number.split('_')
 
-    order_items = (OrderItem.objects
-                   .prefetch_related('order')
-                   .filter(course_number=course_number,
-                           class_gp=class_gp,
-                           order__payment_status=Order.PAYMENT_STATUS_COMPLETED)
-                   .all())
-
-    for order_item in order_items:
-        notification = Notification.objects.create(
+    course = Course.objects.get(base_course__course_number=course_number, class_gp=class_gp)
+    users = get_user_model().objects.filter(Q(courses=course) | Q(department__in=course.allowed_departments)).distinct()
+    notifications = [
+        WebNotification(
             title=title,
             text=text,
+            user=user,
+            model_tracker=model_tracker,
         )
-        notification.order_items.add(order_item)
+        for user in users
+    ]
+    WebNotification.objects.bulk_create(notifications)

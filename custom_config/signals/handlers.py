@@ -4,7 +4,7 @@ from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.dispatch import receiver
 
 from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment
-from custom_config.models import FieldTracker, ModelTracker, Notification, OrderItem, Order
+from custom_config.models import FieldTracker, ModelTracker, WebNotification, OrderItem, Order
 import custom_config.scripts.signals_scripts as requirements
 from university.scripts import get_or_create
 from university.signals import course_teachers_changed
