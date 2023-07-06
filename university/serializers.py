@@ -419,7 +419,7 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = serializers.SerializerMethodField(read_only=True)
-    teachers = SimpleTeacherSerializer(read_only=True, many=True)
+    teachers = serializers.SerializerMethodField(read_only=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
     group_number = serializers.CharField(source='class_gp', read_only=True)
@@ -429,6 +429,9 @@ class CourseGroupSerializer(serializers.ModelSerializer):
 
     def get_course_times(self, obj: Course):
         return SimpleCourseTimePlaceSerializer(obj.course_times.all().order_by('day'), many=True, read_only=True).data
+
+    def get_teachers(self, obj: Course):
+        return SimpleTeacherSerializer(obj.teachers.all().order_by('teacher_image'), many=True, read_only=True).data
 
     def get_complete_course_number(self, obj: Course):
         return model_based_functions.get_complete_course_number(obj)
