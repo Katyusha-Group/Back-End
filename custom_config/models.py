@@ -186,12 +186,12 @@ class OrderItem(models.Model):
         ]
 
 
-class Notification(models.Model):
+class WebNotification(models.Model):
     objects = jmodels.jManager()
 
     is_read = models.BooleanField(default=False)
-    is_sent_to_telegram = models.BooleanField(default=False)
-    order_items = models.ManyToManyField(OrderItem, related_name='notifications')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    tracker = models.ForeignKey(ModelTracker, on_delete=models.SET_NULL, related_name='trackers', null=True)
     title = models.CharField(max_length=100)
     text = models.TextField()
     applied_at = jmodels.jDateTimeField(auto_now_add=True)
