@@ -72,7 +72,7 @@ def create_u_log_for_course_related(sender, **kwargs):
 
         is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['instance'])
         tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', course_pk, field)
-
+        WebNotification.objects.filter(tracker=tracker).delete()
         value = ''
         for tracker_field in tracker.fields.all().reverse():
             if field == tracker_field.field:
