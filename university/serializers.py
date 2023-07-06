@@ -418,7 +418,7 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     total_unit = serializers.IntegerField(source='base_course.total_unit', read_only=True)
     practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
-    course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
+    course_times = serializers.SerializerMethodField(read_only=True)
     teachers = SimpleTeacherSerializer(read_only=True, many=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
@@ -426,6 +426,9 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     added_to_calendar_count = serializers.SerializerMethodField(read_only=True)
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
     color_code = serializers.SerializerMethodField(read_only=True)
+
+    def get_course_times(self, obj: Course):
+        return SimpleCourseTimePlaceSerializer(obj.course_times.all().order_by('day'), many=True, read_only=True).data
 
     def get_complete_course_number(self, obj: Course):
         return model_based_functions.get_complete_course_number(obj)
