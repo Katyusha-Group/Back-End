@@ -1,3 +1,4 @@
+import requests
 from django.db.models import Count, Q
 from rest_framework import serializers
 
@@ -59,7 +60,7 @@ class SemesterSerializer(serializers.ModelSerializer):
         fields = ['year']
 
 
-class TeacherSerializer(serializers.ModelSerializer):
+class SimpleTeacherSerializer(serializers.ModelSerializer):
     teacher_image = serializers.SerializerMethodField(read_only=True)
 
     def get_teacher_image(self, obj: Teacher):
@@ -68,6 +69,20 @@ class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
         fields = ['id', 'name', 'teacher_image']
+
+
+class ShoppingCourseSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='base_course.name', read_only=True)
+    complete_course_number = serializers.SerializerMethodField(read_only=True)
+    teachers = SimpleTeacherSerializer(read_only=True, many=True)
+
+    def get_complete_course_number(self, obj: Course):
+        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+
+    class Meta:
+        model = Course
+        fields = ['complete_course_number', 'name',
+                  'registered_count', 'capacity', 'teachers']
 
 
 class SimpleExamTimePlaceSerializer(serializers.ModelSerializer):
@@ -121,27 +136,13 @@ class SimpleCourseSerializer(serializers.ModelSerializer):
                   'registered_count', 'capacity']
 
 
-class ShoppingCourseSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='base_course.name', read_only=True)
-    complete_course_number = serializers.SerializerMethodField(read_only=True)
-    teachers = TeacherSerializer(read_only=True, many=True)
-
-    def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
-
-    class Meta:
-        model = Course
-        fields = ['complete_course_number', 'name',
-                  'registered_count', 'capacity', 'teachers']
-
-
 class CourseSerializer(serializers.ModelSerializer):
     total_unit = serializers.IntegerField(source='base_course.total_unit', read_only=True)
     practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
     emergency_deletion = serializers.BooleanField(source='base_course.emergency_deletion', read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
-    teachers = TeacherSerializer(read_only=True, many=True)
+    teachers = SimpleTeacherSerializer(read_only=True, many=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
     is_allowed = serializers.SerializerMethodField(read_only=True)
@@ -164,7 +165,7 @@ class CourseSerializer(serializers.ModelSerializer):
 class MyCourseSerializer(serializers.ModelSerializer):
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
-    teachers = TeacherSerializer(read_only=True, many=True)
+    teachers = SimpleTeacherSerializer(read_only=True, many=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
 
@@ -390,7 +391,7 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
     course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
-    teachers = TeacherSerializer(read_only=True, many=True)
+    teachers = SimpleTeacherSerializer(read_only=True, many=True)
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     is_allowed = serializers.SerializerMethodField(read_only=True)
@@ -418,7 +419,7 @@ class CourseGroupSerializer(serializers.ModelSerializer):
     practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
-    teachers = TeacherSerializer(read_only=True, many=True)
+    teachers = SimpleTeacherSerializer(read_only=True, many=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
     group_number = serializers.CharField(source='class_gp', read_only=True)
@@ -444,3 +445,31 @@ class CourseGroupSerializer(serializers.ModelSerializer):
                   'capacity', 'registered_count', 'waiting_count', 'exam_times',
                   'course_times', 'teachers', 'color_intensity_percentage', 'color_code',
                   'total_unit', 'practical_unit', 'sex']
+
+
+class TeacherSerializer(SimpleTeacherSerializer):
+    courses = serializers.SerializerMethodField(read_only=True)
+    timeline = serializers.SerializerMethodField(read_only=True)
+    teacher_votes = serializers.SerializerMethodField(read_only=True)
+    teacher_reviews = serializers.SerializerMethodField(read_only=True)
+
+    def get_timeline(self, obj: Teacher):
+        return project_variables.DOMAIN + '/timeline/teachers/' + str(obj.id)
+
+    def get_teacher_votes(self, obj: Teacher):
+        return project_variables.DOMAIN + '/teacher-votes/' + str(obj.id)
+
+    def get_teacher_reviews(self, obj: Teacher):
+        return project_variables.DOMAIN + '/teacher-reviews/' + str(obj.id)
+
+    def get_courses(self, obj: Teacher):
+        courses = Course.objects.filter(teachers__in=[obj], semester=project_variables.CURRENT_SEMESTER).distinct()
+        serializer = SimpleCourseSerializer(data=courses, many=True, context=self.context)
+        serializer.is_valid()
+        return serializer.data
+
+    class Meta:
+        model = Teacher
+        fields = ['id', 'name', 'email_address',
+                  'teacher_image', 'timeline', 'teacher_votes',
+                  'teacher_reviews', 'courses', ]

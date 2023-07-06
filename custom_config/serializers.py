@@ -7,7 +7,7 @@ from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview
 from custom_config.signals import order_created
 
 from university.models import Course
-from university.serializers import ShoppingCourseSerializer, TeacherSerializer
+from university.serializers import ShoppingCourseSerializer
 
 from university.scripts.get_or_create import get_course
 from utils import project_variables
