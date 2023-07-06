@@ -5,7 +5,8 @@ from rest_framework import serializers
 
 from accounts.serializers import SimpleUserSerializer
 from botapp.models import User_telegram
-from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote
+from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote, \
+    WebNotification
 from custom_config.signals import order_created
 
 from university.models import Course
@@ -393,3 +394,15 @@ class ModifyTeacherReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherReview
         fields = ['text', ]
+
+
+class WebNotificationSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    title = serializers.CharField(read_only=True)
+    text = serializers.CharField(read_only=True)
+    applied_at = serializers.DateTimeField(read_only=True)
+    is_read = serializers.BooleanField()
+
+    class Meta:
+        model = WebNotification
+        fields = ['id', 'title', 'text', 'applied_at', 'is_read']

@@ -6,11 +6,12 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
-from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote
+from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote, WebNotification
 from custom_config.serializers import CartSerializer, CartItemSerializer, \
     AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, \
     TeacherVoteSerializer, ModifyTeacherVoteSerializer, ModifyTeacherReviewSerializer, TeacherReviewSerializer, \
-    ModifyReviewVoteSerializer, ReviewVoteSerializer, UpdateCartItemViewSerializer, CourseCartOrderInfoSerializer
+    ModifyReviewVoteSerializer, ReviewVoteSerializer, UpdateCartItemViewSerializer, CourseCartOrderInfoSerializer, \
+    WebNotificationSerializer
 from university.models import Teacher, Course
 from university.scripts.get_or_create import get_course
 from utils import project_variables
@@ -251,3 +252,26 @@ class ReviewVoteViewSet(ModelViewSet):
             'data': serializer.data,
         }
         return Response(new_data)
+
+
+class WebNotificationViewSet(ModelViewSet):
+    http_method_names = ['get', 'delete', 'options', 'head']
+    serializer_class = WebNotificationSerializer
+
+    def get_permissions(self):
+        if self.request.method in ['DELETE']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def get_serializer_context(self):
+        return {'user': self.request.user,
+                'is_admin': self.request.user.is_staff}
+
+    def get_queryset(self):
+        return WebNotification.objects.filter(user=self.request.user, is_read=False).all()[:10]
+
+    def list(self, request, *args, **kwargs):
+        data = WebNotification.objects.filter(user=self.request.user).order_by('-applied_at').all()[:10]
+        serializer = WebNotificationSerializer(data, many=True)
+        WebNotification.objects.filter(pk__in=[entry.pk for entry in data]).update(is_read=True)
+        return Response(serializer.data)
