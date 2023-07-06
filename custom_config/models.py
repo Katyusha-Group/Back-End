@@ -202,6 +202,9 @@ class WebNotification(models.Model):
     class Meta:
         verbose_name = 'اعلان'
         verbose_name_plural = 'اعلانات'
+        indexes = [
+            models.Index(fields=['user', 'is_read'])
+        ]
 
 
 class TeacherReview(models.Model):
