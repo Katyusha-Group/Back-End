@@ -61,9 +61,6 @@ def create_u_log(sender, **kwargs):
 @receiver(post_save, sender=AllowedDepartment)
 def create_u_log_for_course_related(sender, **kwargs):
     if kwargs['created']:
-        is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['instance'])
-        tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', course_pk)
-
         field = ''
 
         if kwargs['instance'].__class__.__name__ == 'AllowedDepartment':
@@ -72,6 +69,9 @@ def create_u_log_for_course_related(sender, **kwargs):
             field = 'exam_time_place'
         elif kwargs['instance'].__class__.__name__ == 'CourseTimePlace':
             field = 'course_time_place'
+
+        is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['instance'])
+        tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', course_pk, field)
 
         value = ''
         for tracker_field in tracker.fields.all().reverse():
@@ -131,6 +131,6 @@ def notification_update_handler(sender, **kwargs):
         text = 'درس {} با شماره {} ویرایش شد:'.format(field_tracker.tracker.course_name,
                                                       field_tracker.tracker.course_number)
         text += '\n'
-        text += '{}: {}'.format(project_variables.course_field_mapper_en_to_fa_notification(field_tracker.field),
+        text += '{}: {}'.format(project_variables.course_field_mapper_en_to_fa_notification[field_tracker.field],
                                 field_tracker.value)
         requirements.create_notification(title, text, field_tracker.tracker)
