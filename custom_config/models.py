@@ -104,11 +104,11 @@ class CartItem(models.Model):
 
 class Order(models.Model):
     PAYMENT_STATUS_PENDING = 'P'
-    PAYMENT_STATUS_COMPLETE = 'C'
+    PAYMENT_STATUS_COMPLETED = 'C'
     PAYMENT_STATUS_FAILED = 'F'
     PAYMENT_STATUS_CHOICES = [
         (PAYMENT_STATUS_PENDING, 'در حال پردازش'),
-        (PAYMENT_STATUS_COMPLETE, 'موفق'),
+        (PAYMENT_STATUS_COMPLETED, 'موفق'),
         (PAYMENT_STATUS_FAILED, 'ناموفق')
     ]
     PAY_ONLINE = 'O'

@@ -68,12 +68,26 @@ class AddCartItemSerializer(serializers.ModelSerializer):
         contain_telegram = attrs['contain_telegram']
         contain_sms = attrs['contain_sms']
         contain_email = attrs['contain_email']
+        user = self.context['request'].user
         if not Course.objects.filter(base_course_id=base_course_id, class_gp=class_gp).exists():
-            raise serializers.ValidationError('This course does not exist.')
+            raise serializers.ValidationError({'course': 'درس مورد نظر یافت نشد.'})
         if not contain_email and not contain_sms and not contain_telegram:
-            raise serializers.ValidationError('You must choose at least one notification method.')
-        course_id = get_course(course_code=complete_course_number, semester=project_variables.CURRENT_SEMESTER).id
-        attrs['course_id'] = course_id
+            raise serializers.ValidationError({'notification': 'حداقل یکی از روش های ارتباطی را انتخاب کنید.'})
+        course = get_course(course_code=complete_course_number, semester=project_variables.CURRENT_SEMESTER)
+        order_item = (
+            OrderItem.objects
+            .prefetch_related('order__user')
+            .filter(order__user=user,
+                    order__payment_status=Order.PAYMENT_STATUS_COMPLETED,
+                    course=course)
+            .first()
+        )
+        if order_item:
+            if contain_telegram and order_item.contain_telegram or \
+                    contain_sms and order_item.contain_sms or \
+                    contain_email and order_item.contain_email:
+                raise serializers.ValidationError({'order': 'این درس با این روش اطلاع رسانی، قبلاً خریداری شده است.'})
+        attrs['course_id'] = course.id
         return attrs
 
     def save(self, **kwargs):
@@ -183,7 +197,7 @@ class CreateOrderSerializer(serializers.Serializer):
         with transaction.atomic():
             if self.validated_data['payment_method'] == Order.PAY_WALLET:
                 order = Order.objects.create(user_id=user_id, payment_method=self.validated_data['payment_method'],
-                                             payment_status=Order.PAYMENT_STATUS_COMPLETE)
+                                             payment_status=Order.PAYMENT_STATUS_COMPLETED)
             else:
                 order = Order.objects.create(user_id=user_id, payment_method=self.validated_data['payment_method'])
             order_items = [
