@@ -1,8 +1,10 @@
+import requests
 from django.db import transaction
 
 from rest_framework import serializers
 
 from accounts.serializers import SimpleUserSerializer
+from botapp.models import User_telegram
 from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote
 from custom_config.signals import order_created
 
@@ -154,6 +156,14 @@ class CreateOrderSerializer(serializers.Serializer):
         cart = cart.first()
         if cart.items.count() == 0:
             raise serializers.ValidationError({'cart': 'امکان ثبت سفارش وجود ندارد. سبد خرید شما خالی است.'})
+        for item in cart.items.all():
+            if item.contain_telegram and not User_telegram.objects.filter(email=user.email).exists():
+                raise serializers.ValidationError(
+                    {
+                        'telegram': 'امکان ثبت سفارش وجود ندارد. شما تلگرام خود را فعال نکرده اید.',
+                        'telegram_link': requests.get(f'https://katyushaiust.ir/bot/get_user_id/{user.email}').json()
+                    }
+                )
         payment_method = attrs['payment_method']
         if payment_method == Order.PAY_WALLET:
             if cart.total_price() > user.wallet.balance:
