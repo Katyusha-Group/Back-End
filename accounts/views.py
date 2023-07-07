@@ -469,3 +469,26 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
     def get_object(self):
         return get_object_or_404(self.get_queryset(), user=self.request.user)
+
+
+class ChangePasswordlogView(APIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            current_password = serializer.validated_data['old_password']
+            new_password = serializer.validated_data['new_password']
+
+            # Check if the current password matches the user's actual password
+            if not user.check_password(current_password):
+                return Response({'error': 'Invalid current password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Change the user's password
+            user.set_password(new_password)
+            user.save()
+
+            return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
