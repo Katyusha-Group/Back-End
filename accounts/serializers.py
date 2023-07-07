@@ -7,6 +7,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core import exceptions as exception
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from utils.telegram_functions import get_bot_url
+
 
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
@@ -168,7 +170,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     telegram_link = serializers.SerializerMethodField(read_only=True)
 
     def get_telegram_link(self, obj: Profile):
-        return f'{project_variables.DOMAIN}/bot/get_user_id/{obj.user.email}'
+        return get_bot_url(csrftoken=self.context['csrf_token'],
+                           token=self.context['token'])
 
     def update(self, instance, validated_data):
         for field, value in validated_data.items():
@@ -238,7 +241,6 @@ class ResetPasswordSerializer(serializers.Serializer):
         if new_password != confirm_password:
             raise serializers.ValidationError("New password and confirm password do not match.")
 
-
         # Validate password complexity using Django's built-in password validators
         try:
             validate_password(new_password)
@@ -250,4 +252,3 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 class CodeVerificationSerializer(serializers.Serializer):
     verification_code = serializers.CharField(max_length=4, min_length=4)
-

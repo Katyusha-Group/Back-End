@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote, WebNotification
 from custom_config.permissions import IsOwner
@@ -75,8 +76,13 @@ class OrderViewSet(ModelViewSet):
         return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
+        token = self.get_token_for_user(request.user)
+        csrf_token = request.COOKIES.get('csrftoken', None)
         serializer = CreateOrderSerializer(data=request.data,
-                                           context={'user_id': request.user.id, 'user': request.user})
+                                           context={'user_id': request.user.id,
+                                                    'user': request.user,
+                                                    'token': token,
+                                                    'csrftoken': csrf_token, })
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
         serializer = OrderSerializer(order)
@@ -93,6 +99,11 @@ class OrderViewSet(ModelViewSet):
         if self.request.user.is_staff:
             return Order.objects.all()
         return Order.objects.filter(user_id=self.request.user.id)
+
+    @staticmethod
+    def get_token_for_user(user):
+        refresh = RefreshToken.for_user(user)
+        return str(refresh.access_token)
 
 
 class CourseCartOrderInfoRetrieveViewSet(ModelViewSet):

@@ -14,6 +14,7 @@ from university.serializers import ShoppingCourseSerializer
 
 from university.scripts.get_or_create import get_course
 from utils import project_variables
+from utils.telegram_functions import get_bot_url
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -169,7 +170,8 @@ class CreateOrderSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     {
                         'telegram': 'امکان ثبت سفارش وجود ندارد. شما تلگرام خود را فعال نکرده اید.',
-                        'telegram_link': requests.get(f'https://katyushaiust.ir/bot/get_user_id/{user.email}').json()
+                        'telegram_link': get_bot_url(csrftoken=self.context['csrf_token'],
+                                                     token=self.context['token'])
                     }
                 )
         payment_method = attrs['payment_method']
