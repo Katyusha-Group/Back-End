@@ -437,6 +437,11 @@ class ProfileViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
 
+    def get_serializer_context(self):
+        token = self.get_token_for_user(self.request.user)
+        return {'csrftoken': self.request.COOKIES.get('csrftoken'),
+                'token': token}
+
     def get_permissions(self):
         if self.action == 'delete':
             return [IsAdminUser()]
@@ -449,11 +454,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             return super().list(request, *args, **kwargs)
         profile = Profile.objects.filter(user=user).first()
-        token = self.get_token_for_user(user)
         serializer = self.get_serializer(
             profile,
-            context={'csrftoken': request.COOKIES.get('csrftoken'),
-                     'token': token}
+            context=self.get_serializer_context(),
         )
         return Response(serializer.data)
 
@@ -464,9 +467,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         token = self.get_token_for_user(user)
         serializer = self.get_serializer(
             profile,
-            context={'csrftoken': request.COOKIES.get('csrftoken'),
-                     'token': token,
-                     'request': request},
+            context=self.get_serializer_context(),
             data=request.data,
             partial=True,
         )
