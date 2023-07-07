@@ -1,12 +1,9 @@
-from django.contrib.auth import get_user_model
-from django.db.models import Case, When, Value, BooleanField
-from django.db.models.signals import post_save, pre_delete, m2m_changed
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
 from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment
-from custom_config.models import FieldTracker, ModelTracker, WebNotification, OrderItem, Order
+from custom_config.models import FieldTracker, ModelTracker, WebNotification
 import custom_config.scripts.signals_scripts as requirements
-from university.scripts import get_or_create
 from university.signals import course_teachers_changed
 from utils import project_variables
 
