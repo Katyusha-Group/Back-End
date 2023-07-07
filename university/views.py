@@ -1,20 +1,19 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Q, Count, ExpressionWrapper, F, FloatField, Case, When, Value, IntegerField, Prefetch, \
-    OuterRef, Exists, BooleanField
+from django.db.models import Count, ExpressionWrapper, F, FloatField, Case, When, Value, IntegerField, Prefetch, \
+    BooleanField
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.generics import ListAPIView, RetrieveAPIView
-from rest_framework.mixins import ListModelMixin, UpdateModelMixin
+from rest_framework.filters import SearchFilter
+from rest_framework.generics import ListAPIView
+from rest_framework.mixins import ListModelMixin
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from custom_config.ordering_filrers import TeacherOrderingFilter
-from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse, Teacher, CourseTimePlace, \
-    AllowedDepartment
+from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse, Teacher
 from university.pagination import DefaultPagination
 from university.scripts.get_or_create import get_course
 from university.scripts.views_scripts import get_user_department, sort_departments_by_user_department
@@ -224,34 +223,6 @@ class CourseGroupListView(ModelViewSet):
         )
         if courses.exists():
             return courses
-        else:
-            raise ValidationError({'detail': 'No course with this course_number in database.'}, )
-
-
-class CourseStudentCountView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        course_id = kwargs['base_course_id']
-        if course_id is None:
-            raise ValidationError({'detail': 'Enter course_number as query string in the url.'}, )
-        else:
-            if '_' in course_id:
-                course_id_major, group_number = course_id.split('_')
-                if course_id_major.isdigit() is True:
-                    course_id_major = int(course_id_major)
-                else:
-                    raise ValidationError({'detail': 'course_number must be in integer format.'})
-                if group_number.isdigit() is True:
-                    group_number = f'0{int(group_number)}'
-                else:
-                    raise ValidationError({'detail': 'group_number must be in integer format.'})
-            else:
-                raise ValidationError({'detail': 'course_number must be in this format: course_number-group_number'})
-
-        course = get_course(course_code=course_id, semester=project_variables.CURRENT_SEMESTER)
-        if course is not None:
-            return Response(data={'count': course.students.count()})
         else:
             raise ValidationError({'detail': 'No course with this course_number in database.'}, )
 
