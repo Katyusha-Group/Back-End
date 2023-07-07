@@ -195,11 +195,9 @@ class ActivationConfirmView(GenericAPIView):
         if request.data.get('verification_code') != user.verification_code:
             return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user_obj = get_object_or_404(User, email=user.email)
-        user_obj.is_email_verified = True
+        user.is_email_verified = True
         user.verification_code = None
-        user.delete()
-        user_obj.save()
+        user.save()
 
         return Response({'message': 'Email verified successfully'}, status=status.HTTP_200_OK)
 
@@ -463,7 +461,15 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def update_profile(self, request, *args, **kwargs):
         user = request.user
         profile = Profile.objects.filter(user=user).first()
-        serializer = self.get_serializer(profile, data=request.data, partial=True, context={'request': request})
+        token = self.get_token_for_user(user)
+        serializer = self.get_serializer(
+            profile,
+            context={'csrftoken': request.COOKIES.get('csrftoken'),
+                     'token': token,
+                     'request': request},
+            data=request.data,
+            partial=True,
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -478,3 +484,27 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def get_token_for_user(user):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
+
+
+class ChangePasswordlogView(APIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            current_password = serializer.validated_data['old_password']
+            new_password = serializer.validated_data['new_password']
+
+            # Check if the current password matches the user's actual password
+            if not user.check_password(current_password):
+                return Response({'error': 'Invalid current password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Change the user's password
+            user.set_password(new_password)
+            user.save()
+
+            return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

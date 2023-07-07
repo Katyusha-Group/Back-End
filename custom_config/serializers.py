@@ -170,7 +170,7 @@ class CreateOrderSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     {
                         'telegram': 'امکان ثبت سفارش وجود ندارد. شما تلگرام خود را فعال نکرده اید.',
-                        'telegram_link': get_bot_url(csrftoken=self.context['csrf_token'],
+                        'telegram_link': get_bot_url(csrftoken=self.context['csrftoken'],
                                                      token=self.context['token'])
                     }
                 )

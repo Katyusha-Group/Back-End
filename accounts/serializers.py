@@ -170,7 +170,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     telegram_link = serializers.SerializerMethodField(read_only=True)
 
     def get_telegram_link(self, obj: Profile):
-        return get_bot_url(csrftoken=self.context['csrf_token'],
+        return get_bot_url(csrftoken=self.context['csrftoken'],
                            token=self.context['token'])
 
     def update(self, instance, validated_data):
