@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth.hashers import make_password
 from rest_framework import generics, viewsets
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -401,10 +402,8 @@ class CodeVerificationView(APIView):
         if request.data.get('verification_code') != user.verification_code:
             return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user_obj = get_object_or_404(User, email=user.email)
         user.verification_code = None
-        user.delete()
-        user_obj.save()
+        user.save()
 
         return Response(
             {'message': 'code is valid', 'link': f'http://katyushaiust.ir/accounts/change-password/{token}/'},
@@ -452,7 +451,12 @@ class ProfileViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             return super().list(request, *args, **kwargs)
         profile = Profile.objects.filter(user=user).first()
-        serializer = self.get_serializer(profile)
+        token = self.get_token_for_user(user)
+        serializer = self.get_serializer(
+            profile,
+            context={'csrftoken': request.COOKIES.get('csrftoken'),
+                     'token': token}
+        )
         return Response(serializer.data)
 
     @action(detail=False, methods=['patch'], serializer_class=ProfileSerializer, permission_classes=[IsAuthenticated])
@@ -469,6 +473,11 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
     def get_object(self):
         return get_object_or_404(self.get_queryset(), user=self.request.user)
+
+    @staticmethod
+    def get_token_for_user(user):
+        refresh = RefreshToken.for_user(user)
+        return str(refresh.access_token)
 
 
 class ChangePasswordlogView(APIView):
