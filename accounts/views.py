@@ -401,10 +401,8 @@ class CodeVerificationView(APIView):
         if request.data.get('verification_code') != user.verification_code:
             return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user_obj = get_object_or_404(User, email=user.email)
         user.verification_code = None
-        user.delete()
-        user_obj.save()
+        user.save()
 
         return Response(
             {'message': 'code is valid', 'link': f'http://katyushaiust.ir/accounts/change-password/{token}/'},
