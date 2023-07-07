@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
@@ -7,6 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote, WebNotification
+from custom_config.permissions import IsOwner
 from custom_config.serializers import CartSerializer, CartItemSerializer, \
     AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, \
     TeacherVoteSerializer, ModifyTeacherVoteSerializer, ModifyTeacherReviewSerializer, TeacherReviewSerializer, \
@@ -17,7 +19,7 @@ from university.scripts.get_or_create import get_course
 from utils import project_variables
 
 
-# Create your views here.
+# TODO: Add permissions
 class CartViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'options', 'head']
     queryset = Cart.objects.prefetch_related('items', 'items__course').all()
@@ -59,6 +61,7 @@ class CartItemViewSet(ModelViewSet):
         return CartItem.objects.filter(cart_id=self.kwargs['cart_pk']).select_related('course')
 
 
+# TODO: Add permissions for list and retrieve
 class OrderViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
@@ -261,6 +264,8 @@ class WebNotificationViewSet(ModelViewSet):
     def get_permissions(self):
         if self.request.method in ['DELETE']:
             return [IsAdminUser()]
+        if self.action == 'retrieve':
+            return [IsAuthenticated(), IsOwner()]
         return [IsAuthenticated()]
 
     def get_serializer_context(self):
@@ -268,10 +273,17 @@ class WebNotificationViewSet(ModelViewSet):
                 'is_admin': self.request.user.is_staff}
 
     def get_queryset(self):
-        return WebNotification.objects.filter(user=self.request.user, is_read=False).all()[:10]
+        if WebNotification.objects.filter(user=self.request.user, is_read=False).exists():
+            return WebNotification.objects.filter(user=self.request.user).order_by('is_read', 'applied_at').all()
+        return WebNotification.objects.filter(user=self.request.user).order_by('-applied_at').all()
 
     def list(self, request, *args, **kwargs):
-        data = WebNotification.objects.filter(user=self.request.user).order_by('-applied_at').all()[:10]
+        data = self.get_queryset()[:10]
         serializer = WebNotificationSerializer(data, many=True)
         WebNotification.objects.filter(pk__in=[entry.pk for entry in data]).update(is_read=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_name='unread-exists', url_path='unread-exists')
+    def unread_exists(self, request, *args, **kwargs):
+        data = self.get_queryset().filter(is_read=False).exists()
+        return Response({'unread_exists': data})
