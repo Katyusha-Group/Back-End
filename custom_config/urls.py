@@ -11,6 +11,7 @@ router.register(r'teacher-votes/(?P<teacher_pk>\d+)', viewset=views.TeacherVoteV
 router.register(r'course-cart-order-info',
                 viewset=views.CourseCartOrderInfoRetrieveViewSet,
                 basename='course-cart-order-info')
+router.register(r'notifications', viewset=views.WebNotificationViewSet, basename='notifications')
 
 carts_router = routers.NestedSimpleRouter(router, r'carts', lookup='cart')
 carts_router.register(r'items', viewset=views.CartItemViewSet, basename='cart-items')
