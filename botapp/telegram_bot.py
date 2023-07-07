@@ -79,7 +79,7 @@ from asgiref.sync import sync_to_async
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.info(update.message.chat.id)
     name = update.message.chat.first_name + " " + (update.message.chat.last_name if update.message.chat.last_name else "")
-
+    logger.info(f"name= {name}, telegram_chat_id= {str(update.message.chat.id)} start bot.")
 
     if context.args:
         logging.info(context.args)
@@ -95,6 +95,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
     else:
+        logger.info("USER DOESNT START WITH URL")
         response = requests.post("https://katyushaiust.ir/bot/is_it_in_database/", data={ "telegram_chat_id": str(update.message.chat.id), 'name': name}).json()
         logger.info(response)
         message = response['message']
@@ -116,7 +117,7 @@ async def get_course_in_my_calender(update: Update, context: ContextTypes.DEFAUL
     data_user = requests.get(f'http://katyushaiust.ir/bot/get_email/{update.message.chat_id}').json()
     id = data_user['id']
     # get data of user
-    data_user = requests.get(f"http://127.0.0.1:8000/bot/get_courses_on_calendar/{id}/").json()
+    data_user = requests.get(f"http://katyushaiust.ir/bot/get_courses_on_calendar/{id}/").json()
     logger.info(data_user)
     formatted_data = json.dumps(data_user, indent=4, ensure_ascii=False)
 

@@ -38,8 +38,9 @@ persiantools = "*"
 channels = "*"
 kavenegar = "*"
 python-telegram-bot = "*"
+cffi = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.10"
+python_version = "3.9"
