@@ -253,8 +253,7 @@ CRONJOBS = [
     # ('30 2 * * *', 'university.cron.watch_golestan'),
     ('* */12 * * *', 'accounts.cron.reset_verification_tries'),
     ('*/30 * * * *', 'custom_config.cron.send_notifications'),
-    # ('*/5 * * * *', 'custom_config.cron.delete_pending_orders'),
-    # ('0 0 * * 6', 'custom_config.cron.delete_failed_orders'),
+    # ('* */12 * * *', 'custom_config.cron.delete_pending_orders'),
     # ('0 0 * * *', 'custom_config.cron.delete_expired_orders'),
     # ('0 0 * * *', 'custom_config.cron.delete_expired_carts'),
 ]

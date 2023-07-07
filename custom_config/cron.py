@@ -11,14 +11,7 @@ from custom_config.scripts.notification import send_notification_for_courses
 def delete_pending_orders():
     orders = Order.objects.filter(status='P')
     for order in orders:
-        if order.created_at + timedelta(hours=1) < timezone.now():
-            order.delete()
-
-
-def delete_failed_orders():
-    orders = Order.objects.filter(status='F')
-    for order in orders:
-        if order.created_at + timedelta(days=7) < timezone.now():
+        if order.created_at + timedelta(hours=6) < timezone.now():
             order.delete()
 
 
