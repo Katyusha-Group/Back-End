@@ -28,7 +28,7 @@ def send_telegram_notification(email=None, changes=None):
 
 
 if __name__ == '__main__':
-    send_telegram_notification(email='ali.dada.28880@gmail.com', changes='خوبی؟')
+    send_telegram_notification(email='ali.nankali.288@gmail.com', changes='خوبی؟')
 #
 
 

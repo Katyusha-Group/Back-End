@@ -5,6 +5,7 @@ import json
 import logging
 import os
 from django.conf import settings
+import ast
 
 
 
@@ -118,15 +119,60 @@ async def get_course_in_my_calender(update: Update, context: ContextTypes.DEFAUL
     id = data_user['id']
     # get data of user
     data_user = requests.get(f"http://katyushaiust.ir/bot/get_courses_on_calendar/{id}/").json()
-    logger.info(data_user)
-    formatted_data = json.dumps(data_user, indent=4, ensure_ascii=False)
 
-    if formatted_data == "[]":
+    if data_user == []:
         await update.message.reply_text(
             text=f"هیچ درسی به کلندرت اضافه نکردی هنوز!"
         )
     else:
-        await update.message.reply_text(formatted_data)
+        await update.message.reply_text(
+            text=f"این درس ها رو به کلندرت اضافه کردی:\n"
+        )
+        for course in data_user:
+            code = course['complete_course_number']
+            day = []
+            course_start_time = []
+            course_end_time = []
+            place = []
+            for inf in course['course_times']:
+                day.append(inf['course_day'])
+                course_start_time.append(inf['course_start_time'])
+                course_end_time.append(inf['course_end_time'])
+                place.append(inf['place'])
+
+
+            text = ""
+            prefix_code = code[:6]
+            suffix_code = code[8:]
+            code = suffix_code + "__" + prefix_code
+            for a_day in course['course_times']:
+                text += f"روز: {a_day['course_day']}\nساعت شروع: {a_day['course_start_time']}\nساعت پایان: {a_day['course_end_time']}\nمکان: {a_day['place']}\n\n"
+                text += "\n"
+            await update.message.reply_text(
+                text=f"<b><u>📚{course['name']}</u></b>\n"
+                     f"<b>🔢کد درس:</b> {code}\n"
+                     f"<b>ظرفیت کلاس:</b> {course['capacity']}\n"
+                     f"<b>تعداد افرادی که درس را برداشته اند:</b> {course['registered_count']}\n"
+                     f"<b>تعداد افراد در لیست انتظار:</b> {course['waiting_count']}\n"
+                     f"<b>محدودیت اخذ:</b>\n{course['registration_limit']}\n"
+                     f"<b>⏰زمان و مکان کلاس:</b>\n{text}\n"
+                     f"<b>📝تاریخ امتحان:</b> \n"
+                     f"زمان امتحان:{course['exam_times'][0]['date']}\n"
+                     f"ساعت شروع امتحان:{course['exam_times'][0]['exam_start_time']} \n"
+                     f"ساعت پایان امتحان:{course['exam_times'][0]['exam_end_time']}\n",
+                parse_mode='HTML'
+            )
+
+    # logger.info(data_user)
+    # logger.info(data_user['courses'])
+    # formatted_data = json.dumps(data_user, indent=4, ensure_ascii=False)
+    # data_list = ast.literal_eval(data_user)
+    # data_dict = dict(data_list[0])
+    #
+    #
+    # else:
+    #
+    #     await update.message.reply_text(data_dict)
 
 
 def main() -> None:

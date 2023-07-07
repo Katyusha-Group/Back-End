@@ -1,7 +1,7 @@
 from django.conf import settings
 import jwt
 from django.contrib.auth import get_user_model
-
+from django.db.models import Prefetch , Q
 from django.shortcuts import render
 
 # Create your views here.
@@ -27,6 +27,9 @@ from .models import User_telegram
 class UserViewSet(ViewSet):
     permission_classes = []
 
+    def get_serializer_context(self):
+        return {'user': self.request.user}
+
     def get_song(self, request, song_id):
         song = get_object_or_404(User, id=song_id)
         serializer = UserSerializer(song)
@@ -36,8 +39,13 @@ class UserViewSet(ViewSet):
         student = get_user_model().objects.get(id=user_id)
         if request.method == 'GET':
             courses = CourseSerializer(
-                (student.courses.prefetch_related('teacher', 'course_times', 'exam_times', 'base_course').all()),
-                many=True
+                (student.courses.prefetch_related('course_times',
+                                                  'teachers',
+                                                  'exam_times', )
+                 .select_related('base_course__department')
+                 .prefetch_related(Prefetch('base_course__department', Department.objects.all())).all()),
+                many=True,
+                context={'user': student}
             )
             return Response(status=status.HTTP_200_OK, data=courses.data)
         elif request.method == 'PUT':
