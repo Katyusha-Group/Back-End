@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count, ExpressionWrapper, F, FloatField, Case, When, Value, IntegerField, Prefetch, \
     BooleanField
 from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -11,8 +12,12 @@ from rest_framework.mixins import ListModelMixin
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.views import APIView
+
+from utils import project_variables
 
 from custom_config.ordering_filrers import TeacherOrderingFilter
+
 from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse, Teacher
 from university.pagination import DefaultPagination
 from university.scripts.get_or_create import get_course
@@ -21,8 +26,6 @@ from university.serializers import DepartmentSerializer, SemesterSerializer, Mod
     CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, \
     CourseGroupSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer, BaseCourseTimeLineSerializer, \
     SimpleTeacherSerializer, TeacherTimeLineSerializer, TeacherSerializer
-from rest_framework.views import APIView
-from utils import project_variables
 
 
 class SignupDepartmentListView(ListAPIView):
@@ -40,7 +43,7 @@ class DepartmentListView(ListAPIView):
     serializer_class = DepartmentSerializer
 
     def get_serializer_context(self):
-        return {'user': self.request.user, 'api': 'allowed'}
+        return {'user': self.request.user}
 
     def get_queryset(self):
         departments = Department.objects.all()
@@ -48,14 +51,7 @@ class DepartmentListView(ListAPIView):
         return sort_departments_by_user_department(departments, user_department)
 
 
-class AllDepartmentsListView(ListAPIView):
-    http_method_names = ['get', 'head', 'options']
-    permission_classes = [IsAuthenticated]
-    serializer_class = DepartmentSerializer
-
-    def get_serializer_context(self):
-        return {'user': self.request.user, 'api': 'all'}
-
+class AllDepartmentsListView(DepartmentListView):
     def get_queryset(self):
         departments = Department.objects.all().prefetch_related(
             'allowed_departments__course__base_course')

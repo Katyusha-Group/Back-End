@@ -30,21 +30,15 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
     def get_base_courses(self, obj: Department):
         user = self.context.get('user')
-        if self.context['api'] == 'allowed':
-            courses = BaseCourse.objects.filter(
-                Q(courses__allowed_departments__department=user.department) & Q(department__exact=obj) & Q(
-                    courses__semester_id__exact=project_variables.CURRENT_SEMESTER) & Q(
-                    courses__sex__in=[user.gender, 'B']))
-        else:
-            courses = BaseCourse.objects.filter(
+        courses = (
+            BaseCourse.objects.filter(
                 Q(department__exact=obj) & Q(courses__semester_id__exact=project_variables.CURRENT_SEMESTER) & Q(
                     courses__sex__in=[user.gender, 'B']))
-        courses = (
-            courses
             .annotate(allowed_count=Count('courses__allowed_departments__department'))
             .values('course_number', 'name', 'allowed_count')
             .annotate(group_count=Count('course_number'))
-            .order_by('name'))
+            .order_by('name')
+        )
         serializer = SimpleBaseCourseSerializer(data=courses, many=True, context=self.context)
         serializer.is_valid()
         return serializer.data
