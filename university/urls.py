@@ -14,8 +14,8 @@ urlpatterns = [
     path('departments/all', views.AllDepartmentsListView.as_view(), name='all_departments'),
     path('timeline/courses/<int:course_number>', views.BaseCoursesTimeLineListAPIView.as_view(), name='timeline'),
     path('timeline/teachers/<int:teacher_id>', views.TeachersTimeLineListAPIView.as_view(), name='timeline'),
-    path('coursegroups/<base_course_id>', views.CourseGroupListView.as_view({'get': 'list'}), name='coursegroups'),
-    path('allcoursesdepartment/', views.AllCourseDepartmentList.as_view(), name='allcoursedepartment'),
+    path('coursegroups/<base_course_id>', views.CourseGroupListView.as_view({'get': 'list'}), name='course-groups'),
+    path('allcoursesdepartment/', views.AllCourseDepartmentList.as_view(), name='all-course-department'),
     path('allcourses-based-department/<int:department_id>', views.AllCourseDepartmentRetrieve.as_view(),
-         name='allcoursedepartment_retrieve'),
+         name='all-course-department_retrieve'),
 ]
