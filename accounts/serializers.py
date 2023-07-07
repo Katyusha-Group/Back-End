@@ -252,3 +252,26 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 class CodeVerificationSerializer(serializers.Serializer):
     verification_code = serializers.CharField(max_length=4, min_length=4)
+
+
+class ChangePasswordloginSerializer(serializers.Serializer):
+    current_password = serializers.CharField()
+    new_password = serializers.CharField()
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Invalid current password.")
+        return value
+
+    def validate(self, data):
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+
+        # Additional validation logic if needed
+        # For example, you can check password complexity requirements
+
+        if current_password == new_password:
+            raise serializers.ValidationError("New password must be different from the current password.")
+
+        return data
