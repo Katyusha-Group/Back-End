@@ -31,8 +31,6 @@ def create_u_log(sender, **kwargs):
             is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['instance'])
             tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', course_pk)
 
-            fields_list = []
-
             for field in kwargs['update_fields']:
 
                 for tracker_field in tracker.fields.all():
@@ -46,13 +44,11 @@ def create_u_log(sender, **kwargs):
                 else:
                     value = kwargs['instance'].__dict__[field]
 
-                fields_list.append(FieldTracker(
+                FieldTracker.objects.create(
                     field=field,
                     value=value,
                     tracker=tracker,
-                ))
-
-            FieldTracker.objects.bulk_create(fields_list)
+                )
 
 
 @receiver(post_save, sender=ExamTimePlace)
