@@ -19,12 +19,17 @@ from university.scripts.get_or_create import get_course
 from utils import project_variables
 
 
-# TODO: Add permissions
 class CartViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'options', 'head']
     queryset = Cart.objects.prefetch_related('items', 'items__course').all()
     serializer_class = CartSerializer
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated()]
+        if self.action == 'retrieve':
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
 
 
 class CartItemViewSet(ModelViewSet):
@@ -61,13 +66,12 @@ class CartItemViewSet(ModelViewSet):
         return CartItem.objects.filter(cart_id=self.kwargs['cart_pk']).select_related('course')
 
 
-# TODO: Add permissions for list and retrieve
 class OrderViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_permissions(self):
         if self.request.method in ['PATCH', 'DELETE']:
-            return [IsAdminUser()]
+            return [IsAdminUser(), IsOwner()]
         return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
