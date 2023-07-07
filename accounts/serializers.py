@@ -1,3 +1,4 @@
+import requests
 from rest_framework import serializers
 from accounts.models import *
 from django.contrib.auth import authenticate
@@ -29,14 +30,14 @@ class SignUpSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_email(self, value):
-        user = User.objects.filter(email=value)
+        user = User.objects.filter(email__iexact=value)
         if user.exists():
             user = user.first()
             if user.is_email_verified:
                 raise serializers.ValidationError("Email already exists.")
             if user.verification_tries_count >= project_variables.MAX_VERIFICATION_TRIES:
                 raise serializers.ValidationError("You have reached the maximum number of registration tries.")
-        return value
+        return str.lower(value)
 
 
 class LoginSerializer(serializers.Serializer):
@@ -61,6 +62,7 @@ class LoginSerializer(serializers.Serializer):
         password = attrs.get('password', None)
 
         if username and password:
+            username = str.lower(username)
             user = authenticate(request=self.context.get('request'),
                                 username=username, password=password)
 
@@ -128,7 +130,7 @@ class ActivationResendSerializer(serializers.Serializer):
         email = attrs.get('email', None)
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
             raise serializers.ValidationError({"detail": "user does not exist."})
 
@@ -163,6 +165,10 @@ class ProfileSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source='user.email', read_only=True)
     department = serializers.CharField(source='user.department', read_only=True)
     gender = serializers.CharField(source='user.gender', read_only=True)
+    telegram_link = serializers.SerializerMethodField(read_only=True)
+
+    def get_telegram_link(self, obj: Profile):
+        return f'{project_variables.DOMAIN}/bot/get_user_id/{obj.user.email}'
 
     def update(self, instance, validated_data):
         for field, value in validated_data.items():
@@ -180,7 +186,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['first_name', 'last_name', 'email', 'department', 'gender', 'image', 'telegram_id']
+        fields = ['first_name', 'last_name', 'email', 'department', 'gender', 'image', 'telegram_link']
 
 
 class WalletSerializer(serializers.ModelSerializer):

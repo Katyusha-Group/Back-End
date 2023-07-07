@@ -5,6 +5,8 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
+from django_jalali.db import models as jmodels
+
 from university.models import Course, Teacher, AllowedDepartment, CourseTimePlace, ExamTimePlace
 from utils import project_variables
 from utils.transaction_functions import create_ref_code
@@ -104,11 +106,11 @@ class CartItem(models.Model):
 
 class Order(models.Model):
     PAYMENT_STATUS_PENDING = 'P'
-    PAYMENT_STATUS_COMPLETE = 'C'
+    PAYMENT_STATUS_COMPLETED = 'C'
     PAYMENT_STATUS_FAILED = 'F'
     PAYMENT_STATUS_CHOICES = [
         (PAYMENT_STATUS_PENDING, 'در حال پردازش'),
-        (PAYMENT_STATUS_COMPLETE, 'موفق'),
+        (PAYMENT_STATUS_COMPLETED, 'موفق'),
         (PAYMENT_STATUS_FAILED, 'ناموفق')
     ]
     PAY_ONLINE = 'O'
@@ -118,7 +120,9 @@ class Order(models.Model):
         (PAY_WALLET, 'پرداخت از طریق کیف پول'),
     )
 
-    placed_at = models.DateTimeField(auto_now_add=True)
+    objects = jmodels.jManager
+
+    placed_at = jmodels.jDateTimeField(auto_now_add=True)
     payment_status = models.CharField(
         max_length=1, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_STATUS_PENDING
     )
@@ -157,6 +161,15 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return str(self.id) + ' : ' + str(self.order.id) + ' : ' + str(self.course_number) + '_' + self.class_gp
+
+    @staticmethod
+    def get_same_items_with_same_course_user(user, course):
+        return (OrderItem.objects
+                .prefetch_related('order__user')
+                .filter(order__user=user,
+                        order__payment_status=Order.PAYMENT_STATUS_COMPLETED,
+                        course=course)
+                .first())
 
     class Meta:
         verbose_name = 'سفارش'

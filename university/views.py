@@ -5,19 +5,23 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.mixins import ListModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
+
+from custom_config.ordering_filrers import TeacherOrderingFilter
 from university.models import Course, Department, Semester, ExamTimePlace, BaseCourse, Teacher, CourseTimePlace, \
     AllowedDepartment
+from university.pagination import DefaultPagination
 from university.scripts.get_or_create import get_course
 from university.scripts.views_scripts import get_user_department, sort_departments_by_user_department
 from university.serializers import DepartmentSerializer, SemesterSerializer, ModifyMyCourseSerializer, \
     CourseExamTimeSerializer, CourseSerializer, SummaryCourseSerializer, \
     CourseGroupSerializer, SimpleDepartmentSerializer, AllCourseDepartmentSerializer, BaseCourseTimeLineSerializer, \
-    TeacherSerializer, TeacherTimeLineSerializer
+    SimpleTeacherSerializer, TeacherTimeLineSerializer, TeacherSerializer
 from rest_framework.views import APIView
 from utils import project_variables
 
@@ -173,18 +177,12 @@ class TeachersTimeLineListAPIView(ListAPIView):
         return Teacher.objects.filter(pk=self.kwargs['teacher_id']).all()
 
 
-class TeacherProfileRetrieveAPIView(RetrieveAPIView):
-    http_method_names = ['get', 'head', 'options']
-    permission_classes = [IsAuthenticated]
-    serializer_class = TeacherSerializer
-
-    def get_queryset(self):
-        return Teacher.objects.all()
-
-
 class CourseGroupListView(ModelViewSet):
     serializer_class = CourseGroupSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_context(self):
+        return {'user': self.request.user}
 
     def get_queryset(self):
         base_course_id = self.kwargs['base_course_id']
@@ -281,3 +279,21 @@ class AllCourseDepartmentList(BaseAllCourseDepartment):
 class AllCourseDepartmentRetrieve(BaseAllCourseDepartment):
     def get(self, request, department_id, *args, **kwargs):
         return super(AllCourseDepartmentRetrieve, self).get(request, department_id, *args, **kwargs)
+
+
+class TeacherViewSet(ModelViewSet):
+    http_method_names = ['get', 'head', 'options']
+    serializer_class = SimpleTeacherSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = DefaultPagination
+    filter_backends = [SearchFilter, TeacherOrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'total_score', 'total_vote_count']
+
+    def get_queryset(self):
+        return Teacher.objects.filter(courses__semester=project_variables.CURRENT_SEMESTER).distinct().all()
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = TeacherSerializer(instance, context={'user': request.user})
+        return Response(serializer.data)
