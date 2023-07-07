@@ -32,8 +32,8 @@ def delete_expired_carts():
 def watch_and_send_notifications():
     pre = time.time()
 
-    # watch_golestan()
-    # print('Completed watching golestan in', time.time() - pre)
+    watch_golestan()
+    print('Completed watching golestan in', time.time() - pre)
 
     post = time.time()
     send_notification_for_courses()

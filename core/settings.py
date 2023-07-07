@@ -252,7 +252,8 @@ EMAIL_USE_TLS = True
 CRONJOBS = [
     # ('30 2 * * *', 'university.cron.watch_golestan'),
     ('* */12 * * *', 'accounts.cron.reset_verification_tries'),
-    ('*/30 * * * *', 'custom_config.cron.send_notifications'),
+    # ('*/30 * * * *', 'custom_config.cron.send_notifications'),
+    ('*/20 * * * *', 'custom_config.cron.watch_and_send_notifications'),
     # ('* */12 * * *', 'custom_config.cron.delete_pending_orders'),
     # ('0 0 * * *', 'custom_config.cron.delete_expired_orders'),
     # ('0 0 * * *', 'custom_config.cron.delete_expired_carts'),
