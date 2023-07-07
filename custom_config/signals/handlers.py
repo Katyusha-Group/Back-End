@@ -38,7 +38,6 @@ def create_u_log(sender, **kwargs):
                 for tracker_field in tracker.fields.all():
                     if field == tracker_field.field:
                         tracker_field.delete()
-                        break
 
                 if field == 'sex':
                     value = project_variables.SEX_EN_TO_FA[kwargs['instance'].__dict__[field]]
@@ -71,15 +70,26 @@ def create_u_log_for_course_related(sender, **kwargs):
             field = 'course_time_place'
 
         is_course, course_name, course_number, course_pk = requirements.get_course_info(kwargs['instance'])
+        course = Course.objects.filter(pk=course_pk).first()
+        if course is None:
+            return
+
         tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', course_pk, field)
+
         WebNotification.objects.filter(tracker=tracker).delete()
+
         value = ''
+
         for tracker_field in tracker.fields.all().reverse():
-            if field == tracker_field.field:
-                value += tracker_field.value + '، '
-                tracker_field.delete()
-                if field == 'exam_time_place' or field == 'course_time_place':
-                    break
+            if field != 'exam_time_place':
+                if field == tracker_field.field:
+                    if field == 'course_time_place' and course.base_course.total_unit == 3:
+                        value += tracker_field.value.split('،')[-1].strip() + '، '
+                else:
+                    value += tracker_field.value.split('،')[-1].strip() + '، '
+            tracker_field.delete()
+            break
+
         value += kwargs['instance'].__str__()
 
         FieldTracker.objects.create(
@@ -96,7 +106,6 @@ def teachers_changed(sender, **kwargs):
     for tracker_field in tracker.fields.all():
         if tracker_field.field == 'teachers':
             tracker_field.delete()
-            break
     teacher_names = list(kwargs['course'].teachers.all().values_list('name', flat=True))
     teacher_names = '-'.join(teacher_names)
     FieldTracker.objects.create(
