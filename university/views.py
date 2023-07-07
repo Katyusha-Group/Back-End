@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.mixins import ListModelMixin, UpdateModelMixin
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
@@ -77,9 +77,17 @@ class CourseViewSet(ListModelMixin, GenericViewSet):
     http_method_names = ['get', 'put', 'head', 'options']
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
+    lookup_url_kwarg = 'course_number'
 
     def get_serializer_context(self):
         return {'user': self.request.user}
+
+    def get_permissions(self):
+        if self.action in ['my_courses', 'my_exams', 'my_summary']:
+            self.permission_classes = [IsAuthenticated]
+        elif self.action == 'list':
+            self.permission_classes = [IsAdminUser]
+        return super(CourseViewSet, self).get_permissions()
 
     def get_serializer_class(self):
         if self.action == 'my_courses' and self.request.method == 'PUT':
@@ -91,30 +99,21 @@ class CourseViewSet(ListModelMixin, GenericViewSet):
         return CourseSerializer
 
     def get_queryset(self):
-        base_course = self.request.query_params.get('course_number', None)
-        allowed_only = self.request.query_params.get('allowed_only', False)
-        user = self.request.user
-        courses = Course.objects.prefetch_related('teachers',
-                                                  'course_times',
-                                                  'exam_times',
-                                                  'base_course',
-                                                  'students',
-                                                  'allowed_departments__department__user_set').filter(
-            semester_id=project_variables.CURRENT_SEMESTER).filter(
-            Q(sex=user.gender) | Q(sex='B'))
-        try:
-            base_course = int(base_course)
-            if allowed_only:
-                courses = courses.filter(base_course=base_course, allowed_departments__department=user.department)
-            else:
-                courses = courses.filter(base_course=base_course)
-            if not courses.exists():
-                raise ValidationError(detail='No course with this course_number exists in database.')
-            else:
-                return courses.all()
-        except TypeError:
-            if self.action != 'my_exams' and self.action != 'my_courses' and self.action != 'my_summary':
-                raise ValidationError(detail='Enter course_number as query string in the url.')
+        return Course.objects.prefetch_related('teachers',
+                                               'course_times',
+                                               'exam_times',
+                                               'base_course',
+                                               'students',
+                                               'allowed_departments__department__user_set').filter(
+            semester=project_variables.CURRENT_SEMESTER).all()
+
+    def get_object(self):
+        return get_course(course_code=self.kwargs['course_number'], semester=project_variables.CURRENT_SEMESTER)
+
+    def retrieve(self, request, *args, **kwargs):
+        course = self.get_object()
+        serializer = self.get_serializer(course)
+        return Response(data=serializer.data)
 
     @action(detail=False, methods=['GET', 'PUT'])
     def my_courses(self, request):
