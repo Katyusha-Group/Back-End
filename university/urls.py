@@ -6,10 +6,6 @@ from . import views
 router = routers.DefaultRouter()
 router.register(r'courses', viewset=views.CourseViewSet, basename='courses')
 router.register(r'teachers', viewset=views.TeacherViewSet, basename='teachers')
-# router.register(r'all-course-departments', viewset=views.AllCourseDepartment, basename='all_course_departments')
-# other_router = routers.SimpleRouter()
-# other_router.register(r'coursegroups', views.CourseGroupListView, basename='coursegroups')
-#
 
 urlpatterns = [
     path('', include(router.urls)),
