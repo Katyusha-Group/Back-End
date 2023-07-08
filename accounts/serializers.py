@@ -168,6 +168,12 @@ class ProfileSerializer(serializers.ModelSerializer):
     department = serializers.CharField(source='user.department', read_only=True)
     gender = serializers.CharField(source='user.gender', read_only=True)
     telegram_link = serializers.SerializerMethodField(read_only=True)
+    image = serializers.SerializerMethodField(read_only=True)
+
+    def get_image(self, obj: Profile):
+        return project_variables.DOMAIN + obj.image.url \
+            if obj.image \
+            else project_variables.DOMAIN + '/media/profile_pics/default.png'
 
     def get_telegram_link(self, obj: Profile):
         return get_bot_url(csrftoken=self.context['csrftoken'],
