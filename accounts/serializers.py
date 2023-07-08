@@ -179,6 +179,23 @@ class ProfileSerializer(serializers.ModelSerializer):
         return get_bot_url(csrftoken=self.context['csrftoken'],
                            token=self.context['token'])
 
+    class Meta:
+        model = Profile
+        fields = ['first_name', 'last_name', 'email', 'department', 'gender', 'image', 'telegram_link']
+
+
+class UpdateProfileSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    email = serializers.CharField(source='user.email', read_only=True)
+    department = serializers.CharField(source='user.department', read_only=True)
+    gender = serializers.CharField(source='user.gender', read_only=True)
+    telegram_link = serializers.SerializerMethodField(read_only=True)
+
+    def get_telegram_link(self, obj: Profile):
+        return get_bot_url(csrftoken=self.context['csrftoken'],
+                           token=self.context['token'])
+
     def update(self, instance, validated_data):
         for field, value in validated_data.items():
             if field == 'user':

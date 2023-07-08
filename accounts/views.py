@@ -472,7 +472,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         user = request.user
         profile = Profile.objects.filter(user=user).first()
         token = self.get_token_for_user(user)
-        serializer = self.get_serializer(
+        serializer = UpdateProfileSerializer(
             profile,
             context=self.get_serializer_context(),
             data=request.data,
@@ -480,7 +480,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        data = serializer.data
+        data['image'] = f'{project_variables.DOMAIN}/{serializer.data["image"]}'
+        return Response(data)
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
