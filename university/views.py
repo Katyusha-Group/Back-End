@@ -37,6 +37,20 @@ class SignupDepartmentListView(ListAPIView):
         return Department.objects.filter(department_number__gt=0).all()
 
 
+class SortedNamesDepartmentListView(ListAPIView):
+    http_method_names = ['get', 'head', 'options']
+    serializer_class = SimpleDepartmentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_context(self):
+        return {'user': self.request.user}
+
+    def get_queryset(self):
+        departments = Department.objects.all()
+        user_department = get_user_department(self.request.user)
+        return sort_departments_by_user_department(departments, user_department)
+
+
 class DepartmentListView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
