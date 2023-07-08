@@ -77,7 +77,7 @@ class Cart(models.Model):
     def total_price(self):
         total = 0
         for item in self.items.all():
-            total += item.get_item_price()
+            total += float(item.get_item_price())
         return total * project_variables.TAX + total
 
     class Meta:
@@ -145,8 +145,8 @@ class Order(models.Model):
     def total_price(self):
         total = 0
         for item in self.items.all():
-            total += item.unit_price
-        return total * Decimal(project_variables.TAX) + total
+            total += float(item.unit_price)
+        return total * project_variables.TAX + total
 
     class Meta:
         verbose_name = 'سفارش'
