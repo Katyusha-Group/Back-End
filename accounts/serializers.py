@@ -168,9 +168,15 @@ class ProfileSerializer(serializers.ModelSerializer):
     department = serializers.CharField(source='user.department', read_only=True)
     gender = serializers.CharField(source='user.gender', read_only=True)
     telegram_link = serializers.SerializerMethodField(read_only=True)
+    image = serializers.SerializerMethodField(read_only=True)
+
+    def get_image(self, obj: Profile):
+        return project_variables.DOMAIN + obj.image.url \
+            if obj.image \
+            else project_variables.DOMAIN + '/media/profile_pics/default.png'
 
     def get_telegram_link(self, obj: Profile):
-        return get_bot_url(csrftoken=self.context['csrf_token'],
+        return get_bot_url(csrftoken=self.context['csrftoken'],
                            token=self.context['token'])
 
     def update(self, instance, validated_data):
@@ -241,7 +247,6 @@ class ResetPasswordSerializer(serializers.Serializer):
         if new_password != confirm_password:
             raise serializers.ValidationError("New password and confirm password do not match.")
 
-
         # Validate password complexity using Django's built-in password validators
         try:
             validate_password(new_password)
@@ -253,7 +258,6 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 class CodeVerificationSerializer(serializers.Serializer):
     verification_code = serializers.CharField(max_length=4, min_length=4)
-
 
 
 class ChangePasswordloginSerializer(serializers.Serializer):

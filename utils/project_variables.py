@@ -36,9 +36,12 @@ EMERGENCY_DELETION = 'امکان حذف اضطراری'
 GUEST_ABLE = 'امکان اخذ توسط مهمان'
 DESCRIPTION = 'توضیحات'
 ALLOWED_DEPARTMENTS = 'محدودیت دانشکده ها'
+
+# notifications:
 REGISTERED_COUNT_NOTIFICATION = 'تعداد ثبت نام شده'
 WAITING_COUNT_NOTIFICATION = 'تعداد لیست انتظار'
 TEACHER_NOTIFICATION = 'اساتید'
+SEX_NOTIFICATION = 'جنسیت'
 
 # population modes:
 POPULATION_INITIAL = 'initial'
@@ -153,7 +156,7 @@ course_field_mapper_en_to_fa_notification = {
     'capacity': CAPACITY,
     'registered_count': REGISTERED_COUNT_NOTIFICATION,
     'waiting_count': WAITING_COUNT_NOTIFICATION,
-    'sex': SEX,
+    'sex': SEX_NOTIFICATION,
     'teachers': TEACHER_NOTIFICATION,
     'registration_limit': REGISTRATION_LIMIT,
     'presentation_type': PRESENTATION_TYPE,

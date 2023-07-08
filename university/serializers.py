@@ -30,21 +30,15 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
     def get_base_courses(self, obj: Department):
         user = self.context.get('user')
-        if self.context['api'] == 'allowed':
-            courses = BaseCourse.objects.filter(
-                Q(courses__allowed_departments__department=user.department) & Q(department__exact=obj) & Q(
-                    courses__semester_id__exact=project_variables.CURRENT_SEMESTER) & Q(
-                    courses__sex__in=[user.gender, 'B']))
-        else:
-            courses = BaseCourse.objects.filter(
+        courses = (
+            BaseCourse.objects.filter(
                 Q(department__exact=obj) & Q(courses__semester_id__exact=project_variables.CURRENT_SEMESTER) & Q(
                     courses__sex__in=[user.gender, 'B']))
-        courses = (
-            courses
             .annotate(allowed_count=Count('courses__allowed_departments__department'))
             .values('course_number', 'name', 'allowed_count')
             .annotate(group_count=Count('course_number'))
-            .order_by('name'))
+            .order_by('name')
+        )
         serializer = SimpleBaseCourseSerializer(data=courses, many=True, context=self.context)
         serializer.is_valid()
         return serializer.data
@@ -158,6 +152,12 @@ class CourseSerializer(serializers.ModelSerializer):
     def get_complete_course_number(self, obj: Course):
         return model_based_functions.get_complete_course_number(obj)
 
+    def get_course_times(self, obj: Course):
+        return SimpleCourseTimePlaceSerializer(obj.course_times.all().order_by('day'), many=True, read_only=True).data
+
+    def get_teachers(self, obj: Course):
+        return SimpleTeacherSerializer(obj.teachers.all().order_by('teacher_image'), many=True, read_only=True).data
+
     class Meta:
         model = Course
         fields = ['complete_course_number', 'name', 'group_number', 'total_unit',
@@ -166,23 +166,6 @@ class CourseSerializer(serializers.ModelSerializer):
                   'registration_limit', 'description', 'presentation_type',
                   'teachers', 'exam_times', 'course_times', 'is_allowed',
                   'added_to_calendar_count']
-
-
-class MyCourseSerializer(serializers.ModelSerializer):
-    exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
-    course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
-    teachers = SimpleTeacherSerializer(read_only=True, many=True)
-    name = serializers.CharField(source='base_course.name', read_only=True)
-    complete_course_number = serializers.SerializerMethodField(read_only=True)
-
-    def get_complete_course_number(self, obj: Course):
-        return model_based_functions.get_complete_course_number(obj)
-
-    class Meta:
-        model = Course
-        fields = ['complete_course_number', 'name', 'capacity',
-                  'registered_count', 'waiting_count', 'exam_times',
-                  'course_times', 'teachers']
 
 
 class ModifyMyCourseSerializer(serializers.Serializer):
@@ -420,42 +403,19 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
                   'exam_times', 'allowed_departments')
 
 
-class CourseGroupSerializer(serializers.ModelSerializer):
-    total_unit = serializers.IntegerField(source='base_course.total_unit', read_only=True)
-    practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
-    exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
-    course_times = serializers.SerializerMethodField(read_only=True)
-    teachers = serializers.SerializerMethodField(read_only=True)
-    name = serializers.CharField(source='base_course.name', read_only=True)
-    complete_course_number = serializers.SerializerMethodField(read_only=True)
-    group_number = serializers.CharField(source='class_gp', read_only=True)
-    added_to_calendar_count = serializers.SerializerMethodField(read_only=True)
+class CourseGroupSerializer(CourseSerializer):
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
-    is_allowed = serializers.SerializerMethodField(read_only=True)
-
-    def get_is_allowed(self, obj: Course):
-        return model_based_functions.get_is_allowed(obj, self.context['user'])
-
-    def get_course_times(self, obj: Course):
-        return SimpleCourseTimePlaceSerializer(obj.course_times.all().order_by('day'), many=True, read_only=True).data
-
-    def get_teachers(self, obj: Course):
-        return SimpleTeacherSerializer(obj.teachers.all().order_by('teacher_image'), many=True, read_only=True).data
-
-    def get_complete_course_number(self, obj: Course):
-        return model_based_functions.get_complete_course_number(obj)
 
     def get_color_intensity_percentage(self, obj):
         return model_based_functions.get_color_intensity_percentage(obj)
 
-    def get_added_to_calendar_count(self, obj: Course):
-        return obj.students.count()
-
     class Meta:
         model = Course
-        fields = ['complete_course_number', 'added_to_calendar_count', 'name', 'base_course_id', 'group_number',
-                  'capacity', 'registered_count', 'waiting_count', 'exam_times', 'course_times', 'teachers',
-                  'color_intensity_percentage', 'total_unit', 'practical_unit', 'sex', 'is_allowed', 'description']
+        fields = ['complete_course_number', 'added_to_calendar_count', 'name',
+                  'base_course_id', 'group_number', 'capacity', 'registered_count',
+                  'waiting_count', 'exam_times', 'course_times', 'teachers',
+                  'color_intensity_percentage', 'total_unit', 'practical_unit', 'sex',
+                  'is_allowed', 'description']
 
 
 class TeacherSerializer(SimpleTeacherSerializer):

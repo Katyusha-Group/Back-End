@@ -5,7 +5,8 @@ from rest_framework import serializers
 
 from accounts.serializers import SimpleUserSerializer
 from botapp.models import User_telegram
-from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote
+from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote, \
+    WebNotification
 from custom_config.signals import order_created
 
 from university.models import Course
@@ -13,6 +14,7 @@ from university.serializers import ShoppingCourseSerializer
 
 from university.scripts.get_or_create import get_course
 from utils import project_variables
+from utils.telegram_functions import get_bot_url
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -168,7 +170,8 @@ class CreateOrderSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     {
                         'telegram': 'امکان ثبت سفارش وجود ندارد. شما تلگرام خود را فعال نکرده اید.',
-                        'telegram_link': requests.get(f'https://katyushaiust.ir/bot/get_user_id/{user.email}').json()
+                        'telegram_link': get_bot_url(csrftoken=self.context['csrftoken'],
+                                                     token=self.context['token'])
                     }
                 )
         payment_method = attrs['payment_method']
@@ -393,3 +396,15 @@ class ModifyTeacherReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherReview
         fields = ['text', ]
+
+
+class WebNotificationSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    title = serializers.CharField(read_only=True)
+    text = serializers.CharField(read_only=True)
+    applied_at = serializers.DateTimeField(read_only=True)
+    is_read = serializers.BooleanField()
+
+    class Meta:
+        model = WebNotification
+        fields = ['id', 'title', 'text', 'applied_at', 'is_read']

@@ -195,11 +195,9 @@ class ActivationConfirmView(GenericAPIView):
         if request.data.get('verification_code') != user.verification_code:
             return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user_obj = get_object_or_404(User, email=user.email)
-        user_obj.is_email_verified = True
+        user.is_email_verified = True
         user.verification_code = None
-        user.delete()
-        user_obj.save()
+        user.save()
 
         return Response({'message': 'Email verified successfully'}, status=status.HTTP_200_OK)
 
@@ -439,6 +437,11 @@ class ProfileViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
 
+    def get_serializer_context(self):
+        token = self.get_token_for_user(self.request.user)
+        return {'csrftoken': self.request.COOKIES.get('csrftoken'),
+                'token': token}
+
     def get_permissions(self):
         if self.action == 'delete':
             return [IsAdminUser()]
@@ -451,11 +454,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             return super().list(request, *args, **kwargs)
         profile = Profile.objects.filter(user=user).first()
-        token = self.get_token_for_user(user)
         serializer = self.get_serializer(
             profile,
-            context={'csrftoken': request.COOKIES.get('csrftoken'),
-                     'token': token}
+            context=self.get_serializer_context(),
         )
         return Response(serializer.data)
 
@@ -463,7 +464,13 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def update_profile(self, request, *args, **kwargs):
         user = request.user
         profile = Profile.objects.filter(user=user).first()
-        serializer = self.get_serializer(profile, data=request.data, partial=True, context={'request': request})
+        token = self.get_token_for_user(user)
+        serializer = self.get_serializer(
+            profile,
+            context=self.get_serializer_context(),
+            data=request.data,
+            partial=True,
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -483,6 +490,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
 class ChangePasswordlogView(APIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
+
     def post(self, request):
         serializer = ChangePasswordSerializer(data=request.data)
         if serializer.is_valid():

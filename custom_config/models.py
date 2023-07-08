@@ -13,15 +13,22 @@ from utils.transaction_functions import create_ref_code
 
 
 class ModelTracker(models.Model):
+    ACTION_CREATED = 'C'
+    ACTION_UPDATED = 'U'
+    ACTION_DELETED = 'D'
+
     ACTION_CHOICES = (
-        ('C', 'ایجاد'),
-        ('U', 'بروزرسانی'),
-        ('D', 'حذف'),
+        (ACTION_CREATED, 'ایجاد'),
+        (ACTION_UPDATED, 'بروزرسانی'),
+        (ACTION_DELETED, 'حذف'),
     )
 
+    STATUS_UNCOMMITTED = 'U'
+    STATUS_COMMITTED = 'T'
+
     STATUS_CHOICES = (
-        ('U', 'اعمال نشده'),
-        ('C', 'اعمال شده'),
+        (STATUS_UNCOMMITTED, 'اعمال نشده'),
+        (STATUS_COMMITTED, 'اعمال شده'),
     )
 
     model = models.CharField(max_length=255, verbose_name='مدل')
@@ -70,7 +77,7 @@ class Cart(models.Model):
     def total_price(self):
         total = 0
         for item in self.items.all():
-            total += item.get_item_price()
+            total += float(item.get_item_price())
         return total * project_variables.TAX + total
 
     class Meta:
@@ -138,8 +145,8 @@ class Order(models.Model):
     def total_price(self):
         total = 0
         for item in self.items.all():
-            total += item.unit_price
-        return total * Decimal(project_variables.TAX) + total
+            total += float(item.unit_price)
+        return total * project_variables.TAX + total
 
     class Meta:
         verbose_name = 'سفارش'
@@ -176,6 +183,27 @@ class OrderItem(models.Model):
         verbose_name_plural = 'آیتم های سفارش'
         indexes = [
             models.Index(fields=['course_number', 'class_gp']),
+        ]
+
+
+class WebNotification(models.Model):
+    objects = jmodels.jManager()
+
+    is_read = models.BooleanField(default=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    tracker = models.ForeignKey(ModelTracker, on_delete=models.SET_NULL, related_name='trackers', null=True)
+    title = models.CharField(max_length=100)
+    text = models.TextField()
+    applied_at = jmodels.jDateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.id) + ' : ' + self.title
+
+    class Meta:
+        verbose_name = 'اعلان'
+        verbose_name_plural = 'اعلانات'
+        indexes = [
+            models.Index(fields=['user', 'is_read'])
         ]
 
 
