@@ -38,7 +38,7 @@ def find_reference_course(course_related: ModelTracker):
 
 def prepare_message_field(field):
     message = f'مقدار جدید برای ستون {field.field} ثبت شده است.\n'
-    message = message + 'مقدار جدید: ' + field.value
+    message = message + 'مقدار جدید: ' + str(field.value)
     return message
 
 

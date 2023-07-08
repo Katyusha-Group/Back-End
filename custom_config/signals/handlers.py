@@ -134,5 +134,5 @@ def notification_update_handler(sender, **kwargs):
                                                       field_tracker.tracker.course_number)
         text += '\n'
         text += f'مقدار جدید برای ستون {field_tracker.field} ثبت شده است.\n'
-        text += 'مقدار جدید: ' + field_tracker.value
+        text += 'مقدار جدید: ' + str(field_tracker.value)
         requirements.create_notification(title, text, field_tracker.tracker)
