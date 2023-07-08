@@ -102,8 +102,8 @@ def send_notification_for_courses():
                                                                 fields=modified_fields)
                         order_items = find_updated_course_references_completed_orders(course)
             send_message_to_all(message=message, order_items=order_items)
-            # course_instance.status = project_variables.CREATE
-            # course_instance.save()
+            course_instance.status = ModelTracker.STATUS_COMMITTED
+            course_instance.save()
 
 
 def append_or_create_dict(course, course_related, pks):
