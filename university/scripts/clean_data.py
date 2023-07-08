@@ -12,9 +12,9 @@ def determine_presentation_type(presentation_type):
 
 
 def determine_sex(sex):
-    if sex == project_variables.BOTH_SEX:
+    if sex == project_variables.BOTH_SEX_FA:
         return 'B'
-    elif sex == project_variables.MAN:
+    elif sex == project_variables.MAN_FA:
         return 'M'
     return 'F'
 

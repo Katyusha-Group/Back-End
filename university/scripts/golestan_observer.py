@@ -25,9 +25,10 @@ class ExcelHandler(FileSystemEventHandler):
             diff = pd.concat([self.df, df_new]).drop_duplicates(keep=False)
             # Check for changes
             if not diff.empty:
-                create_list, update_list = course_updater.make_create_update_list(diff)
-                course_updater.create(data=create_list)
-                course_updater.update(data=update_list)
+                modification_lists = course_updater.make_create_update_list(diff)
+                course_updater.create(data=modification_lists['create'])
+                course_updater.update(data=modification_lists['update'])
+                course_updater.delete(data=modification_lists['delete'])
                 self.df = df_new
                 self.df.to_excel(self.old_file, index=False)
                 print('Excel file updated successfully')

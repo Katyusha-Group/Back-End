@@ -3,6 +3,7 @@ from accounts.models import *
 from university.models import Course, ExamTimePlace, Teacher, CourseTimePlace
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import make_password
+from university.scripts import model_based_functions
 
 from university.serializers import SimpleCourseTimePlaceSerializer, SimpleExamTimePlaceSerializer
 
@@ -37,10 +38,37 @@ class UserSerializer(serializers.ModelSerializer):
         return Department.objects.get(pk=obj.department_id).name
     class Meta:
         model = User
-        fields = ('id', 'username', 'department_name' )
+        fields = ('id', 'username', 'department_name',  )
         read_only_fields = ('id',)
 
 class TeacherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Teacher
+        fields = ['name', ]
+
+
+# class CourseSerializer(serializers.ModelSerializer):
+#     total_unit = serializers.IntegerField(source='base_course.total_unit', read_only=True)
+#     practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
+#     emergency_deletion = serializers.BooleanField(source='base_course.emergency_deletion', read_only=True)
+#     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
+#     course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
+#     teacher = TeacherSerializer(read_only=True)
+#     name = serializers.CharField(source='base_course.name', read_only=True)
+#     complete_course_number = serializers.SerializerMethodField(read_only=True)
+#
+#     def get_complete_course_number(self, obj: Course):
+#         return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+#
+#     class Meta:
+#         model = Course
+#         fields = ['complete_course_number', 'name', 'class_gp', 'total_unit',
+#                   'practical_unit', 'capacity', 'registered_count',
+#                   'waiting_count', 'sex', 'guest_able', 'emergency_deletion',
+#                   'registration_limit', 'description', 'presentation_type',
+#                   'teacher', 'exam_times', 'course_times']
+
+class SimpleTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
         fields = ['name', ]
@@ -52,20 +80,24 @@ class CourseSerializer(serializers.ModelSerializer):
     emergency_deletion = serializers.BooleanField(source='base_course.emergency_deletion', read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = SimpleCourseTimePlaceSerializer(many=True, read_only=True)
-    teacher = TeacherSerializer(read_only=True)
+    teachers = SimpleTeacherSerializer(read_only=True, many=True)
     name = serializers.CharField(source='base_course.name', read_only=True)
     complete_course_number = serializers.SerializerMethodField(read_only=True)
+    group_number = serializers.CharField(source='class_gp', read_only=True)
+
 
     def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+        return model_based_functions.get_complete_course_number(obj)
 
     class Meta:
         model = Course
-        fields = ['complete_course_number', 'name', 'class_gp', 'total_unit',
+        fields = ['complete_course_number', 'name', 'group_number', 'total_unit',
                   'practical_unit', 'capacity', 'registered_count',
-                  'waiting_count', 'sex', 'guest_able', 'emergency_deletion',
+                  'waiting_count', 'sex', 'emergency_deletion',
                   'registration_limit', 'description', 'presentation_type',
-                  'teacher', 'exam_times', 'course_times']
+                  'teachers', 'exam_times', 'course_times',
+                  ]
+
 
 
 class ModifyMyCourseSerializer(serializers.Serializer):
@@ -86,3 +118,12 @@ class ModifyMyCourseSerializer(serializers.Serializer):
         #         detail='This course can not be added, due to its department incompatibility with allowed departments',
         #     )
         return attrs
+
+class IsItInDatabaseSerializer(serializers.Serializer):
+    hashed_number = serializers.CharField(max_length=10, min_length=10, allow_null=True, allow_blank=True, required=False)
+    telegram_chat_id = serializers.CharField(max_length=10, allow_null=True, allow_blank=True)
+    name = serializers.CharField(max_length=100, allow_null=True, allow_blank=True)
+
+
+class GetChatIderializer(serializers.Serializer):
+    email = serializers.EmailField()

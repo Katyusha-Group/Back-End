@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     # 'debug_toolbar',
+    'botapp',
     "django_filters",
     'mail_templated',
     'drf_yasg',
@@ -43,7 +44,6 @@ INSTALLED_APPS = [
     'accounts',
     'university',
     'custom_config',
-    'botapp',
 ]
 
 MIDDLEWARE = [
@@ -106,15 +106,15 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ],
-}
+#
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework.authentication.SessionAuthentication',
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#         'rest_framework.authentication.TokenAuthentication',
+#         'rest_framework.authentication.BasicAuthentication',
+#     ],
+# }
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -196,7 +196,7 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=15),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
@@ -245,15 +245,17 @@ CORS_EXPOSE_HEADERS = [
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'katyushaiust@gmail.com'
-EMAIL_HOST_PASSWORD = 'tysifiqazxifzbsi'
+EMAIL_HOST_PASSWORD = 'wsumkosjhltxfsox'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 CRONJOBS = [
-    ('30 2 * * *', 'university.cron.watch_golestan'),
-    ('*/5 * * * *', 'custom_config.cron.delete_pending_orders'),
-    ('0 0 * * 6', 'custom_config.cron.delete_failed_orders'),
-    ('0 0 * * *', 'custom_config.cron.delete_expired_orders'),
-    ('0 0 * * *', 'custom_config.cron.delete_expired_carts'),
+    # ('30 2 * * *', 'university.cron.watch_golestan'),
+    ('* */12 * * *', 'accounts.cron.reset_verification_tries'),
+    # ('*/30 * * * *', 'custom_config.cron.send_notifications'),
+    ('*/20 * * * *', 'custom_config.cron.watch_and_send_notifications'),
+    # ('* */12 * * *', 'custom_config.cron.delete_pending_orders'),
+    # ('0 0 * * *', 'custom_config.cron.delete_expired_orders'),
+    # ('0 0 * * *', 'custom_config.cron.delete_expired_carts'),
 ]
 

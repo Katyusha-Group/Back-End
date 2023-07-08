@@ -1,8 +1,16 @@
 #!/usr/bin/env python
+import asyncio
+import django
 import json
 import logging
-from telegram import Bot, Update
-from telegram.ext import Updater, CommandHandler, PicklePersistence
+import os
+from django.conf import settings
+import ast
+
+
+
+
+from django.conf import settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -10,22 +18,15 @@ logging.basicConfig(level=logging.INFO)
 # Create a bot instance
 
 import logging
-
-import jwt
 import requests
-import os
-from django import setup
-from asgiref.sync import sync_to_async
-from channels.db import database_sync_to_async
 
 
-from django.conf import settings
+
+
 
 # Configure the Django settings module
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
-setup()
+
 # Import the models
-from botapp.models import User_telegram
 
 
 from telegram import __version__ as TG_VER
@@ -42,22 +43,14 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
     )
 from telegram import (
-    KeyboardButton,
-    KeyboardButtonPollType,
-    Poll,
-    ReplyKeyboardMarkup,
-    ReplyKeyboardRemove,
+
     Update,
 )
-from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
     CommandHandler,
-    ContextTypes,
-    MessageHandler,
-    PollAnswerHandler,
-    PollHandler,
-    filters,
+    ContextTypes, Updater, ConversationHandler, MessageHandler, filters
+
 )
 
 # Enable logging
@@ -67,129 +60,212 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-TOTAL_VOTER_COUNT = 3
-DJANGO_SETTINGS_MODULE = 'core.settings'
+# TOTAL_VOTER_COUNT = 3
+
+
+# Set up Django environment
+
+
+
 
 from asgiref.sync import sync_to_async
 
 
-
-def send_telegram_notification(course):
-    bot_token = '6182994088:AAFwEqBN16Yvudx85OkkQVpkiNwHmmO3GtY'
-    chat_id = '5066702945'
-    message = f"The capacity of the course '{course.name}' has been changed to {course.capacity}."
-
-    bot = Bot(token=bot_token)
-    bot.send_message(chat_id=chat_id, text=message)
-
-
-def is_user_in_databese(hashed_number, telegram_chat_id):
-    try:
-        user_telegram = User_telegram.objects.get(hashed_number=hashed_number)
-        user_telegram.telegram_chat_id = telegram_chat_id
-        logger.info("changed telegram chat_id")
-        # Convert the synchronous save() operation to asynchronous using sync_to_async
-        user_telegram.save()
-        logger.info("saved")
-    except User_telegram.DoesNotExist:
-        user_telegram = None
-
-    return user_telegram
-
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-
+    logger.info(update.message.chat.id)
+    name = update.message.chat.first_name + " " + (update.message.chat.last_name if update.message.chat.last_name else "")
+    logger.info(f"name= {name}, telegram_chat_id= {str(update.message.chat.id)} start bot.")
 
     if context.args:
-        hashed_number = context.args[0]
         logging.info(context.args)
-        create_func = sync_to_async(is_user_in_databese)
-        logging.info("created user")
-        logger.info(update.message.chat.id)
+        hashed_number = context.args[0]
 
-        user_telegram = await create_func(hashed_number, str(update.message.chat.id))
-        if user_telegram:
-            await update.message.reply_text(
-                f"Hello {update.message.chat.first_name}, welcome to the Katyusha bot.\n"
-                "Please select /my_information to get your information, /get_course_in_my_calender to get Courses that were added to the calendar."
-            )
-        else:
-            await update.message.reply_text(
-                f"Hello {update.message.chat.first_name}, welcome to the Katyusha bot.\n"
-                "You should first log in to the website and then access the Telegram bot through the link provided by the website in order to utilize the bot's features.\n"
-                "http://katyushaiust.ir/accounts/login/"
-            )
+        logger.info(f"hashed_number= {hashed_number}, telegram_chat_id= {str(update.message.chat.id)}, name= {name}")
+
+        response = requests.post("https://katyushaiust.ir/bot/is_it_in_database/", data={"hashed_number": hashed_number, "telegram_chat_id": str(update.message.chat.id), 'name': name}).json()
+        logger.info(response)
+        message = response['message']
+
+        await update.message.reply_text(message)
+
+
     else:
-        await update.message.reply_text(
-            f"Hello {update.message.chat.first_name}, welcome to the Katyusha bot.\n"
-            "You should first log in to the website and then access the Telegram bot through the link provided by the website in order to utilize the bot's features.\n"
-            "http://katyushaiust.ir/accounts/login/"
-        )
+        logger.info("USER DOESNT START WITH URL")
+        response = requests.post("https://katyushaiust.ir/bot/is_it_in_database/", data={ "telegram_chat_id": str(update.message.chat.id), 'name': name}).json()
+        logger.info(response)
+        message = response['message']
+        logger.info(message)
+        await update.message.reply_text(message)
 
-def get_user_id(telegram_chat_id):
-    try:
-        user_telegram = User_telegram.objects.get(telegram_chat_id=telegram_chat_id)
-        user_id = user_telegram.user_id
-    except User_telegram.DoesNotExist:
-        user_id = None
 
-    return user_id
 async def my_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Sends information about the user and its chat."""
-    user_id = sync_to_async(get_user_id)
-    user_id_number = await user_id(str(update.message.chat.id))
-    # get data of user
-    data_user = requests.get(f"http://127.0.0.1:8000/bot/get_song/{user_id_number}/").json()
+    logger.info(update.message.chat.id)
+    data_user = requests.get(f'http://katyushaiust.ir/bot/get_email/{update.message.chat_id}').json()
     logger.info(data_user)
     await update.message.reply_text(
-        text=f"User Name: {data_user['inf']['username']}\nDeparment Name: {data_user['inf']['department_name']}"
+        text=f"این اطلاعاتیه که من ازت میدونم:\n"
+             f"User Name: {data_user['username']}\nDeparment Name: {data_user['department_name']}"
     )
 
 async def get_course_in_my_calender(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Sends information about the user and its chat."""
-    user_id = sync_to_async(get_user_id)
-    user_id_number = await user_id(str(update.message.chat.id))
+    data_user = requests.get(f'http://katyushaiust.ir/bot/get_email/{update.message.chat_id}').json()
+    id = data_user['id']
     # get data of user
-    data_user = requests.get(f"http://127.0.0.1:8000/bot/get_courses_on_calendar/{user_id_number}/").json()
-    logger.info(data_user)
-    formatted_data = json.dumps(data_user, indent=4, ensure_ascii=False)
+    data_user = requests.get(f"http://katyushaiust.ir/bot/get_courses_on_calendar/{id}/").json()
 
-    if formatted_data == "[]":
+    if data_user == []:
         await update.message.reply_text(
-            text=f"You have no course in your calendar."
+            text=f"هیچ درسی به کلندرت اضافه نکردی هنوز!"
         )
     else:
-        await update.message.reply_text(formatted_data)
+        await update.message.reply_text(
+            text=f"این درس ها رو به کلندرت اضافه کردی:\n"
+        )
+        for course in data_user:
+            code = course['complete_course_number']
+            day = []
+            course_start_time = []
+            course_end_time = []
+            place = []
+            for inf in course['course_times']:
+                day.append(inf['course_day'])
+                course_start_time.append(inf['course_start_time'])
+                course_end_time.append(inf['course_end_time'])
+                place.append(inf['place'])
 
-# send notification to user
-# async def send_notification_to_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-#     """Sends information about the user and its chat."""
-#     user_id = sync_to_async(get_user_id)
-#     user_id_number = await user_id(str(update.message.chat.id))
-#     # get data of user
-#     data_user = requests.get(f"http://
 
-def send_notification_to_user(user, message):
-    pass
+            text = ""
+            prefix_code = code[:6]
+            suffix_code = code[8:]
+            code = suffix_code + "__" + prefix_code
+            for a_day in course['course_times']:
+                text += f"روز: {a_day['course_day']}\nساعت شروع: {a_day['course_start_time']}\nساعت پایان: {a_day['course_end_time']}\nمکان: {a_day['place']}\n\n"
+                text += "\n"
+            await update.message.reply_text(
+                text=f"<b><u>📚{course['name']}</u></b>\n"
+                     f"<b>🔢کد درس:</b> {code}\n"
+                     f"<b>ظرفیت کلاس:</b> {course['capacity']}\n"
+                     f"<b>تعداد افرادی که درس را برداشته اند:</b> {course['registered_count']}\n"
+                     f"<b>تعداد افراد در لیست انتظار:</b> {course['waiting_count']}\n"
+                     f"<b>محدودیت اخذ:</b>\n{course['registration_limit']}\n"
+                     f"<b>⏰زمان و مکان کلاس:</b>\n{text}\n"
+                     f"<b>📝تاریخ امتحان:</b> \n"
+                     f"زمان امتحان:{course['exam_times'][0]['date']}\n"
+                     f"ساعت شروع امتحان:{course['exam_times'][0]['exam_start_time']} \n"
+                     f"ساعت پایان امتحان:{course['exam_times'][0]['exam_end_time']}\n",
+                parse_mode='HTML'
+            )
+
+    course_number = 1
+
+
 
 
 def main() -> None:
     """Run the bot."""
+    course_number = 1
+    # Define a function to handle the user's age input
+
+    def getnumberconvert_to_date(number):
+        if number == '0':
+            return "شنبه"
+        elif number == '1':
+            return "یکشنبه"
+        elif number == '2':
+            return "دوشنبه"
+        elif number == '3':
+            return "سه شنبه"
+        elif number == '4':
+            return "چهارشنبه"
+        elif number == '5':
+            return "پنجشنبه"
+        elif number == '6':
+            return "جمعه"
+
+    async def get_course_information(update: Update, context):
+        text = '<b>کد درس برو بهم بده تا من اطلاعاتی که از اون درس میدونم رو بهت بگم. </b>'
+        await update.message.reply_text(text, parse_mode='HTML')
+        return course_number
+
+
+    async def get_age(update: Update, context):
+        course_number = update.message.text
+        # request with token
+        headers = {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjg5NjgxOTQyLCJpYXQiOjE2ODg4MTc5NDIsImp0aSI6ImFhZDBkMzVlMmNlYzRiYWQ4YWMyYjExMzEzN2NiYWIwIiwidXNlcl9pZCI6MTB9.vp0kqPgX-JX6W55Sh6ofDcVnrE8qNRr3t7JxP0Q3cHM"
+        }
+        course_information = requests.get(f"http://127.0.0.1:7000/courses/{course_number}/", headers=headers).json()
+
+        name = course_information['name'] if course_information['name'] else "نام درس موجود نیست"
+        capacity = course_information['capacity'] if course_information['capacity'] else "ظرفیت درس موجود نیست"
+        registered_count = course_information['registered_count'] if course_information['registered_count'] else "تعداد افرادی که درس را برداشته اند موجود نیست"
+        waiting_count = course_information['waiting_count'] if course_information['waiting_count'] else "تعداد افراد در لیست انتظار موجود نیست"
+        registration_limit = course_information['registration_limit'] if course_information['registration_limit'] else "محدودیت اخذ موجود نیست"
+        exam_times = course_information['exam_times'] if course_information['exam_times'] else "زمان امتحان موجود نیست"
+        date = exam_times[0]['date'] if exam_times[0]['date'] else "تاریخ امتحان موجود نیست"
+        exam_start_time = exam_times[0]['exam_start_time'] if exam_times[0]['exam_start_time'] else "ساعت شروع امتحان موجود نیست"
+        exam_end_time = exam_times[0]['exam_end_time'] if exam_times[0]['exam_end_time'] else "ساعت پایان امتحان موجود نیست"
+        course_times = course_information['course_times'] if course_information['course_times'] else "زمان کلاس موجود نیست"
+        course_day = getnumberconvert_to_date(course_times[0]['course_day']) if course_times[0]['course_day'] else "روز کلاس موجود نیست"
+        course_start_time = course_times[0]['course_start_time'] if course_times[0]['course_start_time'] else "ساعت شروع کلاس موجود نیست"
+        course_end_time = course_times[0]['course_end_time'] if course_times[0]['course_end_time'] else "ساعت پایان کلاس موجود نیست"
+        place = course_times[0]['place'] if course_times[0]['place'] else "مکان کلاس موجود نیست"
+
+        teachers = course_information['teachers'] if course_information['teachers'] else "استاد موجود نیست"
+
+        text = ""
+        for a_day in course_times:
+            text += f"روز: {getnumberconvert_to_date(a_day['course_day'])}\nساعت شروع: {a_day['course_start_time']}\nساعت پایان: {a_day['course_end_time']}\nمکان: {a_day['place']}\n\n"
+            text += "\n"
+
+        await update.message.reply_text(
+            text=f"<b><u>📚{name}</u></b>\n"
+                 f"<b>استاد:</b> {teachers}\n"
+                 f"<b>ظرفیت کلاس:</b> {capacity}\n"
+                 f"<b>تعداد افرادی که درس را برداشته اند:</b> {registered_count}\n"
+                 f"<b>تعداد افراد در لیست انتظار:</b> {waiting_count}\n"
+                 f"<b>محدودیت اخذ:</b>\n{registration_limit}\n"
+                 f"<b>⏰زمان و مکان کلاس:</b>\n{text}\n"  
+                f"زمان امتحان:{date}\n"
+                 f"ساعت شروع امتحان:{exam_start_time} \n"
+                 f"ساعت پایان امتحان:{exam_end_time}\n",
+            parse_mode='HTML'
+        )
+
+        await update.message.reply_text(
+                                     "می تونی این کارهارو با بات کاتیوشا انجام بدی:\n\n"
+                                    "/get_course_information\n"
+                                    "درس هایی که به کلندرت اضافه کردی\n\n"
+                                    "/get_course_in_my_calender")
+
+
+        return ConversationHandler.END
+
+
 
     # Create the Application and pass it your bot's token.
-    application = (
-        Application.builder()
-        .token("6182994088:AAFwEqBN16Yvudx85OkkQVpkiNwHmmO3GtY")
-        .arbitrary_callback_data(True)
-        .build()
-    )
-
+    application =  Application.builder().token("6182994088:AAFZbZ9_fMeWebvb4x9_vb3k4q74RYWAuOM").build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("my_information", my_information))
     application.add_handler(CommandHandler("get_course_in_my_calender", get_course_in_my_calender))
+    # application.add_handler(CommandHandler("get_information_course", get_information_course))
+
+    conversation_handler = ConversationHandler(
+        entry_points=[CommandHandler("get_course_information", get_course_information)],
+        states={
+            course_number: [MessageHandler(filters.TEXT, get_age)]
+        },
+        fallbacks=[]
+    )
+
+    # Add the conversation handler to the dispatcher
+    application.add_handler(conversation_handler)
+
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
+
 
 
 if __name__ == "__main__":

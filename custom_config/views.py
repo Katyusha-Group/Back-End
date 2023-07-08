@@ -1,22 +1,35 @@
 from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote
+from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote, WebNotification
+from custom_config.permissions import IsOwner
 from custom_config.serializers import CartSerializer, CartItemSerializer, \
     AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, \
     TeacherVoteSerializer, ModifyTeacherVoteSerializer, ModifyTeacherReviewSerializer, TeacherReviewSerializer, \
-    ModifyReviewVoteSerializer, ReviewVoteSerializer, UpdateCartItemViewSerializer
-from university.models import Teacher
+    ModifyReviewVoteSerializer, ReviewVoteSerializer, UpdateCartItemViewSerializer, CourseCartOrderInfoSerializer, \
+    WebNotificationSerializer
+from university.models import Teacher, Course
+from university.scripts.get_or_create import get_course
+from utils import project_variables
 
 
-# Create your views here.
 class CartViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'options', 'head']
     queryset = Cart.objects.prefetch_related('items', 'items__course').all()
     serializer_class = CartSerializer
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated()]
+        if self.action == 'retrieve':
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
 
 
 class CartItemViewSet(ModelViewSet):
@@ -31,14 +44,16 @@ class CartItemViewSet(ModelViewSet):
         return CartItemSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, context={'cart_id': self.kwargs['cart_pk']})
+        serializer = self.get_serializer(data=request.data,
+                                         context={'cart_id': self.kwargs['cart_pk'], 'request': self.request})
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
         serializer = UpdateCartItemViewSerializer(instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, context={'cart_id': self.kwargs['cart_pk']})
+        serializer = self.get_serializer(data=request.data,
+                                         context={'cart_id': self.kwargs['cart_pk'], 'request': self.request})
         serializer.is_valid(raise_exception=True)
         instance = serializer.update(self.get_object(), serializer.validated_data)
         serializer = UpdateCartItemViewSerializer(instance)
@@ -56,11 +71,17 @@ class OrderViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.request.method in ['PATCH', 'DELETE']:
-            return [IsAdminUser()]
+            return [IsAdminUser(), IsOwner()]
         return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
-        serializer = CreateOrderSerializer(data=request.data, context={'user_id': request.user.id})
+        token = self.get_token_for_user(request.user)
+        csrf_token = request.COOKIES.get('csrftoken', None)
+        serializer = CreateOrderSerializer(data=request.data,
+                                           context={'user_id': request.user.id,
+                                                    'user': request.user,
+                                                    'token': token,
+                                                    'csrftoken': csrf_token, })
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
         serializer = OrderSerializer(order)
@@ -77,6 +98,41 @@ class OrderViewSet(ModelViewSet):
         if self.request.user.is_staff:
             return Order.objects.all()
         return Order.objects.filter(user_id=self.request.user.id)
+
+    @staticmethod
+    def get_token_for_user(user):
+        refresh = RefreshToken.for_user(user)
+        return str(refresh.access_token)
+
+
+class CourseCartOrderInfoRetrieveViewSet(ModelViewSet):
+    http_method_names = ['get', 'options', 'head']
+    serializer_class = CourseCartOrderInfoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_context(self):
+        return {'user': self.request.user, 'cart_id': self.request.query_params.get('cart_id', None), }
+
+    def get_queryset(self):
+        complete_course_number = self.request.query_params.get('complete_course_number', None)
+        if complete_course_number is None:
+            raise ValidationError('You need to send complete_course_number as query string.')
+        course = get_course(course_code=complete_course_number, semester=project_variables.CURRENT_SEMESTER)
+        if course is None:
+            raise ValidationError('Course not found.')
+        return Course.objects.filter(id=course.id).prefetch_related('order_items__order', 'cart_items')
+
+
+class GetPricesView(APIView):
+    http_method_names = ['get', 'options', 'head']
+
+    def get(self, request, *args, **kwargs):
+        data = {
+            'T': project_variables.TELEGRAM_PRICE,
+            'S': project_variables.SMS_PRICE,
+            'E': project_variables.EMAIL_PRICE,
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class BaseVoteReviewViewSet(ModelViewSet):
@@ -213,3 +269,35 @@ class ReviewVoteViewSet(ModelViewSet):
             'data': serializer.data,
         }
         return Response(new_data)
+
+
+class WebNotificationViewSet(ModelViewSet):
+    http_method_names = ['get', 'delete', 'options', 'head']
+    serializer_class = WebNotificationSerializer
+
+    def get_permissions(self):
+        if self.request.method in ['DELETE']:
+            return [IsAdminUser()]
+        if self.action == 'retrieve':
+            return [IsAuthenticated(), IsOwner()]
+        return [IsAuthenticated()]
+
+    def get_serializer_context(self):
+        return {'user': self.request.user,
+                'is_admin': self.request.user.is_staff}
+
+    def get_queryset(self):
+        if WebNotification.objects.filter(user=self.request.user, is_read=False).exists():
+            return WebNotification.objects.filter(user=self.request.user).order_by('is_read', 'applied_at').all()
+        return WebNotification.objects.filter(user=self.request.user).order_by('-applied_at').all()
+
+    def list(self, request, *args, **kwargs):
+        data = self.get_queryset()[:10]
+        serializer = WebNotificationSerializer(data, many=True)
+        WebNotification.objects.filter(pk__in=[entry.pk for entry in data]).update(is_read=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_name='unread-exists', url_path='unread-exists')
+    def unread_exists(self, request, *args, **kwargs):
+        data = self.get_queryset().filter(is_read=False).exists()
+        return Response({'unread_exists': data})

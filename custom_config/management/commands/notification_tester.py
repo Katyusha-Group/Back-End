@@ -2,7 +2,7 @@ import time
 
 from django.core.management.base import BaseCommand
 
-from custom_config.notification_requirements import send_notification_for_courses, send_notification_for_course_related
+from custom_config.scripts.notification import send_notification_for_courses
 
 
 class Command(BaseCommand):
@@ -12,6 +12,5 @@ class Command(BaseCommand):
         pre = time.time()
 
         send_notification_for_courses()
-        send_notification_for_course_related()
 
         print(time.time() - pre)

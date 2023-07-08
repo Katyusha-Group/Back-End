@@ -59,9 +59,9 @@ class BaseCourse(models.Model):
     total_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='کل واحد')
     practical_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='واحد های عملی')
     emergency_deletion = models.BooleanField(verbose_name='حذف اضطراری')
-    department = models.ForeignKey(to=Department, on_delete=models.PROTECT, verbose_name='دانشکده درس',
+    department = models.ForeignKey(to=Department, on_delete=models.CASCADE, verbose_name='دانشکده درس',
                                    related_name='base_courses')
-    course_studying_gp = models.ForeignKey(to=CourseStudyingGP, on_delete=models.PROTECT,
+    course_studying_gp = models.ForeignKey(to=CourseStudyingGP, on_delete=models.CASCADE,
                                            verbose_name='دوره آموزشی درس')
 
     def __str__(self):
@@ -98,9 +98,9 @@ class Teacher(models.Model):
 
 class Course(models.Model):
     SEX_CHOICES = (
-        ('M', project_variables.MAN),
-        ('F', project_variables.WOMAN),
-        ('B', project_variables.BOTH_SEX),
+        ('M', project_variables.MAN_FA),
+        ('F', project_variables.WOMAN_FA),
+        ('B', project_variables.BOTH_SEX_FA),
     )
 
     PRESENTATION_TYPE_CHOICES = (
@@ -121,12 +121,11 @@ class Course(models.Model):
     description = models.CharField(max_length=400, verbose_name='توضیحات')
     sex = models.CharField(choices=SEX_CHOICES, max_length=1, verbose_name='جنسیت')
     presentation_type = models.CharField(choices=PRESENTATION_TYPE_CHOICES, max_length=1, verbose_name='نحوه ارائه درس')
-    base_course = models.ForeignKey(to=BaseCourse, on_delete=models.PROTECT, verbose_name='درس پایه',
+    base_course = models.ForeignKey(to=BaseCourse, on_delete=models.CASCADE, verbose_name='درس پایه',
                                     related_name='courses')
-    teacher = models.ForeignKey(to=Teacher, on_delete=models.DO_NOTHING, verbose_name='استاد درس',
-                                related_name='courses')
+    teachers = models.ManyToManyField(to=Teacher, verbose_name='اساتید', related_name='courses')
     students = models.ManyToManyField(to=settings.AUTH_USER_MODEL, related_name='courses')
-    semester = models.ForeignKey(to=Semester, on_delete=models.PROTECT, verbose_name='ترم ارائه',
+    semester = models.ForeignKey(to=Semester, on_delete=models.CASCADE, verbose_name='ترم ارائه',
                                  related_name='courses')
 
     def __str__(self):
@@ -186,7 +185,7 @@ class AllowedDepartment(models.Model):
                                related_name='allowed_departments')
 
     def __str__(self):
-        return str(self.course.base_course_id) + ' - ' + str(self.department_id)
+        return str(self.department.name)
 
     class Meta:
         verbose_name = 'دانشکدۀ مجاز و غیر مجاز'
