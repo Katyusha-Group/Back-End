@@ -24,7 +24,7 @@ class ModelTracker(models.Model):
     )
 
     STATUS_UNCOMMITTED = 'U'
-    STATUS_COMMITTED = 'T'
+    STATUS_COMMITTED = 'C'
 
     STATUS_CHOICES = (
         (STATUS_UNCOMMITTED, 'اعمال نشده'),

@@ -22,9 +22,10 @@ def send_verification_message(subject, recipient_list, verification_token, regis
     context = {
         'email_verification_token': verification_token,
         'remaining_text': remaining_text,
-        'image_bg': 'http://katyushaiust.ir/static/Back-End/welcome_bg.png',
-        'image_url1': 'http://katyushaiust.ir/static/Back-End/katyusha-activation-image.png'
+        'image_bg': f'{project_variables.DOMAIN}/static/Back-End/welcome_bg.png',
+        'image_url1': f'{project_variables.DOMAIN}/static/Back-End/katyusha-activation-image.png'
     }
+
     html_message = render_to_string('activation_template.html', context)
     email = EmailMultiAlternatives(subject, '', EMAIL_HOST, recipient_list)
     email.attach_alternative(html_message, "text/html")
@@ -45,9 +46,9 @@ def send_forget_password_verification_message(subject, recipient_list, verificat
     context = {
         'email_verification_token': verification_token,
         'remaining_text': remaining_text,
-        'image_bg': 'http://katyushaiust.ir/static/Back-End/ResetPassword_BG_2.png',
-        'image_icon': 'http://katyushaiust.ir/static/Back-End/kat_1.png',
-        'image_header': 'http://katyushaiust.ir/static/Back-End/Reset_password-bro.png',
+        'image_bg': f'{project_variables.DOMAIN}/static/Back-End/ResetPassword_BG_2.png',
+        'image_icon': f'{project_variables.DOMAIN}/static/Back-End/kat_1.png',
+        'image_header': f'{project_variables.DOMAIN}/static/Back-End/Reset_password-bro.png',
     }
     html_message = render_to_string('forget_password.html', context)
     email = EmailMultiAlternatives(subject, '', EMAIL_HOST, recipient_list)
@@ -59,9 +60,9 @@ def send_modification_message(subject, recipient_list, message):
     message_lines = message.split('\n')
     context = {
         'message_lines': message_lines,
-        'image_icon': 'http://katyushaiust.ir/static/Back-End/kat_1.png',
-        'image_header': 'http://katyushaiust.ir/static/Back-End/announcement.png',
-        'image_footer': 'http://katyushaiust.ir/static/Back-End/feedback.png',
+        'image_icon': f'{project_variables.DOMAIN}/static/Back-End/kat_1.png',
+        'image_header': f'{project_variables.DOMAIN}/static/Back-End/announcement.png',
+        'image_footer': f'{project_variables.DOMAIN}/static/Back-End/feedback.png',
     }
     html_message = render_to_string('modifications.html', context)
     email = EmailMultiAlternatives(subject, '', EMAIL_HOST, recipient_list)
