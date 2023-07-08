@@ -180,7 +180,6 @@ class BaseCoursesTimeLineListAPIView(ListAPIView):
     def list(self, request, *args, **kwargs):
         base_courses = self.get_queryset()
         serializer = self.get_serializer(base_courses, many=True)
-        add_all_semesters_to_timeline(base_courses, serializer)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
@@ -195,7 +194,6 @@ class TeachersTimeLineListAPIView(ListAPIView):
     def list(self, request, *args, **kwargs):
         teachers = self.get_queryset()
         serializer = self.get_serializer(teachers, many=True)
-        add_all_semesters_to_timeline(teachers, serializer)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
