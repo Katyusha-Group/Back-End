@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Count, ExpressionWrapper, F, FloatField, Case, When, Value, IntegerField, Prefetch, \
     BooleanField
+from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
@@ -14,6 +15,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.views import APIView
 
+from university.scripts.timeline_functions import add_all_semesters_to_timeline
 from utils import project_variables
 
 from custom_config.ordering_filrers import TeacherOrderingFilter
@@ -175,6 +177,12 @@ class BaseCoursesTimeLineListAPIView(ListAPIView):
     def get_queryset(self):
         return BaseCourse.objects.filter(course_number=self.kwargs['course_number']).all()
 
+    def list(self, request, *args, **kwargs):
+        base_courses = self.get_queryset()
+        serializer = self.get_serializer(base_courses, many=True)
+        add_all_semesters_to_timeline(base_courses, serializer)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
 
 class TeachersTimeLineListAPIView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
@@ -183,6 +191,12 @@ class TeachersTimeLineListAPIView(ListAPIView):
 
     def get_queryset(self):
         return Teacher.objects.filter(pk=self.kwargs['teacher_id']).all()
+
+    def list(self, request, *args, **kwargs):
+        teachers = self.get_queryset()
+        serializer = self.get_serializer(teachers, many=True)
+        add_all_semesters_to_timeline(teachers, serializer)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
 class CourseGroupListView(ModelViewSet):
