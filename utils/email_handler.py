@@ -25,6 +25,7 @@ def send_verification_message(subject, recipient_list, verification_token, regis
         'image_bg': 'http://katyushaiust.ir/static/Back-End/welcome_bg.png',
         'image_url1': 'http://katyushaiust.ir/static/Back-End/katyusha-activation-image.png'
     }
+
     html_message = render_to_string('activation_template.html', context)
     email = EmailMultiAlternatives(subject, '', EMAIL_HOST, recipient_list)
     email.attach_alternative(html_message, "text/html")

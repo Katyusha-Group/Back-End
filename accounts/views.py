@@ -1,9 +1,8 @@
 import random
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.contrib.auth.hashers import make_password
 from rest_framework import generics, viewsets
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -20,9 +19,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
 from rest_framework import status
-from mail_templated import EmailMessage
 from .signals import wallet_updated_signal
-from .utils import EmailThread
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.generics import GenericAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -147,7 +144,7 @@ class LogoutView(APIView):
             response = Response()
             response.delete_cookie('refresh_token')
             response.delete_cookie('access_token')
-            return response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
+            return Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
         else:
             if request.user.is_authenticated:
                 logout(request)
@@ -240,16 +237,26 @@ class ActivationResend(generics.GenericAPIView):
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
-        serializer = ActivationResendSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            user_obj = serializer.validated_data['user']
-            token = self.get_token_for_user(user_obj)
-            email_obj = EmailMessage('email/activation_email.tpl',
-                                     {'token': token},
-                                     'asad@asd.com',
-                                     to=[user_obj.email])
-            EmailThread(email_obj).start()
-            return Response({"message": "email sent"})
+            user = serializer.validated_data['user']
+            subject = 'تایید ایمیل ثبت نام'
+            verification_code = str(random.randint(1000, 9999))
+            user.verification_tries_count += 1
+            user.verification_code = verification_code
+            user.last_verification_sent = datetime.now()
+            user.save()
+            show_text = user.has_verification_tries_reset or user.verification_tries_count > 1
+            token = self.get_token_for_user(user)
+            email_handler.send_verification_message(subject=subject,
+                                                    recipient_list=[user.email],
+                                                    verification_token=verification_code,
+                                                    registration_tries=user.verification_tries_count,
+                                                    show_text=show_text)
+            return Response({
+                "message": "email sent",
+                "url": f'{project_variables.DOMAIN}/accounts/activation-confirm/{token}',
+            }, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
