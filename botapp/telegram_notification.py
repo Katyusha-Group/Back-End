@@ -13,11 +13,11 @@ async def send_telegram_message(token, user_id, message):
 
 def send_telegram_notification(email=None, changes=None):
     params = {'email': str.lower(email)}
-    response = requests.get(f'https://katyushaiust.ir/bot/get_user_id/{str.lower(email)}').json()
+    response = requests.get(f'https://127.0.0.1:8000/bot/get_user_id/{str.lower(email)}').json()
 
     token = '6182994088:AAFZbZ9_fMeWebvb4x9_vb3k4q74RYWAuOM'
 
-   
+
     loop = asyncio.get_event_loop()
     loop.run_until_complete(send_telegram_message(token, response['user_id'], changes))
 
