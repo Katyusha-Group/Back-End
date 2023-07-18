@@ -13,13 +13,11 @@ class GolestanCrawler(SeleniumCrawler):
     AUTHENTICATION_URL = 'https://golestan.iust.ac.ir/forms/authenticateuser/main.htm'
     EXCEL_NAME = 'golestan_courses'
 
-    def __init__(self, user_login, username=None, password=None, year=4012):
+    def __init__(self, user_login, year=4012):
         super().__init__()
         self.driver.get(self.AUTHENTICATION_URL)
         self.user_login = user_login
         self.set_user_login(user_login)
-        self.username = username
-        self.password = password
         self.year = year
 
     def set_user_login(self, user_login):
