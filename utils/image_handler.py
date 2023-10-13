@@ -18,6 +18,7 @@ class ImageHandler:
             return self.save(img=image, suffix='.gif', name=name)
         except Exception as e:
             print("Error downloading image: ", e)
+            return False
 
     def download_img(self, url, name):
         try:
@@ -26,6 +27,7 @@ class ImageHandler:
             return self.save(img=image, name=name, suffix='.png')
         except Exception as e:
             print("Error downloading image: ", e)
+            return False
 
     def save(self, img, name, suffix):
         try:
@@ -36,7 +38,8 @@ class ImageHandler:
                 fh.write(img)
             return img_path
         except Exception as e:
-            print("Error downloading image: ", e)
+            print("Error creating image: ", e)
+            return False
 
     @staticmethod
     def delete(img_path):
@@ -45,6 +48,7 @@ class ImageHandler:
             os.remove(img_path)
         except Exception as e:
             print("Error deleting image: ", e)
+            return False
 
     def create_path(self):
         if not os.path.exists(self.output_dir):
