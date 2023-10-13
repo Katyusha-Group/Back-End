@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 selenium = "==4.8.0"
 bs4 = "*"
-webdriver-manager = "*"
 requests = "*"
 mechanicalsoup = "*"
 scikit-learn = "==1.0.2"
@@ -39,6 +38,7 @@ channels = "*"
 kavenegar = "*"
 python-telegram-bot = "*"
 cffi = "*"
+webdriver-manager = "*"
 
 [dev-packages]
 

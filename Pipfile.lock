@@ -1380,14 +1380,6 @@
             "index": "pypi",
             "version": "==3.0.0"
         },
-        "webdriver-manager": {
-            "hashes": [
-                "sha256:7d3aa8d67bd6c92a5d25f4abd75eea2c6dd24ea6617bff986f502280903a0e2b",
-                "sha256:ee788d389b8f45222a8a62f6f39b579360a1f87be46dad6da89918354af3ce73"
-            ],
-            "index": "pypi",
-            "version": "==3.8.6"
-        },
         "wsproto": {
             "hashes": [
                 "sha256:ad565f26ecb92588a3e43bc3d96164de84cd9902482b130d0ddbaa9664a85065",
