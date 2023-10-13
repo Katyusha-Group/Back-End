@@ -35,7 +35,7 @@ class GolestanCrawler(SeleniumCrawler):
     def switch_to_inner_frames(self, frames):
         self.driver.switch_to.default_content()
         for frame in frames:
-            element = self.wait_on_find_element_by_name(frame, 5)
+            element = self.wait_on_find_element_by_name(frame, 10)
             self.driver.switch_to.frame(element)
 
     @staticmethod
@@ -76,6 +76,8 @@ class GolestanCrawler(SeleniumCrawler):
         soup = self.get_soup(self.driver.page_source)
         png_url = soup.find('img', {'id': 'imgCaptcha'})['src']
         img_path = self.image_handler.download_captcha(png_url)
+        while not img_path:
+            img_path = self.image_handler.download_captcha(png_url)
         captcha_solver = CaptchaSolver()
         captcha_text = captcha_solver.get_captcha_text(img_path)
         self.image_handler.delete(img_path)
