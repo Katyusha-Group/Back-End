@@ -4,7 +4,7 @@ import time
 import pandas as pd
 from selenium.webdriver.common.by import By
 
-from utils.image_handler import ImageHandler
+from utils.image.image_handler import ImageHandler
 from crawler_scripts.selenium_crawler import SeleniumCrawler
 
 
