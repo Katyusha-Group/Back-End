@@ -1,6 +1,5 @@
 import os
 import random
-from os.path import basename
 
 import requests
 
@@ -16,15 +15,6 @@ class ImageHandler:
             image = requests.get(url).content
             name = str(int(random.uniform(10000, 99999)))
             return self.save(img=image, suffix='.gif', name=name)
-        except Exception as e:
-            print("Error downloading image: ", e)
-            return False
-
-    def download_img(self, url, name):
-        try:
-            print('creating image with url :::', url)
-            image = requests.get(url).content
-            return self.save(img=image, name=name, suffix='.png')
         except Exception as e:
             print("Error downloading image: ", e)
             return False

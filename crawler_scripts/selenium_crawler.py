@@ -6,11 +6,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait as Wait
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.core.utils import read_version_from_cmd
 
 from crawler_scripts import constants
-from utils.image_handler import ImageHandler
+from utils.image.image_handler import ImageHandler
 
 
 class SeleniumCrawler:
