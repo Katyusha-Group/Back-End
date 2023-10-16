@@ -1,6 +1,6 @@
 from crawler_scripts.lms_crawler import LMSCrawler
 from crawler_scripts.lms_crawler_selenium import LMSCrawlerSelenium
-from utils.Excel.excel_handler import ExcelHandler
+from utils.excel.excel_handler import ExcelHandler
 
 COUNT = 3260
 
