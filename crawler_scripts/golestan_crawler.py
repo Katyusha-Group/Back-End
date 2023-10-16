@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from captcha_reader.captchaSolver import CaptchaSolver
 from crawler_scripts.selenium_crawler import SeleniumCrawler
 from utils import project_variables
-from utils.excel_handler import ExcelHandler
+from utils.Excel.excel_handler import ExcelHandler
 import constants
 
 
