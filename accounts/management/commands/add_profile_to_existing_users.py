@@ -3,7 +3,6 @@ import time
 from django.core.management.base import BaseCommand
 
 from accounts.models import Profile, User
-from utils import project_variables
 
 
 class Command(BaseCommand):

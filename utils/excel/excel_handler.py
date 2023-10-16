@@ -3,7 +3,7 @@ import glob
 import pandas as pd
 import os
 
-from utils.Excel import excel_cleaner
+from utils.excel import excel_cleaner
 
 
 class ExcelHandler:

@@ -1,4 +1,4 @@
-from utils import project_variables
+from utils.variables import project_variables
 
 
 def determine_presentation_type(presentation_type):

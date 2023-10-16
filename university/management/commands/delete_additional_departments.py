@@ -4,8 +4,8 @@ from django.core.management.base import BaseCommand
 from django.db.models.signals import pre_delete, post_delete
 
 from university.models import Department
-from utils import project_variables
-from utils.disable_signals import DisableSignals
+from utils.variables import project_variables
+from utils.signal.disable_signals import DisableSignals
 
 
 class Command(BaseCommand):

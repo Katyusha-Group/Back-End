@@ -3,7 +3,7 @@ import os
 import openpyxl
 from persiantools import characters, digits
 
-from utils import project_variables
+from utils.variables import project_variables
 
 
 def get_path(file_name, directory):

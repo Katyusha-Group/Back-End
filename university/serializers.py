@@ -1,9 +1,8 @@
-import requests
 from django.db.models import Count, Q
 from rest_framework import serializers
 
 from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse, AllowedDepartment
-from utils import project_variables
+from utils.variables import project_variables
 from .scripts import model_based_functions
 from .scripts.get_or_create import get_course
 

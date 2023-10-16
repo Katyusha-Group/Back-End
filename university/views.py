@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Count, ExpressionWrapper, F, FloatField, Case, When, Value, IntegerField, Prefetch, \
     BooleanField
-from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
@@ -15,8 +14,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.views import APIView
 
-from university.scripts.timeline_functions import add_all_semesters_to_timeline
-from utils import project_variables
+from utils.variables import project_variables
 
 from custom_config.ordering_filrers import TeacherOrderingFilter
 

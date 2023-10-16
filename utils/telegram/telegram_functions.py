@@ -1,6 +1,6 @@
 import requests
 
-from utils import project_variables
+from utils.variables import project_variables
 
 
 def get_bot_url(csrftoken, token):

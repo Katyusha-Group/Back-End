@@ -4,8 +4,8 @@ from django_jalali.db import models as jmodels
 from django.conf import settings
 
 from university import managers
-from utils import project_variables
-from utils.project_variables import day_mapper
+from utils.variables import project_variables
+from utils.variables.project_variables import day_mapper
 
 
 # Create your models here.

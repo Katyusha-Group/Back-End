@@ -1,4 +1,3 @@
-from decimal import Decimal
 from uuid import uuid4
 
 from django.conf import settings
@@ -8,7 +7,7 @@ from django.db import models
 from django_jalali.db import models as jmodels
 
 from university.models import Course, Teacher, AllowedDepartment, CourseTimePlace, ExamTimePlace
-from utils import project_variables
+from utils.variables import project_variables
 from utils.transaction_functions import create_ref_code
 
 

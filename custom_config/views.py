@@ -16,7 +16,7 @@ from custom_config.serializers import CartSerializer, CartItemSerializer, \
     WebNotificationSerializer
 from university.models import Teacher, Course
 from university.scripts.get_or_create import get_course
-from utils import project_variables
+from utils.variables import project_variables
 
 
 class CartViewSet(ModelViewSet):
