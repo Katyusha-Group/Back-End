@@ -5,8 +5,8 @@ import time
 import pandas as pd
 from django.core.management.base import BaseCommand
 from crawler_scripts.lms_crawler_multi_thread import get_teachers_info, grab_teacher_photo
-from utils import project_variables
-from utils.Excel.excel_handler import ExcelHandler
+from utils.variables import project_variables
+from utils.excel.excel_handler import ExcelHandler
 
 
 class Command(BaseCommand):

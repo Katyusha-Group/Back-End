@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from university.scripts import course_updater
-from utils import project_variables
+from utils.variables import project_variables
 
 
 def watch_golestan():

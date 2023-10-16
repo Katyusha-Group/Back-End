@@ -5,7 +5,7 @@ from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDep
 from custom_config.models import FieldTracker, ModelTracker, WebNotification
 import custom_config.scripts.signals_scripts as requirements
 from university.signals import course_teachers_changed
-from utils import project_variables
+from utils.variables import project_variables
 
 
 @receiver(post_save, sender=Course)

@@ -2,7 +2,7 @@ import pandas as pd
 
 from university.models import CourseTimePlace, ExamTimePlace, Department, AllowedDepartment
 from university.scripts import get_or_create, clean_data
-from utils import project_variables
+from utils.variables import project_variables
 
 
 def get_data_from_course_time(data):

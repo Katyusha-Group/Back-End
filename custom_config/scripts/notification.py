@@ -4,8 +4,8 @@ from django.db.models import Q
 from custom_config.models import ModelTracker, OrderItem
 from university.models import Course
 from university.scripts.get_or_create import get_course
-from utils import project_variables, email_handler
-from utils.project_variables import course_field_mapper_en_to_fa_notification as course_field_mapper
+from utils.variables import project_variables
+from utils.email import email_handler
 
 
 def get_int(s):

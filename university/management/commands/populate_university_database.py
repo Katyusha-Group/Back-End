@@ -6,7 +6,7 @@ import pandas as pd
 from django.core.management.base import BaseCommand
 
 from university.scripts import populate_table
-from utils import project_variables
+from utils.variables import project_variables
 from utils.get_data_path import get_teachers_data, get_path_to_data_directory
 
 

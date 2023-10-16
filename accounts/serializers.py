@@ -1,4 +1,3 @@
-import requests
 from rest_framework import serializers
 from accounts.models import *
 from django.contrib.auth import authenticate
@@ -7,7 +6,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core import exceptions as exception
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from utils.telegram_functions import get_bot_url
+from utils.telegram.telegram_functions import get_bot_url
 
 
 class SignUpSerializer(serializers.ModelSerializer):

@@ -6,7 +6,7 @@ from pandas import DataFrame
 from university.models import Course, Teacher
 from university.scripts import populate_table, get_or_create, clean_data, delete_from_table
 from university.signals import course_teachers_changed
-from utils import project_variables
+from utils.variables import project_variables
 from utils.get_data_path import get_teachers_data
 
 

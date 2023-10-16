@@ -2,7 +2,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
 from core.settings import EMAIL_HOST
-from utils import project_variables
+from utils.variables import project_variables
 
 
 def send_verification_message(subject, recipient_list, verification_token, registration_tries, show_text):

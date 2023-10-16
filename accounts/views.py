@@ -8,7 +8,7 @@ from rest_framework.mixins import ListModelMixin
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 
-from utils import email_handler
+from utils.email import email_handler
 from .serializers import *
 from .serializers import LoginSerializer
 from accounts.models import User

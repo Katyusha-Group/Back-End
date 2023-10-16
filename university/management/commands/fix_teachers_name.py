@@ -2,8 +2,8 @@ import time
 
 from django.core.management.base import BaseCommand
 
-from university.models import Department, Teacher
-from utils import project_variables
+from university.models import Teacher
+from utils.variables import project_variables
 
 
 class Command(BaseCommand):

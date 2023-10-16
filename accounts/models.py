@@ -2,13 +2,12 @@ from datetime import datetime
 from decimal import Decimal
 
 from django.db import models
-from django.core.validators import MinLengthValidator, RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django_jalali.db import models as jmodels
 
 from core import settings
 from university.models import Department
-from utils import project_variables
+from utils.variables import project_variables
 from utils.transaction_functions import create_ref_code
 
 

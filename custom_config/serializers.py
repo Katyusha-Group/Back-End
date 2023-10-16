@@ -1,4 +1,3 @@
-import requests
 from django.db import transaction
 
 from rest_framework import serializers
@@ -13,8 +12,8 @@ from university.models import Course
 from university.serializers import ShoppingCourseSerializer
 
 from university.scripts.get_or_create import get_course
-from utils import project_variables
-from utils.telegram_functions import get_bot_url
+from utils.variables import project_variables
+from utils.telegram.telegram_functions import get_bot_url
 
 
 class CartItemSerializer(serializers.ModelSerializer):
