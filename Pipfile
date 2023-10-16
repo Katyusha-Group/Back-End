@@ -41,6 +41,10 @@ cffi = "*"
 webdriver-manager = "*"
 
 [dev-packages]
+pytest = "*"
+django-pytest = "*"
+pytest-watch = "*"
+model-bakery = "*"
 
 [requires]
 python_version = "3.9"
