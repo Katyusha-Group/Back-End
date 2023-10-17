@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 
 from captcha_reader.captchaSolver import CaptchaSolver
 from crawler_scripts.selenium_crawler import SeleniumCrawler
+from utils.excel.excel_cleaner import make_name_correct
 from utils.variables import project_variables
 from utils.excel.excel_handler import ExcelHandler
 import constants
@@ -153,7 +154,6 @@ class GolestanCrawler(SeleniumCrawler):
 
     def extract_courses(self):
         table = self.wait_on_find_element_by_xpath('/html/body/div[1]/div[13]/table', 10)
-        excel_handler = ExcelHandler()
         soup = self.get_soup(table.get_attribute('innerHTML'))
         courses = []
         rows = soup.find_all('tr')
@@ -162,7 +162,7 @@ class GolestanCrawler(SeleniumCrawler):
             for i in range(len(cols)):
                 if i == 8:
                     temp = cols[i].contents
-                    temp = [excel_handler.make_name_correct(temp[j].strip()) for j in range(0, len(temp), 2)]
+                    temp = [make_name_correct(temp[j].strip()) for j in range(0, len(temp), 2)]
                     cols[i] = str.join('-', temp)
                 else:
                     cols[i] = cols[i].text.strip()
