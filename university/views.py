@@ -51,7 +51,7 @@ class SortedNamesDepartmentListView(ListAPIView):
         return sort_departments_by_user_department(departments, user_department)
 
 
-class DepartmentListView(ListAPIView):
+class DepartmentsListView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
     serializer_class = DepartmentSerializer
@@ -65,7 +65,7 @@ class DepartmentListView(ListAPIView):
         return sort_departments_by_user_department(departments, user_department)
 
 
-class AllDepartmentsListView(DepartmentListView):
+class AllDepartmentsListView(DepartmentsListView):
     def get_queryset(self):
         departments = Department.objects.all().prefetch_related(
             'allowed_departments__course__base_course')
