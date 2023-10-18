@@ -60,13 +60,6 @@ class DepartmentsListView(ListAPIView):
         return {'user': self.request.user}
 
     def get_queryset(self):
-        departments = Department.objects.all()
-        user_department = get_user_department(self.request.user)
-        return sort_departments_by_user_department(departments, user_department)
-
-
-class AllDepartmentsListView(DepartmentsListView):
-    def get_queryset(self):
         departments = Department.objects.all().prefetch_related(
             'allowed_departments__course__base_course')
         user_department = get_user_department(self.request.user)
