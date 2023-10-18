@@ -134,8 +134,8 @@ dmypy.json
 # idea folder
 .idea/
 
-# test_crawler.py file
-/crawler_scripts/test_crawler.py
+# crawler_main.py file
+/crawler_scripts/crawler_main.py
 
 # media
 /media/
