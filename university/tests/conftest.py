@@ -12,7 +12,7 @@ def api_client():
 
 @pytest.fixture
 def sign_up_department_list_view_url():
-    return reverse('department_names')
+    return reverse('department-names')
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def departments_list_view_url():
 
 @pytest.fixture
 def sorted_department_list_view_url():
-    return reverse('sorted_department_names')
+    return reverse('sorted-department-names')
 
 
 @pytest.fixture

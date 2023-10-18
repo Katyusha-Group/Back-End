@@ -60,20 +60,13 @@ class DepartmentsListView(ListAPIView):
         return {'user': self.request.user}
 
     def get_queryset(self):
-        departments = Department.objects.all()
-        user_department = get_user_department(self.request.user)
-        return sort_departments_by_user_department(departments, user_department)
-
-
-class AllDepartmentsListView(DepartmentsListView):
-    def get_queryset(self):
         departments = Department.objects.all().prefetch_related(
             'allowed_departments__course__base_course')
         user_department = get_user_department(self.request.user)
         return sort_departments_by_user_department(departments, user_department)
 
 
-class SemesterViewSet(ModelViewSet):
+class SemestersViewList(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
     serializer_class = SemesterSerializer
@@ -142,7 +135,7 @@ class CourseViewSet(ListModelMixin, GenericViewSet):
             serializer = ModifyMyCourseSerializer(data=request.data, context={'user_id': request.user.id})
             serializer.is_valid(raise_exception=True)
             _, created = serializer.save(student=student)
-            message = 'Course added to calendar' if created else 'Course deleted from calendar'
+            message = self.generate_message(created)
             return Response(status=status.HTTP_200_OK, data={'message': message})
 
     @action(detail=False, methods=['GET'])
@@ -166,6 +159,14 @@ class CourseViewSet(ListModelMixin, GenericViewSet):
                         data={'unit_count': sum([course.base_course.total_unit for course in course_data]),
                               'data': courses.data})
 
+    @staticmethod
+    def generate_message(created):
+        if created:
+            message = 'Course added to calendar'
+        else:
+            message = 'Course deleted from calendar'
+        return message
+
 
 class BaseCoursesTimeLineListAPIView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
@@ -187,7 +188,7 @@ class TeachersTimeLineListAPIView(ListAPIView):
     serializer_class = TeacherTimeLineSerializer
 
     def get_queryset(self):
-        return Teacher.objects.filter(pk=self.kwargs['teacher_id']).all()
+        return Teacher.objects.filter(pk=self.kwargs['teacher_pk']).all()
 
     def list(self, request, *args, **kwargs):
         teachers = self.get_queryset()
@@ -203,7 +204,7 @@ class CourseGroupListView(ModelViewSet):
         return {'user': self.request.user}
 
     def get_queryset(self):
-        base_course_id = self.kwargs['base_course_id']
+        base_course_id = self.kwargs['base_course_pk']
         if base_course_id is None:
             raise ValidationError({'detail': 'Enter course_number as query string in the url.'}, )
         elif base_course_id.isdigit() is True:
@@ -250,15 +251,19 @@ class CourseGroupListView(ModelViewSet):
 class BaseAllCourseDepartment(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, department_id, *args, **kwargs):
+    def get(self, request, department_number, *args, **kwargs):
         all_courses = (
             Course.objects
-            .filter(base_course__department_id=department_id, semester=project_variables.CURRENT_SEMESTER)
+            .filter(base_course__department_id=department_number, semester=project_variables.CURRENT_SEMESTER)
             .select_related('base_course')
             .prefetch_related('course_times', 'exam_times', 'students', 'teachers')
             .all()
         )
-        return Response(AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
+        if all_courses.exists():
+            return Response(
+                AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
+        else:
+            raise ValidationError({'detail': 'No department with this department_number is in database.'}, )
 
 
 class AllCourseDepartmentList(BaseAllCourseDepartment):
@@ -267,8 +272,8 @@ class AllCourseDepartmentList(BaseAllCourseDepartment):
 
 
 class AllCourseDepartmentRetrieve(BaseAllCourseDepartment):
-    def get(self, request, department_id, *args, **kwargs):
-        return super(AllCourseDepartmentRetrieve, self).get(request, department_id, *args, **kwargs)
+    def get(self, request, department_number, *args, **kwargs):
+        return super(AllCourseDepartmentRetrieve, self).get(request, department_number, *args, **kwargs)
 
 
 class TeacherViewSet(ModelViewSet):

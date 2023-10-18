@@ -1,4 +1,5 @@
 from django.db.models import Count, Q
+from django.urls import reverse
 from rest_framework import serializers
 
 from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse, AllowedDepartment
@@ -262,45 +263,29 @@ class CourseWithoutTeacherTimeLineSerializer(serializers.ModelSerializer):
 
 
 class BaseCourseTimeLineSerializer(serializers.ModelSerializer):
+    courses = CourseWithTeacherTimeLineSerializer(many=True, read_only=True)
+
     def to_representation(self, obj):
         representation = super().to_representation(obj)
-        representation['data'] = {}
-        if 'courses' in representation:
-            courses_representation = representation.pop('courses')
-            for sub_item in courses_representation:
-                new_data = {}
-                for sub_key in sub_item:
-                    if sub_key == 'semester' or sub_key == 'teachers':
-                        continue
-                    if sub_key in new_data:
-                        new_data[sub_key].append(sub_item[sub_key])
-                    else:
-                        new_data[sub_key] = sub_item[sub_key]
-                if sub_item['semester'] not in representation['data']:
-                    representation['data'][sub_item['semester']] = {}
-                for teacher in sub_item['teachers']:
-                    if teacher not in representation['data'][sub_item['semester']]:
-                        representation['data'][sub_item['semester']][teacher] = {}
-                        representation['data'][sub_item['semester']][teacher]['courses'] = []
-                    if teacher in representation['data'][sub_item['semester']]:
-                        representation['data'][sub_item['semester']][teacher]['courses'].append(new_data)
-        DATA_KEY = 'data'
-        for semester in representation[DATA_KEY]:
-            for teacher in representation[DATA_KEY][semester]:
-                representation[DATA_KEY][semester][teacher]['total_capacity'] = sum(
-                    [item['capacity'] for item in representation[DATA_KEY][semester][teacher]['courses']]
-                )
-                representation[DATA_KEY][semester][teacher]['total_registered_count'] = sum(
-                    [item['registered_count'] for item in representation[DATA_KEY][semester][teacher]['courses']]
-                )
-                representation[DATA_KEY][semester][teacher]['popularity'] = \
-                    (representation[DATA_KEY][semester][teacher]['total_registered_count'] /
-                     representation[DATA_KEY][semester][teacher]['total_capacity'] * 100) // 1
-                representation[DATA_KEY][semester][teacher]['total_classes'] = len(
-                    representation[DATA_KEY][semester][teacher]['courses'])
+        data = {}
+        for course in representation.pop('courses'):
+            semester = course.pop('semester')
+            teachers = course.pop('teachers')
+            for teacher in teachers:
+                if semester not in data:
+                    data[semester] = {}
+                if teacher not in data[semester]:
+                    data[semester][teacher] = {'courses': []}
+                data[semester][teacher]['courses'].append(course)
+        for semester in data:
+            for teacher in data[semester]:
+                courses = data[semester][teacher]['courses']
+                data[semester][teacher]['total_capacity'] = sum(course['capacity'] for course in courses)
+                data[semester][teacher]['total_registered_count'] = sum(course['registered_count'] for course in courses)
+                data[semester][teacher]['popularity'] = int(data[semester][teacher]['total_registered_count'] / data[semester][teacher]['total_capacity'] * 100)
+                data[semester][teacher]['total_classes'] = len(courses)
+        representation['data'] = data
         return representation
-
-    courses = CourseWithTeacherTimeLineSerializer(many=True, read_only=True)
 
     class Meta:
         model = BaseCourse
@@ -308,54 +293,32 @@ class BaseCourseTimeLineSerializer(serializers.ModelSerializer):
 
 
 class TeacherTimeLineSerializer(serializers.ModelSerializer):
+    courses = CourseWithoutTeacherTimeLineSerializer(many=True, read_only=True)
+
     def to_representation(self, obj):
         representation = super().to_representation(obj)
-        representation['data'] = {}
-        if 'courses' in representation:
-            courses_representation = representation.pop('courses')
-            for sub_item in courses_representation:
-                new_data = {}
-                for sub_key in sub_item:
-                    if sub_key == 'semester' or sub_key == 'course_name':
-                        continue
-                    if sub_key in new_data:
-                        new_data[sub_key].append(sub_item[sub_key])
-                    else:
-                        new_data[sub_key] = sub_item[sub_key]
-                if sub_item['semester'] not in representation['data']:
-                    representation['data'][sub_item['semester']] = {}
-                    representation['data'][sub_item['semester']]['courses'] = {}
-                if sub_item['course_name'] not in representation['data'][sub_item['semester']]['courses']:
-                    representation['data'][sub_item['semester']]['courses'][sub_item['course_name']] = {}
-                    representation['data'][sub_item['semester']]['courses'][sub_item['course_name']]['detail'] = []
-                representation['data'][sub_item['semester']]['courses'][sub_item['course_name']]['detail'].append(
-                    new_data)
-        DATA_KEY = 'data'
-        for semester in representation[DATA_KEY]:
-            for course in representation[DATA_KEY][semester]['courses']:
-                representation[DATA_KEY][semester]['courses'][course]['course_total_capacity'] = sum(
-                    [item['capacity'] for item in representation[DATA_KEY][semester]['courses'][course]['detail']]
-                )
-                representation[DATA_KEY][semester]['courses'][course]['course_total_registered_count'] = sum(
-                    [item['registered_count'] for item in
-                     representation[DATA_KEY][semester]['courses'][course]['detail']]
-                )
-                representation[DATA_KEY][semester]['courses'][course]['course_popularity'] = \
-                    (representation[DATA_KEY][semester]['courses'][course]['course_total_registered_count'] /
-                     representation[DATA_KEY][semester]['courses'][course]['course_total_capacity'] * 100) // 1
-                representation[DATA_KEY][semester]['courses'][course]['course_total_classes'] = len(
-                    representation[DATA_KEY][semester]['courses'][course])
+        data = {}
+        for course in representation.pop('courses'):
+            semester = course.pop('semester')
+            course_name = course.pop('course_name')
+            if semester not in data:
+                data[semester] = {'courses': {}}
+            if course_name not in data[semester]['courses']:
+                data[semester]['courses'][course_name] = {'detail': []}
+            data[semester]['courses'][course_name]['detail'].append(course)
+        for semester in data:
+            for course_name in data[semester]['courses']:
+                courses = data[semester]['courses'][course_name]['detail']
+                data[semester]['courses'][course_name]['course_total_capacity'] = sum(course['capacity'] for course in courses)
+                data[semester]['courses'][course_name]['course_total_registered_count'] = sum(course['registered_count'] for course in courses)
+                data[semester]['courses'][course_name]['course_popularity'] = int(data[semester]['courses'][course_name]['course_total_registered_count'] / data[semester]['courses'][course_name]['course_total_capacity'] * 100)
+                data[semester]['courses'][course_name]['course_total_classes'] = len(courses)
+        representation['data'] = data
         return representation
-
-    courses = CourseWithoutTeacherTimeLineSerializer(many=True, read_only=True)
 
     class Meta:
         model = Teacher
         fields = ['name', 'courses']
-
-
-class StudentCountSerializer(serializers.Serializer):
-    count = serializers.IntegerField()
 
 
 class SimpleAllowedDepartmentSerializer(serializers.ModelSerializer):
@@ -369,11 +332,8 @@ class SimpleAllowedDepartmentSerializer(serializers.ModelSerializer):
 class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         representation = super().to_representation(obj)
-        if 'allowed_departments' in representation:
-            allowed_departments = representation.pop('allowed_departments')
-            representation['allowed_departments'] = []
-            for key in allowed_departments:
-                representation['allowed_departments'].append(key['department_name'])
+        allowed_departments = representation.pop('allowed_departments')
+        representation['allowed_departments'] = [department['department_name'] for department in allowed_departments]
         return representation
 
     name = serializers.CharField(source='base_course.name', read_only=True)
@@ -424,13 +384,13 @@ class TeacherSerializer(SimpleTeacherSerializer):
     teacher_reviews = serializers.SerializerMethodField(read_only=True)
 
     def get_timeline(self, obj: Teacher):
-        return project_variables.DOMAIN + '/timeline/teachers/' + str(obj.id)
+        return project_variables.DOMAIN + reverse('teacher-timeline', kwargs={'teacher_pk': obj.id})
 
     def get_teacher_votes(self, obj: Teacher):
-        return project_variables.DOMAIN + '/teacher-votes/' + str(obj.id)
+        return project_variables.DOMAIN + reverse('teacher-votes-list', kwargs={'teacher_pk': obj.id})
 
     def get_teacher_reviews(self, obj: Teacher):
-        return project_variables.DOMAIN + '/teacher-reviews/' + str(obj.id)
+        return project_variables.DOMAIN + reverse('teacher-reviews-list', kwargs={'teacher_pk': obj.id})
 
     def get_courses(self, obj: Teacher):
         courses = Course.objects.filter(teachers__in=[obj], semester=project_variables.CURRENT_SEMESTER).distinct()
