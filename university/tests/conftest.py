@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.urls import reverse
 from rest_framework.test import APIClient
 import pytest
 
@@ -6,6 +7,21 @@ import pytest
 @pytest.fixture
 def api_client():
     return APIClient()
+
+
+@pytest.fixture
+def sign_up_department_list_view_url():
+    return reverse('department_names')
+
+
+@pytest.fixture
+def department_list_view_url():
+    return reverse('departments')
+
+
+@pytest.fixture
+def sorted_department_list_view_url():
+    return reverse('sorted_department_names')
 
 
 @pytest.fixture
