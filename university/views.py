@@ -72,7 +72,7 @@ class SemestersViewList(ListAPIView):
     serializer_class = SemesterSerializer
 
     def get_queryset(self):
-        return Semester.objects.all()
+        return Semester.objects.order_by('-year').all()
 
 
 class CourseViewSet(ListModelMixin, GenericViewSet):
