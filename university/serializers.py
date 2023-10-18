@@ -336,11 +336,8 @@ class SimpleAllowedDepartmentSerializer(serializers.ModelSerializer):
 class AllCourseDepartmentSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         representation = super().to_representation(obj)
-        if 'allowed_departments' in representation:
-            allowed_departments = representation.pop('allowed_departments')
-            representation['allowed_departments'] = []
-            for key in allowed_departments:
-                representation['allowed_departments'].append(key['department_name'])
+        allowed_departments = representation.pop('allowed_departments')
+        representation['allowed_departments'] = [department['department_name'] for department in allowed_departments]
         return representation
 
     name = serializers.CharField(source='base_course.name', read_only=True)
