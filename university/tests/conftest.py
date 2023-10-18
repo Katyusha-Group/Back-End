@@ -5,6 +5,8 @@ from rest_framework.test import APIClient
 import pytest
 
 
+# URLs:
+
 @pytest.fixture
 def api_client():
     return APIClient()
@@ -23,6 +25,11 @@ def departments_list_view_url():
 @pytest.fixture
 def sorted_department_list_view_url():
     return reverse('sorted-department-names')
+
+
+@pytest.fixture
+def semesters_list_view_url():
+    return reverse('semesters')
 
 
 @pytest.fixture
