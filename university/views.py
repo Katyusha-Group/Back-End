@@ -135,7 +135,7 @@ class CourseViewSet(ListModelMixin, GenericViewSet):
             serializer = ModifyMyCourseSerializer(data=request.data, context={'user_id': request.user.id})
             serializer.is_valid(raise_exception=True)
             _, created = serializer.save(student=student)
-            message = 'Course added to calendar' if created else 'Course deleted from calendar'
+            message = self.generate_message(created)
             return Response(status=status.HTTP_200_OK, data={'message': message})
 
     @action(detail=False, methods=['GET'])
@@ -158,6 +158,14 @@ class CourseViewSet(ListModelMixin, GenericViewSet):
         return Response(status=status.HTTP_200_OK,
                         data={'unit_count': sum([course.base_course.total_unit for course in course_data]),
                               'data': courses.data})
+
+    @staticmethod
+    def generate_message(created):
+        if created:
+            message = 'Course added to calendar'
+        else:
+            message = 'Course deleted from calendar'
+        return message
 
 
 class BaseCoursesTimeLineListAPIView(ListAPIView):
