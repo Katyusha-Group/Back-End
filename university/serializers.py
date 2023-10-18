@@ -1,4 +1,5 @@
 from django.db.models import Count, Q
+from django.urls import reverse
 from rest_framework import serializers
 
 from .models import Department, Semester, Course, ExamTimePlace, CourseTimePlace, Teacher, BaseCourse, AllowedDepartment
@@ -390,13 +391,13 @@ class TeacherSerializer(SimpleTeacherSerializer):
     teacher_reviews = serializers.SerializerMethodField(read_only=True)
 
     def get_timeline(self, obj: Teacher):
-        return project_variables.DOMAIN + '/timeline/teachers/' + str(obj.id)
+        return project_variables.DOMAIN + reverse('teacher-timeline', kwargs={'teacher_pk': obj.id})
 
     def get_teacher_votes(self, obj: Teacher):
-        return project_variables.DOMAIN + '/teacher-votes/' + str(obj.id)
+        return project_variables.DOMAIN + reverse('teacher-votes-list', kwargs={'teacher_pk': obj.id})
 
     def get_teacher_reviews(self, obj: Teacher):
-        return project_variables.DOMAIN + '/teacher-reviews/' + str(obj.id)
+        return project_variables.DOMAIN + reverse('teacher-reviews-list', kwargs={'teacher_pk': obj.id})
 
     def get_courses(self, obj: Teacher):
         courses = Course.objects.filter(teachers__in=[obj], semester=project_variables.CURRENT_SEMESTER).distinct()
