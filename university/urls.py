@@ -10,7 +10,7 @@ router.register(r'teachers', viewset=views.TeacherViewSet, basename='teachers')
 urlpatterns = [
     path('', include(router.urls)),
     # semesters:
-    path('semeters/', views.SemestersViewList.as_view(), name='semesters'),
+    path('semesters/', views.SemestersViewList.as_view(), name='semesters'),
 
     # departments:
     path('departments/', views.DepartmentsListView.as_view(), name='departments'),
