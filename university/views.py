@@ -66,7 +66,7 @@ class DepartmentsListView(ListAPIView):
         return sort_departments_by_user_department(departments, user_department)
 
 
-class SemesterViewSet(ModelViewSet):
+class SemesterViewList(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
     serializer_class = SemesterSerializer
