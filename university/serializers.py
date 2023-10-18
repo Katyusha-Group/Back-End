@@ -321,10 +321,6 @@ class TeacherTimeLineSerializer(serializers.ModelSerializer):
         fields = ['name', 'courses']
 
 
-class StudentCountSerializer(serializers.Serializer):
-    count = serializers.IntegerField()
-
-
 class SimpleAllowedDepartmentSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='department.name', read_only=True)
 
