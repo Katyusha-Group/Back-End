@@ -1,5 +1,6 @@
-from django.contrib.auth.models import User
+from accounts.models import User
 from django.urls import reverse
+from model_bakery import baker
 from rest_framework.test import APIClient
 import pytest
 
@@ -15,13 +16,18 @@ def sign_up_department_list_view_url():
 
 
 @pytest.fixture
-def department_list_view_url():
+def departments_list_view_url():
     return reverse('departments')
 
 
 @pytest.fixture
 def sorted_department_list_view_url():
     return reverse('sorted_department_names')
+
+
+@pytest.fixture
+def simple_user():
+    return baker.make(User)
 
 
 @pytest.fixture

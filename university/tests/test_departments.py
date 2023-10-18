@@ -1,7 +1,5 @@
-from django.urls import reverse
-from rest_framework import status
-
 import pytest
+from rest_framework import status
 from model_bakery import baker
 
 from accounts.models import User
@@ -10,49 +8,46 @@ from university.models import Department
 
 @pytest.mark.django_db
 class TestSignupDepartmentListView:
-    def setUp(self):
-        self.url = reverse('department_names')
-
-    def test_if_get_request_is_status_200(self, api_client):
-        response = api_client.get(self.url)
+    def test_if_get_request_is_status_200(self, api_client, sign_up_department_list_view_url):
+        response = api_client.get(sign_up_department_list_view_url)
 
         assert response.status_code == status.HTTP_200_OK
 
-    def test_if_post_request_is_status_405(self, api_client):
-        response = api_client.post(self.url)
+    def test_if_post_request_is_status_405(self, api_client, sign_up_department_list_view_url):
+        response = api_client.post(sign_up_department_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_put_request_is_status_405(self, api_client):
-        response = api_client.put(self.url)
+    def test_if_put_request_is_status_405(self, api_client, sign_up_department_list_view_url):
+        response = api_client.put(sign_up_department_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_patch_request_is_status_405(self, api_client):
-        response = api_client.patch(self.url)
+    def test_if_patch_request_is_status_405(self, api_client, sign_up_department_list_view_url):
+        response = api_client.patch(sign_up_department_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_delete_request_is_status_405(self, api_client):
-        response = api_client.delete(self.url)
+    def test_if_delete_request_is_status_405(self, api_client, sign_up_department_list_view_url):
+        response = api_client.delete(sign_up_department_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_returned_query_set_only_contains_dn_greater_than_0(self, api_client):
+    def test_if_returned_query_set_only_contains_dn_greater_than_0(self, api_client, sign_up_department_list_view_url):
         """
         Test that the get_queryset method returns all departments with department_number greater than 0.
         """
         # Create some departments with department_number greater than 0
-        Department.objects.create(name='Department 1', department_number=1)
-        Department.objects.create(name='Department 2', department_number=2)
-        Department.objects.create(name='Department 3', department_number=3)
+        baker.make(Department, name='Department 1', department_number=1)
+        baker.make(Department, name='Department 2', department_number=2)
+        baker.make(Department, name='Department 3', department_number=3)
 
         # Create some departments with department_number less than or equal to 0
-        Department.objects.create(name='Department 4', department_number=0)
-        Department.objects.create(name='Department 5', department_number=-1)
+        baker.make(Department, name='Department 4', department_number=0)
+        baker.make(Department, name='Department 5', department_number=-1)
 
         # Make a GET request to the SignupDepartmentListView
-        response = api_client.get(self.url)
+        response = api_client.get(sign_up_department_list_view_url)
 
         # Check that the response status code is 200 OK
         assert response.status_code == status.HTTP_200_OK
@@ -60,85 +55,84 @@ class TestSignupDepartmentListView:
         # Check that the response data contains all departments with department_number greater than 0
         assert len(response.data) == 3
 
-    def test_if_returned_data_is_correct(self, api_client):
-        departments = baker.make(Department, _quantity=3)
+    def test_if_returned_data_is_correct(self, api_client, sign_up_department_list_view_url):
+        department_1 = baker.make(Department, name='Department 1', department_number=1)
+        department_2 = baker.make(Department, name='Department 2', department_number=2)
+        department_3 = baker.make(Department, name='Department 3', department_number=3)
 
-        response = api_client.get(self.url)
+        response = api_client.get(sign_up_department_list_view_url)
 
         assert response.data == [
             {
-                'value': departments[0].department_number,
-                'label': departments[0].name
+                'value': department_1.department_number,
+                'label': department_1.name
             },
             {
-                'value': departments[1].department_number,
-                'label': departments[1].name
+                'value': department_2.department_number,
+                'label': department_2.name
             },
             {
-                'value': departments[2].department_number,
-                'label': departments[2].name
+                'value': department_3.department_number,
+                'label': department_3.name
             }
         ]
 
 
 @pytest.mark.django_db
 class TestSortedDepartmentListView:
-    def setUp(self):
-        self.url = reverse('sorted_department_names')
-        self.user = baker.make(User)
-
-    def test_if_get_request_with_authenticated_user_is_status_200(self):
+    def test_if_get_request_with_authenticated_user_is_status_200(self, api_client, simple_user,
+                                                                  sorted_department_list_view_url):
         # Authenticate the user
-        self.client.force_login(self.user)
+        api_client.force_login(simple_user)
 
         # Make a GET request to the SignupDepartmentListView
-        response = self.client.get(self.url)
+        response = api_client.get(sorted_department_list_view_url)
 
         assert response.status_code == status.HTTP_200_OK
 
-    def test_if_get_request_with_unauthenticated_user_is_status_403(self):
+    def test_if_get_request_with_unauthenticated_user_is_status_403(self, api_client, sorted_department_list_view_url):
         # Make a GET request to the SignupDepartmentListView
-        response = self.client.get(self.url)
+        response = api_client.get(sorted_department_list_view_url)
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_if_put_request_is_status_405(self):
+    def test_if_put_request_is_status_405(self, api_client, simple_user, sorted_department_list_view_url):
         # Authenticate the user
-        self.client.force_login(self.user)
+        api_client.force_login(simple_user)
 
         # Make a PUT request to the SignupDepartmentListView
-        response = self.client.put(self.url)
+        response = api_client.put(sorted_department_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_patch_request_is_status_405(self):
+    def test_if_patch_request_is_status_405(self, api_client, simple_user, sorted_department_list_view_url):
         # Authenticate the user
-        self.client.force_login(self.user)
+        api_client.force_login(simple_user)
 
         # Make a PATCH request to the SignupDepartmentListView
-        response = self.client.patch(self.url)
+        response = api_client.patch(sorted_department_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_post_request_is_status_405(self):
+    def test_if_post_request_is_status_405(self, api_client, simple_user, sorted_department_list_view_url):
         # Authenticate the user
-        self.client.force_login(self.user)
+        api_client.force_login(simple_user)
 
         # Make a POST request to the SignupDepartmentListView
-        response = self.client.post(self.url)
+        response = api_client.post(sorted_department_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_delete_request_is_status_405(self):
+    def test_if_delete_request_is_status_405(self, api_client, simple_user, sorted_department_list_view_url):
         # Authenticate the user
-        self.client.force_login(self.user)
+        api_client.force_login(simple_user)
 
         # Make a DELETE request to the SignupDepartmentListView
-        response = self.client.delete(self.url)
+        response = api_client.delete(sorted_department_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_returned_data_is_sorted_by_user_department(self):
+    def test_if_returned_data_is_sorted_by_user_department(self, api_client, sorted_department_list_view_url):
         # Create departments with different department numbers
         department1 = baker.make(Department, department_number=1)
         department2 = baker.make(Department, department_number=2)
@@ -146,11 +140,15 @@ class TestSortedDepartmentListView:
         department4 = baker.make(Department, department_number=4)
 
         # Set user department to department2
-        self.user.department = department2
-        self.user.save()
+        user = baker.make(User, department=department2)
+
+        # Authenticate the user
+        api_client.force_login(user)
 
         # Make a GET request to the SortedNamesDepartmentListView
-        response = self.client.get(self.url)
+        response = api_client.get(sorted_department_list_view_url)
+
+        print(response.data)
 
         # Check that the response data contains all departments sorted by user department
         assert response.data[0]['value'] == department2.department_number
@@ -161,57 +159,54 @@ class TestSortedDepartmentListView:
 
 @pytest.mark.django_db
 class TestDepartmentsListView:
-    def setUp(self):
-        self.url = reverse('departments')
-        self.user = baker.make(User)
-
-    def test_if_get_request_with_authenticated_user_is_status_200(self):
+    def test_if_get_request_with_authenticated_user_is_status_200(self, api_client, simple_user,
+                                                                  departments_list_view_url):
         # Authenticate the user
-        self.client.force_login(self.user)
+        api_client.force_login(simple_user)
 
         # Make a GET request to the SignupDepartmentListView
-        response = self.client.get(self.url)
+        response = api_client.get(departments_list_view_url)
 
         assert response.status_code == status.HTTP_200_OK
 
-    def test_if_get_request_with_unauthenticated_user_is_status_403(self):
+    def test_if_get_request_with_unauthenticated_user_is_status_403(self, api_client, departments_list_view_url):
         # Make a GET request to the SignupDepartmentListView
-        response = self.client.get(self.url)
+        response = api_client.get(departments_list_view_url)
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_if_put_request_is_status_405(self):
+    def test_if_put_request_is_status_405(self, api_client, simple_user, departments_list_view_url):
         # Authenticate the user
-        self.client.force_login(self.user)
+        api_client.force_login(simple_user)
 
         # Make a PUT request to the SignupDepartmentListView
-        response = self.client.put(self.url)
+        response = api_client.put(departments_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_patch_request_is_status_405(self):
+    def test_if_patch_request_is_status_405(self, api_client, simple_user, departments_list_view_url):
         # Authenticate the user
-        self.client.force_login(self.user)
+        api_client.force_login(simple_user)
 
         # Make a PATCH request to the SignupDepartmentListView
-        response = self.client.patch(self.url)
+        response = api_client.patch(departments_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_post_request_is_status_405(self):
+    def test_if_post_request_is_status_405(self, api_client, simple_user, departments_list_view_url):
         # Authenticate the user
-        self.client.force_login(self.user)
+        api_client.force_login(simple_user)
 
         # Make a POST request to the SignupDepartmentListView
-        response = self.client.post(self.url)
+        response = api_client.post(departments_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_delete_request_is_status_405(self):
+    def test_if_delete_request_is_status_405(self, api_client, simple_user, departments_list_view_url):
         # Authenticate the user
-        self.client.force_login(self.user)
+        api_client.force_login(simple_user)
 
         # Make a DELETE request to the SignupDepartmentListView
-        response = self.client.delete(self.url)
+        response = api_client.delete(departments_list_view_url)
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
