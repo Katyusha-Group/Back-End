@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django_jalali.db import models as jmodels
 from django.conf import settings
 
@@ -54,7 +54,8 @@ class CourseStudyingGP(models.Model):
 class BaseCourse(models.Model):
     objects = managers.SignalSenderManager()
 
-    course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس', db_index=True)
+    course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس', db_index=True,
+                                        validators=[RegexValidator(r'^\d{7}$', 'Must be an 7-digit number')])
     name = models.CharField(max_length=255, verbose_name='نام درس')
     total_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='کل واحد')
     practical_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='واحد های عملی')
