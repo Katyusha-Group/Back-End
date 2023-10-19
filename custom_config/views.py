@@ -1,12 +1,12 @@
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from custom_config import validators
 from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote, WebNotification
 from custom_config.permissions import IsOwner
 from custom_config.serializers import CartSerializer, CartItemSerializer, \
@@ -115,11 +115,10 @@ class CourseCartOrderInfoRetrieveViewSet(ModelViewSet):
 
     def get_queryset(self):
         complete_course_number = self.request.query_params.get('complete_course_number', None)
-        if complete_course_number is None:
-            raise ValidationError('You need to send complete_course_number as query string.')
+        validators.not_null(value=complete_course_number,
+                            message='You need to send complete_course_number as query string.')
         course = get_course(course_code=complete_course_number, semester=project_variables.CURRENT_SEMESTER)
-        if course is None:
-            raise ValidationError('Course not found.')
+        validators.not_null(value=course, message='Course not found.')
         return Course.objects.filter(id=course.id).prefetch_related('order_items__order', 'cart_items')
 
 
@@ -128,9 +127,9 @@ class GetPricesView(APIView):
 
     def get(self, request, *args, **kwargs):
         data = {
-            'T': project_variables.TELEGRAM_PRICE,
-            'S': project_variables.SMS_PRICE,
-            'E': project_variables.EMAIL_PRICE,
+            project_variables.TELEGRAM_NOTIFICATION_TYPE: project_variables.TELEGRAM_PRICE,
+            project_variables.SMS_NOTIFICATION_TYPE: project_variables.SMS_PRICE,
+            project_variables.EMAIL_NOTIFICATION_TYPE: project_variables.EMAIL_PRICE,
         }
         return Response(data, status=status.HTTP_200_OK)
 

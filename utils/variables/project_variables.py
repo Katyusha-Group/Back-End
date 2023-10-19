@@ -66,6 +66,11 @@ WAITING_COUNT_NOTIFICATION = 'تعداد لیست انتظار'
 TEACHER_NOTIFICATION = 'اساتید'
 SEX_NOTIFICATION = 'جنسیت'
 
+# notifications types 1 letter
+TELEGRAM_NOTIFICATION_TYPE = 'T'
+EMAIL_NOTIFICATION_TYPE = 'E'
+SMS_NOTIFICATION_TYPE = 'S'
+
 # population modes:
 POPULATION_INITIAL = 'initial'
 POPULATION_COURSE_CREATE = 'course_create'
