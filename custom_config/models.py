@@ -8,7 +8,7 @@ from django_jalali.db import models as jmodels
 
 from university.models import Course, Teacher, AllowedDepartment, CourseTimePlace, ExamTimePlace
 from utils.variables import project_variables
-from utils.transaction_functions import create_ref_code
+from utils.transactions.transaction_functions import create_ref_code
 
 
 class ModelTracker(models.Model):

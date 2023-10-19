@@ -8,7 +8,7 @@ from django_jalali.db import models as jmodels
 from core import settings
 from university.models import Department
 from utils.variables import project_variables
-from utils.transaction_functions import create_ref_code
+from utils.transactions.transaction_functions import create_ref_code
 
 
 class User(AbstractUser):
