@@ -62,6 +62,11 @@ def current_semester():
 
 
 @pytest.fixture
+def teachers():
+    return baker.make(Teacher, _quantity=5)
+
+
+@pytest.fixture
 def base_courses():
     base_courses_list = []
     for i in range(1, 6):
@@ -70,14 +75,14 @@ def base_courses():
 
 
 @pytest.fixture
-def courses(base_courses, current_semester):
+def courses(base_courses, teachers, current_semester):
     courses_list = []
     for i in range(5):
         for j in range(1, 5):
             course = baker.make(Course,
                                 base_course=base_courses[i], class_gp=f'0{j}',
                                 semester=current_semester)
-            course.teachers.add(*baker.make(Teacher, _quantity=2))
+            course.teachers.add(*teachers[i:])
             courses_list.append(course)
     return courses_list
 
