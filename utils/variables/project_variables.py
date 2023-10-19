@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 CURRENT_SEMESTER = 4021
 GOLESTAN_EXCEL_FILE_NAME = 'golestan_courses'
 GOLESTAN_EXCEL_COMPLETE_FILE_NAME = 'golestan_courses.xlsx'
