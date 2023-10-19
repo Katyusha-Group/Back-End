@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
+from django.core import validators
 from django.db.models import Count, ExpressionWrapper, F, FloatField, Case, When, Value, IntegerField, Prefetch, \
     BooleanField
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.mixins import ListModelMixin
@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.views import APIView
 
+from university.validators import validate_int, validate_queryset_existence
 from utils.variables import project_variables
 
 from custom_config.ordering_filrers import TeacherOrderingFilter
@@ -205,21 +206,14 @@ class CourseGroupListView(ModelViewSet):
 
     def get_queryset(self):
         base_course_id = self.kwargs['base_course_pk']
-        if base_course_id is None:
-            raise ValidationError({'detail': 'Enter course_number as query string in the url.'}, )
-        elif base_course_id.isdigit() is True:
-            base_course_id = int(base_course_id)
-        else:
-            raise ValidationError({'detail': 'Enter course_number as query number in the url.'}, )
+        validate_int(base_course_id, 'Enter course_number as an integer in the url.')
         user = self.request.user
         courses = (
             Course.objects
             .select_related('base_course', 'semester')
-            .prefetch_related('teachers',
-                              'course_times',
-                              'exam_times',
-                              'students')
-            .filter(base_course_id=base_course_id, semester_id=project_variables.CURRENT_SEMESTER,
+            .prefetch_related('teachers', 'course_times', 'exam_times', 'students')
+            .filter(base_course_id=base_course_id,
+                    semester_id=project_variables.CURRENT_SEMESTER,
                     sex__in=[user.gender, 'B'])
             .annotate(empty_capacity=ExpressionWrapper(
                 F('capacity') - F('registered_count'),
@@ -242,10 +236,8 @@ class CourseGroupListView(ModelViewSet):
             .order_by('capacity_is_less_zero', 'empty_capacity', 'color_intensity_percentage_first')
             .all()
         )
-        if courses.exists():
-            return courses
-        else:
-            raise ValidationError({'detail': 'No course with this course_number in database.'}, )
+        validate_queryset_existence(courses, 'No course with this course_number in database.')
+        return courses
 
 
 class BaseAllCourseDepartment(APIView):
@@ -259,11 +251,9 @@ class BaseAllCourseDepartment(APIView):
             .prefetch_related('course_times', 'exam_times', 'students', 'teachers')
             .all()
         )
-        if all_courses.exists():
-            return Response(
-                AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
-        else:
-            raise ValidationError({'detail': 'No department with this department_number is in database.'}, )
+        validate_queryset_existence(all_courses, 'No course with this department_number in database.')
+        return Response(
+            AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
 
 
 class AllCourseDepartmentList(BaseAllCourseDepartment):

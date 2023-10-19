@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 CURRENT_SEMESTER = 4021
 GOLESTAN_EXCEL_FILE_NAME = 'golestan_courses'
 GOLESTAN_EXCEL_COMPLETE_FILE_NAME = 'golestan_courses.xlsx'
@@ -65,6 +63,11 @@ REGISTERED_COUNT_NOTIFICATION = 'تعداد ثبت نام شده'
 WAITING_COUNT_NOTIFICATION = 'تعداد لیست انتظار'
 TEACHER_NOTIFICATION = 'اساتید'
 SEX_NOTIFICATION = 'جنسیت'
+
+# notifications types 1 letter
+TELEGRAM_NOTIFICATION_TYPE = 'T'
+EMAIL_NOTIFICATION_TYPE = 'E'
+SMS_NOTIFICATION_TYPE = 'S'
 
 # population modes:
 POPULATION_INITIAL = 'initial'
