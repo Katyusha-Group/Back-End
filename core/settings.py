@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_crontab',
     'accounts',
     'university',
+    'social_media',
     'custom_config',
 ]
 
