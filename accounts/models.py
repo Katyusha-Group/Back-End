@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+
 from django_jalali.db import models as jmodels
 
 from core import settings
@@ -27,6 +28,18 @@ class User(AbstractUser):
     verification_tries_count = models.IntegerField(default=0)
     last_verification_sent = models.DateTimeField(null=True, blank=True, default=datetime.now)
     has_verification_tries_reset = models.BooleanField(default=False)
+
+    def get_default_profile_name(self):
+        return self.email.split('@')[0]
+
+    def get_default_profile_username(self):
+        return self.get_username()
+
+    def get_default_profile_image(self):
+        if self.gender == 'M':
+            return 'images/profile_pics/male_default.png'
+        else:
+            return 'images/profile_pics/female_default.png'
 
     def __str__(self):
         return self.email

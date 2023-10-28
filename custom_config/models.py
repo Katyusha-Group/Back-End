@@ -133,7 +133,7 @@ class Order(models.Model):
         max_length=1, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_STATUS_PENDING
     )
     payment_method = models.CharField(
-        max_length=1, choices=PAYMENT_METHOD_CHOICES, default='O'
+        max_length=1, choices=PAYMENT_METHOD_CHOICES, default=PAY_ONLINE
     )
     ref_code = models.CharField(max_length=20, default=create_ref_code, unique=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='orders')

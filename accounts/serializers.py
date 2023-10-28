@@ -154,12 +154,6 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         fields = ['user_email']
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['email', 'department', 'gender', 'first_name', 'last_name']
-
-
 class WalletSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
