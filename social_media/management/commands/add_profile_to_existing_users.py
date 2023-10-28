@@ -1,8 +1,9 @@
 import time
 
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
-from accounts.models import Profile, User
+from social_media.models import Profile
 
 
 class Command(BaseCommand):
@@ -10,7 +11,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         pre = time.time()
-        for user in User.objects.all():
+
+        user_model = get_user_model()
+
+        for user in user_model.objects.all():
             profile, created = Profile.objects.get_or_create(user=user)
             if created:
                 if user.gender == 'M':

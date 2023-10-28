@@ -32,14 +32,6 @@ class User(AbstractUser):
         return self.email
 
 
-class Profile(models.Model):
-    user = models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
-    image = models.ImageField(upload_to='images/profile_pics', default='images/profile_pics/default.png')
-
-    def __str__(self):
-        return self.user.email
-
-
 class Wallet(models.Model):
     user = models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     balance = models.DecimalField(max_digits=10, decimal_places=0, default=project_variables.INITIAL_WALLET_BALANCE)
