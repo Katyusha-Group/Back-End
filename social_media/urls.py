@@ -1,12 +1,10 @@
 from django.urls import path, include
-from accounts import views
+from . import views
 from rest_framework_nested import routers
-from rest_framework_simplejwt.views import (
-    TokenRefreshView,
-    TokenVerifyView
-)
+
 
 router = routers.DefaultRouter()
+router.register(r'profiles', views.ProfileViewSet, basename='profiles')
 urlpatterns = [
     path('', include(router.urls)),
 ]

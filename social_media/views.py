@@ -1,3 +1,5 @@
+from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -6,13 +8,14 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from models import Profile
-from serializers import ProfileSerializer, UpdateProfileSerializer
+from .models import Profile
+from .serializers import ProfileSerializer, UpdateProfileSerializer
 from utils.variables import project_variables
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
-    http_method_names = ['get', 'delete', 'patch', 'head', 'options']
+    # http_method_names = ['get', 'delete', 'patch', 'head', 'options']
+    http_method_names = ['get', 'delete', 'head', 'options']
     serializer_class = ProfileSerializer
     queryset = Profile.objects.all()
     parser_classes = [MultiPartParser, FormParser]
@@ -31,10 +34,12 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def list(self, request, *args, **kwargs):
+        user_model = get_user_model()
+        user_model = ContentType.objects.get_for_model(user_model)
         user = request.user
         if user.is_staff:
             return super().list(request, *args, **kwargs)
-        profile = Profile.objects.filter(user=user).first()
+        profile = Profile.objects.filter(content_type=user_model, object_id=user.pk).first()
         serializer = self.get_serializer(
             profile,
             context=self.get_serializer_context(),
