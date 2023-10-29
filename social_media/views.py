@@ -9,6 +9,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Profile
+from .pagination import DefaultPagination
 from .serializers import ProfileSerializer, UpdateProfileSerializer
 from utils.variables import project_variables
 
@@ -17,9 +18,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
     # http_method_names = ['get', 'delete', 'patch', 'head', 'options']
     http_method_names = ['get', 'delete', 'head', 'options']
     serializer_class = ProfileSerializer
-    queryset = Profile.objects.all()
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
+    pagination_class = DefaultPagination
 
     def get_serializer_context(self):
         token = self.get_token_for_user(self.request.user)
@@ -64,7 +65,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return Response(data)
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        return Profile.objects.order_by('content_type').all()
 
     def get_object(self):
         return get_object_or_404(self.get_queryset(), user=self.request.user)
