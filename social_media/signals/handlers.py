@@ -5,12 +5,13 @@ from django.dispatch import receiver
 
 from social_media.models import Profile
 from university.models import Teacher, BaseCourse
+from accounts.models import User
 
-UserModel = get_user_model()
 
-
-@receiver(post_save, sender=[UserModel, BaseCourse, Teacher])
-def create_profile(sender, instance, created, **kwargs):
-    if created:
+@receiver(post_save, sender=User)
+@receiver(post_save, sender=Teacher)
+@receiver(post_save, sender=BaseCourse)
+def create_profile(sender, **kwargs):
+    if kwargs['created']:
         content_type = ContentType.objects.get_for_model(sender)
-        Profile.objects.create(content_type=content_type, object_id=instance.pk)
+        Profile.objects.create(content_type=content_type, object_id=kwargs['instance'].pk)
