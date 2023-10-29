@@ -1,12 +1,7 @@
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
-
 from rest_framework import serializers
 
 from accounts.models import User
-from university.models import Course
 from .models import Profile
-from utils.telegram.telegram_functions import get_bot_url
 from utils.variables import project_variables
 
 

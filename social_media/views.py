@@ -1,5 +1,3 @@
-from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.decorators import action
