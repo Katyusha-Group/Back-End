@@ -65,6 +65,15 @@ class BaseCourse(models.Model):
     course_studying_gp = models.ForeignKey(to=CourseStudyingGP, on_delete=models.CASCADE,
                                            verbose_name='دوره آموزشی درس')
 
+    def get_default_profile_name(self):
+        return str(self.name)
+
+    def get_default_profile_username(self):
+        return str(self.course_number)
+
+    def get_default_profile_image(self):
+        return 'images/profile_pics/course_default.png'
+
     def __str__(self):
         return str(self.course_number) + ' --- ' + self.name
 
@@ -140,15 +149,6 @@ class Course(models.Model):
 
     def __str__(self):
         return str(self.base_course.course_number) + '_' + str(self.class_gp)
-
-    def get_default_profile_name(self):
-        return str(self.base_course.name)
-
-    def get_default_profile_username(self):
-        return str(self.base_course.course_number) + '_' + str(self.class_gp)
-
-    def get_default_profile_image(self):
-        return 'images/profile_pics/course_default.png'
 
     class Meta:
         verbose_name = 'درس'
