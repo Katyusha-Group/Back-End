@@ -41,6 +41,10 @@ class User(AbstractUser):
         else:
             return 'images/profile_pics/female_default.png'
 
+    @property
+    def is_uni_email(self):
+        return self.email.split('@')[1].endswith('iust.ac.ir')
+
     def __str__(self):
         return self.email
 

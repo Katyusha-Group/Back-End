@@ -67,12 +67,13 @@ class Profile(models.Model):
         if not self.pk:
             user_model = get_user_model()
             if isinstance(self.content_object, user_model):
+                if self.content_object.is_uni_email:
+                    return self.TYPE_VERIFIED_USER
                 return self.TYPE_USER
             if isinstance(self.content_object, Teacher):
                 return self.TYPE_TEACHER
             if isinstance(self.content_object, BaseCourse):
                 return self.TYPE_COURSE
-            # TODO: determine profile type for verified users
             return None
         return self.profile_type
 
