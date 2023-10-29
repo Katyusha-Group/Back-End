@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -76,3 +75,9 @@ class Profile(models.Model):
             # TODO: determine profile type for verified users
             return None
         return self.profile_type
+
+    @staticmethod
+    def get_profile_for_user(user):
+        user_model = get_user_model()
+        user_model = ContentType.objects.get_for_model(user_model)
+        return Profile.objects.filter(content_type=user_model, object_id=user.pk).first()

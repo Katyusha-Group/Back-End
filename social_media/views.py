@@ -15,8 +15,7 @@ from utils.variables import project_variables
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
-    # http_method_names = ['get', 'delete', 'patch', 'head', 'options']
-    http_method_names = ['get', 'delete', 'head', 'options']
+    http_method_names = ['get', 'delete', 'patch', 'head', 'options']
     serializer_class = ProfileSerializer
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
@@ -34,24 +33,20 @@ class ProfileViewSet(viewsets.ModelViewSet):
             return [IsAdminUser()]
         return super().get_permissions()
 
-    def list(self, request, *args, **kwargs):
-        user_model = get_user_model()
-        user_model = ContentType.objects.get_for_model(user_model)
-        user = request.user
-        if user.is_staff:
-            return super().list(request, *args, **kwargs)
-        profile = Profile.objects.filter(content_type=user_model, object_id=user.pk).first()
+    @action(detail=False, methods=['get'], serializer_class=ProfileSerializer, permission_classes=[IsAuthenticated],
+            url_path='me')
+    def get_profile(self, request, *args, **kwargs):
+        profile = Profile.get_profile_for_user(request.user)
         serializer = self.get_serializer(
             profile,
             context=self.get_serializer_context(),
         )
         return Response(serializer.data)
 
-    @action(detail=False, methods=['patch'], serializer_class=ProfileSerializer, permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['patch'], serializer_class=ProfileSerializer, permission_classes=[IsAuthenticated],
+            url_path='me/update')
     def update_profile(self, request, *args, **kwargs):
-        user = request.user
-        profile = Profile.objects.filter(user=user).first()
-        token = self.get_token_for_user(user)
+        profile = Profile.get_profile_for_user(request.user)
         serializer = UpdateProfileSerializer(
             profile,
             context=self.get_serializer_context(),
