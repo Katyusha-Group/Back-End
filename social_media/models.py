@@ -28,6 +28,7 @@ class Profile(models.Model):
     username = models.CharField(max_length=100, blank=True, null=True)
     image = models.ImageField(upload_to='images/profile_pics', default='images/profile_pics/default.png')
     profile_type = models.CharField(max_length=1, choices=ACTION_CHOICES, default=TYPE_USER)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         indexes = [

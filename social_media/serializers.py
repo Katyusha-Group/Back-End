@@ -6,11 +6,8 @@ from utils.variables import project_variables
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
     email = serializers.CharField(read_only=True)
     gender = serializers.CharField(read_only=True)
-    department = serializers.CharField()
 
     # telegram_link = serializers.SerializerMethodField(read_only=True)
 
@@ -20,7 +17,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'gender', 'department']
+        fields = ['email', 'gender', 'department']
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -28,6 +25,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True)
     image = serializers.SerializerMethodField(read_only=True)
     profile_type = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
 
     def get_image(self, obj: Profile):
         return project_variables.DOMAIN + obj.image.url \
@@ -36,12 +34,13 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['name', 'username', 'image', 'profile_type']
+        fields = ['name', 'username', 'image', 'created_at', 'profile_type']
 
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True)
     profile_type = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
 
     content_object = serializers.SerializerMethodField()
 
@@ -68,5 +67,5 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['name', 'username', 'image', 'profile_type', 'content_object']
+        fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'content_object']
 
