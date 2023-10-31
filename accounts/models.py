@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+
 from django_jalali.db import models as jmodels
 
 from core import settings
@@ -28,16 +29,24 @@ class User(AbstractUser):
     last_verification_sent = models.DateTimeField(null=True, blank=True, default=datetime.now)
     has_verification_tries_reset = models.BooleanField(default=False)
 
+    def get_default_profile_name(self):
+        return self.email.split('@')[0]
+
+    def get_default_profile_username(self):
+        return self.get_username()
+
+    def get_default_profile_image(self):
+        if self.gender == 'M':
+            return 'images/profile_pics/male_default.png'
+        else:
+            return 'images/profile_pics/female_default.png'
+
+    @property
+    def is_uni_email(self):
+        return self.email.split('@')[1].endswith('iust.ac.ir')
+
     def __str__(self):
         return self.email
-
-
-class Profile(models.Model):
-    user = models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
-    image = models.ImageField(upload_to='images/profile_pics', default='images/profile_pics/default.png')
-
-    def __str__(self):
-        return self.user.email
 
 
 class Wallet(models.Model):
