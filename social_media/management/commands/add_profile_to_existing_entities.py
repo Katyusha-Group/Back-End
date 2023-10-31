@@ -9,12 +9,12 @@ from university.models import Teacher, BaseCourse
 
 
 class Command(BaseCommand):
-    help = "Add profile to existing users."
+    help = "Add profile to existing entities."
 
     def handle(self, *args, **options):
-        # if Profile.objects.exists():
-        #     print("Profiles already exist.")
-        #     return
+        if Profile.objects.exists():
+            print("Profiles already exist.")
+            return
 
         pre = time.time()
 
