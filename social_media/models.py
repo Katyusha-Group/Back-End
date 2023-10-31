@@ -83,3 +83,18 @@ class Profile(models.Model):
         user_model = get_user_model()
         user_model = ContentType.objects.get_for_model(user_model)
         return Profile.objects.filter(content_type=user_model, object_id=user.pk).first()
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(Profile, related_name='following', on_delete=models.CASCADE)
+    following = models.ForeignKey(Profile, related_name='followers', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('follower', 'following')
+        indexes = [
+            models.Index(fields=["follower", "following"]),
+        ]
+
+    def __str__(self):
+        return f'{self.follower} follows {self.following}'
