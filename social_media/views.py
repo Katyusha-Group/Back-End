@@ -7,7 +7,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Profile, Follow
 from .pagination import DefaultPagination
-from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer
+from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer, \
+    ProfileUsernameSerializer
 from utils.variables import project_variables
 
 
@@ -31,9 +32,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
             return [IsAdminUser()]
         return super().get_permissions()
 
-    @action(detail=False, methods=['get'], serializer_class=ProfileSerializer,
-            permission_classes=[IsAuthenticated], url_path='me')
-    def my_profile(self, request, *args, **kwargs):
+    @action(detail=False, methods=['get'], serializer_class=ProfileUsernameSerializer,
+            permission_classes=[IsAuthenticated], url_path='my-username')
+    def my_username(self, request, *args, **kwargs):
         profile = Profile.get_profile_for_user(request.user)
         serializer = self.get_serializer(
             profile,
@@ -41,18 +42,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'], serializer_class=ProfileSerializer,
-            url_path='(?P<username>\w+)', url_name='view-profile')
-    def view_profile(self, request, username, *args, **kwargs):
-        profile = Profile.objects.filter(username=username).first()
-        serializer = self.get_serializer(
-            profile,
-            context=self.get_serializer_context(),
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
     @action(detail=False, methods=['patch'], serializer_class=ProfileSerializer,
-            permission_classes=[IsAuthenticated], url_path='me/update')
+            permission_classes=[IsAuthenticated], url_path='update-profile')
     def update_profile(self, request, *args, **kwargs):
         profile = Profile.get_profile_for_user(request.user)
         serializer = UpdateProfileSerializer(
@@ -65,6 +56,16 @@ class ProfileViewSet(viewsets.ModelViewSet):
         serializer.save()
         data = serializer.data
         data['image'] = f'{project_variables.DOMAIN}/{serializer.data["image"]}'
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], serializer_class=ProfileSerializer,
+            url_path='(?P<username>\w+)', url_name='view-profile')
+    def view_profile(self, request, username, *args, **kwargs):
+        profile = Profile.objects.filter(username=username).first()
+        serializer = self.get_serializer(
+            profile,
+            context=self.get_serializer_context(),
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='follow', serializer_class=FollowSerializer, )

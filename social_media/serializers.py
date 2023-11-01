@@ -20,6 +20,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ['email', 'gender', 'department']
 
 
+class ProfileUsernameSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = ['username']
+
+
 class ProfileImageSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField(read_only=True)
 
