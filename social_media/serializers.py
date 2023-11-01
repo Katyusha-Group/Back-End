@@ -69,3 +69,21 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'content_object']
 
+
+class FollowingSerializer(serializers.Serializer):
+    username = serializers.CharField(read_only=True)
+
+    def validate(self, attrs):
+        attrs = super().validate(self.initial_data)
+
+        username = attrs.get('username', None)
+
+        if username:
+            profile = Profile.objects.filter(username=username).first()
+
+            if not profile:
+                raise serializers.ValidationError({"detail": "profile does not exist."})
+        else:
+            raise serializers.ValidationError({"detail": "username is required."})
+
+        return {'following': profile}

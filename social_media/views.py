@@ -1,19 +1,18 @@
 from rest_framework.response import Response
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Profile
+from .models import Profile, Follow
 from .pagination import DefaultPagination
-from .serializers import ProfileSerializer, UpdateProfileSerializer
+from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowingSerializer
 from utils.variables import project_variables
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
-    http_method_names = ['get', 'delete', 'patch', 'head', 'options']
+    http_method_names = ['get', 'post', 'delete', 'patch', 'head', 'options']
     serializer_class = ProfileSerializer
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
@@ -57,11 +56,43 @@ class ProfileViewSet(viewsets.ModelViewSet):
         data['image'] = f'{project_variables.DOMAIN}/{serializer.data["image"]}'
         return Response(data)
 
+    @action(detail=False, methods=['post'], url_path='follow', serializer_class=FollowingSerializer, )
+    def follow(self, request):
+        follower = self.request.user.profile.first()
+        following = FollowingSerializer(data=request.data)
+        following.is_valid(raise_exception=True)
+        following = following.validated_data['following']
+
+        if follower == following:
+            return Response({'detail': 'cannot follow yourself'}, status=status.HTTP_400_BAD_REQUEST)
+
+        follow, created = Follow.objects.get_or_create(follower=follower, following=following)
+
+        if created:
+            return Response({'detail': 'followed'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'detail': 'already followed'}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], url_path='unfollow', serializer_class=FollowingSerializer, )
+    def unfollow(self, request):
+        follower = self.request.user.profile.first()
+        following = FollowingSerializer(data=request.data)
+        following.is_valid(raise_exception=True)
+        following = following.validated_data['following']
+
+        if follower == following:
+            return Response({'detail': 'cannot unfollow yourself'}, status=status.HTTP_400_BAD_REQUEST)
+
+        follow = Follow.objects.filter(follower=follower, following=following)
+
+        if follow.exists():
+            follow.delete()
+            return Response({'detail': 'unfollowed'}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({'detail': 'not following'}, status=status.HTTP_400_BAD_REQUEST)
+
     def get_queryset(self):
         return Profile.objects.order_by('content_type').all()
-
-    def get_object(self):
-        return get_object_or_404(self.get_queryset(), user=self.request.user)
 
     @staticmethod
     def get_token_for_user(user):
