@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from accounts.models import User
-from .models import Profile
+from .models import Profile, Follow
 from utils.variables import project_variables
 
 
@@ -20,12 +20,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ['email', 'gender', 'department']
 
 
-class ProfileSerializer(serializers.ModelSerializer):
+class SimpleProfileSerializer(serializers.ModelSerializer):
     name = serializers.CharField(read_only=True)
     username = serializers.CharField(read_only=True)
     image = serializers.SerializerMethodField(read_only=True)
     profile_type = serializers.CharField(read_only=True)
-    created_at = serializers.DateTimeField(read_only=True)
 
     def get_image(self, obj: Profile):
         return project_variables.DOMAIN + obj.image.url \
@@ -34,7 +33,25 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['name', 'username', 'image', 'created_at', 'profile_type']
+        fields = ['name', 'username', 'image', 'profile_type']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(read_only=True)
+    username = serializers.CharField(read_only=True)
+    image = serializers.SerializerMethodField(read_only=True)
+    profile_type = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    description = serializers.CharField(read_only=True)
+
+    def get_image(self, obj: Profile):
+        return project_variables.DOMAIN + obj.image.url \
+            if obj.image \
+            else project_variables.DOMAIN + '/media/profile_pics/default.png'
+
+    class Meta:
+        model = Profile
+        fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'description']
 
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
@@ -67,10 +84,10 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'content_object']
+        fields = ['name', 'username', 'image', 'created_at', 'description', 'profile_type', 'content_object']
 
 
-class FollowingSerializer(serializers.Serializer):
+class FollowSerializer(serializers.Serializer):
     username = serializers.CharField(read_only=True)
 
     def validate(self, attrs):
@@ -87,3 +104,11 @@ class FollowingSerializer(serializers.Serializer):
             raise serializers.ValidationError({"detail": "username is required."})
 
         return {'following': profile}
+
+
+class FollowingSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True)
+
+    class Meta:
+        model = Follow
+        fields = ['profile']

@@ -7,13 +7,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Profile, Follow
 from .pagination import DefaultPagination
-from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowingSerializer
+from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, SimpleProfileSerializer
 from utils.variables import project_variables
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'patch', 'head', 'options']
-    serializer_class = ProfileSerializer
+    serializer_class = SimpleProfileSerializer
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
     pagination_class = DefaultPagination
@@ -30,9 +30,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
             return [IsAdminUser()]
         return super().get_permissions()
 
-    @action(detail=False, methods=['get'], serializer_class=ProfileSerializer, permission_classes=[IsAuthenticated],
-            url_path='me')
-    def get_profile(self, request, *args, **kwargs):
+    @action(detail=False, methods=['get'], serializer_class=ProfileSerializer,
+            permission_classes=[IsAuthenticated], url_path='me')
+    def my_profile(self, request, *args, **kwargs):
         profile = Profile.get_profile_for_user(request.user)
         serializer = self.get_serializer(
             profile,
@@ -40,8 +40,18 @@ class ProfileViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data)
 
-    @action(detail=False, methods=['patch'], serializer_class=ProfileSerializer, permission_classes=[IsAuthenticated],
-            url_path='me/update')
+    @action(detail=False, methods=['get'], serializer_class=ProfileSerializer,
+            url_path='(?P<username>\w+)', url_name='view-profile')
+    def view_profile(self, request, username, *args, **kwargs):
+        profile = Profile.objects.filter(username=username).first()
+        serializer = self.get_serializer(
+            profile,
+            context=self.get_serializer_context(),
+        )
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['patch'], serializer_class=ProfileSerializer,
+            permission_classes=[IsAuthenticated], url_path='me/update')
     def update_profile(self, request, *args, **kwargs):
         profile = Profile.get_profile_for_user(request.user)
         serializer = UpdateProfileSerializer(
@@ -56,10 +66,10 @@ class ProfileViewSet(viewsets.ModelViewSet):
         data['image'] = f'{project_variables.DOMAIN}/{serializer.data["image"]}'
         return Response(data)
 
-    @action(detail=False, methods=['post'], url_path='follow', serializer_class=FollowingSerializer, )
+    @action(detail=False, methods=['post'], url_path='follow', serializer_class=FollowSerializer, )
     def follow(self, request):
-        follower = self.request.user.profile.first()
-        following = FollowingSerializer(data=request.data)
+        follower = Profile.get_profile_for_user(request.user)
+        following = FollowSerializer(data=request.data)
         following.is_valid(raise_exception=True)
         following = following.validated_data['following']
 
@@ -73,10 +83,10 @@ class ProfileViewSet(viewsets.ModelViewSet):
         else:
             return Response({'detail': 'already followed'}, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['post'], url_path='unfollow', serializer_class=FollowingSerializer, )
+    @action(detail=False, methods=['post'], url_path='unfollow', serializer_class=FollowSerializer, )
     def unfollow(self, request):
-        follower = self.request.user.profile.first()
-        following = FollowingSerializer(data=request.data)
+        follower = Profile.get_profile_for_user(request.user)
+        following = FollowSerializer(data=request.data)
         following.is_valid(raise_exception=True)
         following = following.validated_data['following']
 
