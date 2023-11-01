@@ -27,7 +27,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     profile_type = serializers.CharField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     description = serializers.CharField(read_only=True)
-    is_following = serializers.SerializerMethodField(read_only=True)
+    is_following_me = serializers.SerializerMethodField(read_only=True)
+    is_followed = serializers.SerializerMethodField(read_only=True)
     followers_count = serializers.SerializerMethodField(read_only=True)
     following_count = serializers.SerializerMethodField(read_only=True)
 
@@ -44,9 +45,13 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_following_count(self, obj: Profile):
         return obj.following.count()
 
-    def get_is_following(self, obj: Profile):
+    def get_is_followed(self, obj: Profile):
         me = Profile.get_profile_for_user(self.context['request'].user)
         return Follow.objects.filter(follower=me, following=obj).exists()
+
+    def get_is_following_me(self, obj: Profile):
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        return Follow.objects.filter(follower=obj, following=me).exists()
 
     def get_image(self, obj: Profile):
         return project_variables.DOMAIN + obj.image.url \
@@ -55,8 +60,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'description', 'is_following',
-                  'followers_count', 'following_count']
+        fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'description', 'is_following_me',
+                  'is_followed', 'followers_count', 'following_count']
 
 
 class UpdateProfileSerializer(serializers.ModelSerializer):

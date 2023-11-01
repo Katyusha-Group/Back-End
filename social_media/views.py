@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Profile, Follow
 from .pagination import DefaultPagination
-from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, SimpleProfileSerializer
+from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer
 from utils.variables import project_variables
 
 
@@ -101,6 +101,30 @@ class ProfileViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'unfollowed'}, status=status.HTTP_204_NO_CONTENT)
         else:
             return Response({'detail': 'not following'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/followers', serializer_class=ProfileSerializer, )
+    def view_followers(self, request, username):
+        profile = Profile.objects.filter(username=username).first()
+        followers = Follow.objects.filter(following=profile).prefetch_related('follower').all()
+        followers_profile = [follow.follower for follow in followers]
+        serializer = self.get_serializer(
+            followers_profile,
+            context=self.get_serializer_context(),
+            many=True,
+        )
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/following', serializer_class=ProfileSerializer, )
+    def view_following(self, request, username):
+        profile = Profile.objects.filter(username=username).first()
+        followings = Follow.objects.filter(follower=profile).prefetch_related('following').all()
+        following_profile = [following.following for following in followings]
+        serializer = self.get_serializer(
+            following_profile,
+            context=self.get_serializer_context(),
+            many=True,
+        )
+        return Response(serializer.data)
 
     def get_queryset(self):
         return Profile.objects.order_by('content_type').all()
