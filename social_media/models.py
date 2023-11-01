@@ -25,7 +25,7 @@ class Profile(models.Model):
     content_object = GenericForeignKey('content_type', 'object_id')
 
     name = models.CharField(max_length=100, blank=True, null=True)
-    username = models.CharField(max_length=100, blank=True, null=True)
+    username = models.CharField(max_length=100, blank=True, null=True, unique=True)
     image = models.ImageField(upload_to='images/profile_pics', default='images/profile_pics/default.png')
     profile_type = models.CharField(max_length=1, choices=ACTION_CHOICES, default=TYPE_USER)
     created_at = models.DateTimeField(auto_now_add=True)
