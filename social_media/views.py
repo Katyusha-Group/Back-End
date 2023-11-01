@@ -13,7 +13,7 @@ from utils.variables import project_variables
 
 class ProfileViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'patch', 'head', 'options']
-    serializer_class = SimpleProfileSerializer
+    serializer_class = ProfileSerializer
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
     pagination_class = DefaultPagination
@@ -21,7 +21,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def get_serializer_context(self):
         token = self.get_token_for_user(self.request.user)
         return {'csrftoken': self.request.COOKIES.get('csrftoken'),
-                'token': token}
+                'token': token,
+                'request': self.request}
 
     def get_permissions(self):
         if self.action == 'delete':

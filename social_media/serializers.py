@@ -20,22 +20,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ['email', 'gender', 'department']
 
 
-class SimpleProfileSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(read_only=True)
-    username = serializers.CharField(read_only=True)
-    image = serializers.SerializerMethodField(read_only=True)
-    profile_type = serializers.CharField(read_only=True)
-
-    def get_image(self, obj: Profile):
-        return project_variables.DOMAIN + obj.image.url \
-            if obj.image \
-            else project_variables.DOMAIN + '/media/profile_pics/default.png'
-
-    class Meta:
-        model = Profile
-        fields = ['name', 'username', 'image', 'profile_type']
-
-
 class ProfileSerializer(serializers.ModelSerializer):
     name = serializers.CharField(read_only=True)
     username = serializers.CharField(read_only=True)
@@ -43,6 +27,26 @@ class ProfileSerializer(serializers.ModelSerializer):
     profile_type = serializers.CharField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     description = serializers.CharField(read_only=True)
+    is_following = serializers.SerializerMethodField(read_only=True)
+    followers_count = serializers.SerializerMethodField(read_only=True)
+    following_count = serializers.SerializerMethodField(read_only=True)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        if me == instance:
+            data.pop('is_following')
+        return data
+
+    def get_followers_count(self, obj: Profile):
+        return obj.followers.count()
+
+    def get_following_count(self, obj: Profile):
+        return obj.following.count()
+
+    def get_is_following(self, obj: Profile):
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        return Follow.objects.filter(follower=me, following=obj).exists()
 
     def get_image(self, obj: Profile):
         return project_variables.DOMAIN + obj.image.url \
@@ -51,7 +55,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'description']
+        fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'description', 'is_following',
+                  'followers_count', 'following_count']
 
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
