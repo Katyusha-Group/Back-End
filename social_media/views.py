@@ -1,3 +1,8 @@
+from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q, Value, Case, When, BooleanField, ExpressionWrapper, F, IntegerField
+from django.db.models.functions import StrIndex, Lower
+
 from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -6,7 +11,6 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Profile, Follow
-from .pagination import DefaultPagination
 from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer, \
     ProfileUsernameSerializer
 from utils.variables import project_variables
@@ -17,7 +21,6 @@ class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
-    pagination_class = DefaultPagination
 
     def get_serializer_context(self):
         token = self.get_token_for_user(self.request.user)
@@ -31,6 +34,15 @@ class ProfileViewSet(viewsets.ModelViewSet):
         if self.action == 'retrieve':
             return [IsAdminUser()]
         return super().get_permissions()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()[0:10]
+        serializer = self.get_serializer(
+            queryset,
+            context=self.get_serializer_context(),
+            many=True,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], serializer_class=ProfileUsernameSerializer,
             permission_classes=[IsAuthenticated], url_path='my-username')
@@ -127,7 +139,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/followers_you_follow',
+    @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/followers-you-follow',
             serializer_class=FollowersYouFollowSerializer, )
     def view_followers_you_follow(self, request, username):
         profile = Profile.objects.filter(username=username).first()
@@ -138,7 +150,30 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_queryset(self):
-        return Profile.objects.order_by('content_type').all()
+        # This will order queryset first by users' profiles and then by other profiles. Also, if the query string
+        # is found in both name or username, the queryset will be ordered by the sum of the indexes. So that the
+        # profile with the query string nearer to the start of the name or username will be first.
+        queryset = Profile.objects.all()
+        query_string = self.request.query_params.get('search', None)
+        if query_string is not None:
+            content_type = ContentType.objects.get_for_model(get_user_model())
+            queryset = queryset.annotate(
+                username_index=StrIndex(Lower('username'), Lower(Value(query_string))),
+                name_index=StrIndex(Lower('name'), Lower(Value(query_string))),
+                is_user=Case(
+                    When(content_type=content_type, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                ),
+            ).filter(
+                Q(username_index__gt=0) | Q(name_index__gt=0)
+            ).annotate(
+                index=ExpressionWrapper(
+                    F('username_index') + F('name_index'),
+                    output_field=IntegerField(),
+                )
+            ).order_by('-is_user', 'index').all()
+        return queryset
 
     @staticmethod
     def get_token_for_user(user):
