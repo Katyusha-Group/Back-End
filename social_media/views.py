@@ -39,7 +39,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
             profile,
             context=self.get_serializer_context(),
         )
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], serializer_class=ProfileSerializer,
             url_path='(?P<username>\w+)', url_name='view-profile')
@@ -49,7 +49,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
             profile,
             context=self.get_serializer_context(),
         )
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['patch'], serializer_class=ProfileSerializer,
             permission_classes=[IsAuthenticated], url_path='me/update')
@@ -65,7 +65,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         serializer.save()
         data = serializer.data
         data['image'] = f'{project_variables.DOMAIN}/{serializer.data["image"]}'
-        return Response(data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='follow', serializer_class=FollowSerializer, )
     def follow(self, request):
@@ -112,7 +112,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
             context=self.get_serializer_context(),
             many=True,
         )
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/following', serializer_class=ProfileSerializer, )
     def view_following(self, request, username):
@@ -124,7 +124,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
             context=self.get_serializer_context(),
             many=True,
         )
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/followers_you_follow',
             serializer_class=FollowersYouFollowSerializer, )
@@ -134,7 +134,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
             profile,
             context=self.get_serializer_context(),
         )
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_queryset(self):
         return Profile.objects.order_by('content_type').all()
