@@ -20,6 +20,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ['email', 'gender', 'department']
 
 
+class ProfileImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField(read_only=True)
+
+    def get_image(self, obj: Profile):
+        return project_variables.DOMAIN + obj.image.url \
+            if obj.image \
+            else project_variables.DOMAIN + '/media/profile_pics/default.png'
+
+    class Meta:
+        model = Profile
+        fields = ['name', 'image']
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     name = serializers.CharField(read_only=True)
     username = serializers.CharField(read_only=True)
@@ -36,7 +49,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         me = Profile.get_profile_for_user(self.context['request'].user)
         if me == instance:
-            data.pop('is_following')
+            data.pop('is_following_me')
+            data.pop('is_followed')
         return data
 
     def get_followers_count(self, obj: Profile):
@@ -95,6 +109,20 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['name', 'username', 'image', 'created_at', 'description', 'profile_type', 'content_object']
+
+
+class FollowersYouFollowSerializer(serializers.ModelSerializer):
+    followers_you_follow = serializers.SerializerMethodField(read_only=True)
+
+    def get_followers_you_follow(self, obj: Profile):
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        common_followers = obj.followers.filter(follower=me).prefetch_related('follower').all()
+        common_followers_profiles = [common_follower.follower for common_follower in common_followers]
+        return ProfileImageSerializer(common_followers_profiles, many=True).data
+
+    class Meta:
+        model = Follow
+        fields = ['followers_you_follow']
 
 
 class FollowSerializer(serializers.Serializer):

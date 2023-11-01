@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Profile, Follow
 from .pagination import DefaultPagination
-from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer
+from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer
 from utils.variables import project_variables
 
 
@@ -123,6 +123,16 @@ class ProfileViewSet(viewsets.ModelViewSet):
             following_profile,
             context=self.get_serializer_context(),
             many=True,
+        )
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/followers_you_follow',
+            serializer_class=FollowersYouFollowSerializer, )
+    def view_followers_you_follow(self, request, username):
+        profile = Profile.objects.filter(username=username).first()
+        serializer = self.get_serializer(
+            profile,
+            context=self.get_serializer_context(),
         )
         return Response(serializer.data)
 
