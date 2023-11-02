@@ -56,7 +56,7 @@ class BaseCourse(models.Model):
 
     course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس', db_index=True,
                                         validators=[RegexValidator(r'^\d{7}$', 'Must be an 7-digit number')])
-    name = models.CharField(max_length=255, verbose_name='نام درس')
+    name = models.CharField(max_length=50, verbose_name='نام درس')
     total_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='کل واحد')
     practical_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='واحد های عملی')
     emergency_deletion = models.BooleanField(verbose_name='حذف اضطراری')
@@ -85,8 +85,8 @@ class BaseCourse(models.Model):
 class Teacher(models.Model):
     objects = managers.SignalSenderManager()
 
-    name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
-    golestan_name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
+    name = models.CharField(max_length=50, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
+    golestan_name = models.CharField(max_length=50, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
     email_address = models.CharField(max_length=255, verbose_name='ایمیل', null=True, blank=True)
     lms_id = models.IntegerField(verbose_name='شماره استاد در سامانه LMS', null=True, blank=True)
     teacher_image_url = models.CharField(max_length=255, verbose_name='آدرس تصویر استاد', null=True, blank=True)
@@ -132,9 +132,10 @@ class Course(models.Model):
     objects = managers.SignalSenderManager()
 
     class_gp = models.CharField(max_length=2, verbose_name='گروه درس')
-    capacity = models.SmallIntegerField(verbose_name='ظرفیت')
-    registered_count = models.SmallIntegerField(verbose_name='تعداد ثبت نام شده ها')
-    waiting_count = models.SmallIntegerField(verbose_name='تعداد افراد حاضر در لیست انتظار')
+    capacity = models.SmallIntegerField(verbose_name='ظرفیت', validators=[MinValueValidator(0)])
+    registered_count = models.SmallIntegerField(verbose_name='تعداد ثبت نام شده ها', validators=[MinValueValidator(0)])
+    waiting_count = models.SmallIntegerField(verbose_name='تعداد افراد حاضر در لیست انتظار',
+                                             validators=[MinValueValidator(0)])
     guest_able = models.BooleanField(verbose_name='قابل اخذ توسط مهمان')
     registration_limit = models.CharField(max_length=2000, verbose_name='محدودیت اخذ')
     description = models.CharField(max_length=400, verbose_name='توضیحات')

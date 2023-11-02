@@ -1,3 +1,5 @@
+import itertools
+
 import pytest
 from rest_framework import status
 from model_bakery import baker
@@ -100,13 +102,10 @@ class TestCourseTimeLine:
         response = api_client.get(course_timeline_view_url(courses[0].base_course_id))
 
         for teacher in courses[0].teachers.all():
-            assert response.data[0]['data'][project_variables.CURRENT_SEMESTER][teacher.name]['courses'][0][
-                       'capacity'] == courses[0].capacity
-            assert response.data[0]['data'][project_variables.CURRENT_SEMESTER][teacher.name]['courses'][0][
-                       'registered_count'] == courses[0].registered_count
-            assert response.data[0]['data'][project_variables.CURRENT_SEMESTER][teacher.name]['courses'][0][
-                       'capacity'] == \
-                   courses[0].capacity
+            course = response.data[0]['data'][project_variables.CURRENT_SEMESTER][teacher.name]['courses'][0]
+            assert course['capacity'] == courses[0].capacity
+            assert course['registered_count'] == courses[0].registered_count
+            assert course['capacity'] == courses[0].capacity
 
     def test_if_get_request_has_correct_length_of_teachers_for_multiple_teachers(self, api_client, simple_user,
                                                                                  courses, course_timeline_view_url):
@@ -114,8 +113,36 @@ class TestCourseTimeLine:
 
         response = api_client.get(course_timeline_view_url(courses[0].base_course_id))
 
-        assert len(response.data[0]['data'][project_variables.CURRENT_SEMESTER].keys()) == len(
-            courses[0].teachers.all())
+        course_teachers = [course.teachers.all() for course in courses[0].base_course.courses.all()]
+        course_teachers = list(itertools.chain(*course_teachers))
+        course_teachers = list(set(course_teachers))
+        assert len(response.data[0]['data'][project_variables.CURRENT_SEMESTER].keys()) == len(course_teachers)
+
+    def test_if_total_capacity_is_correct(self, api_client, simple_user,
+                                          courses, course_timeline_view_url):
+        api_client.force_login(simple_user)
+
+        response = api_client.get(course_timeline_view_url(courses[0].base_course_id))
+
+        current_semester_data = response.data[0]['data'][project_variables.CURRENT_SEMESTER]
+        for teacher in current_semester_data.keys():
+            total_capacity = 0
+            for course in current_semester_data[teacher]['courses']:
+                total_capacity += course['capacity']
+            assert total_capacity == current_semester_data[teacher]['total_capacity']
+
+    def test_if_total_registered_count_is_correct(self, api_client, simple_user,
+                                                  courses, course_timeline_view_url):
+        api_client.force_login(simple_user)
+
+        response = api_client.get(course_timeline_view_url(courses[0].base_course_id))
+
+        current_semester_data = response.data[0]['data'][project_variables.CURRENT_SEMESTER]
+        for teacher in current_semester_data.keys():
+            total_registered_count = 0
+            for course in current_semester_data[teacher]['courses']:
+                total_registered_count += course['registered_count']
+            assert total_registered_count == current_semester_data[teacher]['total_registered_count']
 
 
 @pytest.mark.django_db
@@ -220,3 +247,29 @@ class TestTeacherTimeLine:
             total += len(response.data[0]['data'][project_variables.CURRENT_SEMESTER]['courses'][course]['detail'])
 
         assert total == len(first_teacher_course)
+
+    def test_if_total_capacity_is_correct(self, api_client, simple_user, teachers, courses,
+                                          teacher_timeline_view_url):
+        api_client.force_login(simple_user)
+
+        response = api_client.get(teacher_timeline_view_url(teachers[0].id))
+
+        current_semester_data = response.data[0]['data'][project_variables.CURRENT_SEMESTER]['courses']
+        for course in current_semester_data.keys():
+            total_capacity = 0
+            for d in current_semester_data[course]['detail']:
+                total_capacity += d['capacity']
+            assert total_capacity == current_semester_data[course]['course_total_capacity']
+
+    def test_if_total_registered_count_is_correct(self, api_client, simple_user, teachers, courses,
+                                                  teacher_timeline_view_url):
+        api_client.force_login(simple_user)
+
+        response = api_client.get(teacher_timeline_view_url(teachers[0].id))
+
+        current_semester_data = response.data[0]['data'][project_variables.CURRENT_SEMESTER]['courses']
+        for course in current_semester_data.keys():
+            total_registered_count = 0
+            for d in current_semester_data[course]['detail']:
+                total_registered_count += d['registered_count']
+            assert total_registered_count == current_semester_data[course]['course_total_registered_count']
