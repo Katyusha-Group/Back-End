@@ -1,3 +1,5 @@
+import random
+
 from accounts.models import User
 from django.urls import reverse
 from model_bakery import baker
@@ -81,8 +83,11 @@ def courses(base_courses, teachers, current_semester):
         for j in range(1, 5):
             course = baker.make(Course,
                                 base_course=base_courses[i], class_gp=f'0{j}',
-                                semester=current_semester)
-            course.teachers.add(*teachers[i:])
+                                semester=current_semester,
+                                capacity=random.randint(1, 100),
+                                registered_count=random.randint(1, 100),
+                                waiting_count=random.randint(1, 100), )
+            course.teachers.add(*teachers[i:j+1])
             courses_list.append(course)
     return courses_list
 
