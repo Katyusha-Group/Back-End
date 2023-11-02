@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.validators import MinLengthValidator, MaxLengthValidator
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -24,8 +25,14 @@ class Profile(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
 
-    name = models.CharField(max_length=100, blank=True, null=True)
-    username = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    name = models.CharField(max_length=50, blank=True, null=True, error_messages={
+        'max_length': 'نام باید حداکثر ۵۰ کاراکتر باشد'})
+    username = models.CharField(max_length=20, blank=True, null=True, unique=True, validators=[
+        MinLengthValidator(6)],
+        error_messages={
+            'unique': 'نام کاربری تکراری است',
+            'min_length': 'نام کاربری باید حداقل ۶ کاراکتر باشد',
+            'max_length': 'نام کاربری باید حداکثر ۲۰ کاراکتر باشد'})
     image = models.ImageField(upload_to='images/profile_pics', default='images/profile_pics/default.png')
     profile_type = models.CharField(max_length=1, choices=ACTION_CHOICES, default=TYPE_USER)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -34,6 +41,7 @@ class Profile(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=["content_type", "object_id"]),
+            models.Index(fields=["username"]),
         ]
         unique_together = ('content_type', 'object_id')
 
