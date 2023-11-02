@@ -132,9 +132,10 @@ class Course(models.Model):
     objects = managers.SignalSenderManager()
 
     class_gp = models.CharField(max_length=2, verbose_name='گروه درس')
-    capacity = models.SmallIntegerField(verbose_name='ظرفیت')
-    registered_count = models.SmallIntegerField(verbose_name='تعداد ثبت نام شده ها')
-    waiting_count = models.SmallIntegerField(verbose_name='تعداد افراد حاضر در لیست انتظار')
+    capacity = models.SmallIntegerField(verbose_name='ظرفیت', validators=[MinValueValidator(0)])
+    registered_count = models.SmallIntegerField(verbose_name='تعداد ثبت نام شده ها', validators=[MinValueValidator(0)])
+    waiting_count = models.SmallIntegerField(verbose_name='تعداد افراد حاضر در لیست انتظار',
+                                             validators=[MinValueValidator(0)])
     guest_able = models.BooleanField(verbose_name='قابل اخذ توسط مهمان')
     registration_limit = models.CharField(max_length=2000, verbose_name='محدودیت اخذ')
     description = models.CharField(max_length=400, verbose_name='توضیحات')
