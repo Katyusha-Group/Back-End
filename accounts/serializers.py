@@ -1,22 +1,38 @@
-from rest_framework import serializers
-from accounts.models import *
+from django.contrib.auth.password_validation import validate_password
+from django.core.validators import RegexValidator
+from django.contrib.auth import password_validation
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.password_validation import validate_password
 from django.core import exceptions as exception
+from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from accounts.models import *
 
 from utils.telegram.telegram_functions import get_bot_url
 
 
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
-    password1 = serializers.CharField(write_only=True)
-    password2 = serializers.CharField(write_only=True)
+    username = serializers.CharField(
+        validators=[
+            RegexValidator(
+                regex="^(?=.{6,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_... .])$",
+                message="Username must be 6-20 characters long, cannot start or end with a period or underscore"
+                        ", and cannot contain two consecutive periods or underscores."
+            )
+        ]
+    )
+    name = serializers.CharField(required=True)
+    password1 = serializers.CharField(
+        style={'input_type': 'password'},
+        validators=[password_validation.validate_password],
+        write_only=True
+    )
+    password2 = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
     class Meta:
         model = User
-        fields = ('id', 'email',
+        fields = ('id', 'email', 'username', 'name',
                   'password1', 'password2', 'gender', 'department')
         extra_kwargs = {
             'password1': {'write_only': True},
@@ -40,10 +56,16 @@ class SignUpSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("You have reached the maximum number of registration tries.")
         return str.lower(value)
 
+    def validate_username(self, value):
+        user = User.objects.filter(username__iexact=value)
+        if user.exists():
+            raise serializers.ValidationError("Username already exists.")
+        return str.lower(value)
+
 
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(
-        label=_("Email"),
+    email_or_username = serializers.CharField(
+        label=_("Email or Username"),
         write_only=True
     )
     password = serializers.CharField(
@@ -58,14 +80,14 @@ class LoginSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
-
-        username = attrs.get('username', None)
+        email_or_username = attrs.get('email_or_username', None)
         password = attrs.get('password', None)
 
-        if username and password:
-            username = str.lower(username)
+        if email_or_username and password:
+            email_or_username = str.lower(email_or_username)
+            user = User.objects.filter(email__iexact=email_or_username)
             user = authenticate(request=self.context.get('request'),
-                                username=username, password=password)
+                                username=email_or_username, password=password)
 
             # The authenticate call simply returns None for is_active=False
             # users. (Assuming the default ModelBackend authentication

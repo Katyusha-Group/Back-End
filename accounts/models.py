@@ -1,12 +1,14 @@
 from datetime import datetime
 from decimal import Decimal
 
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 from django_jalali.db import models as jmodels
 
 from core import settings
+from social_media.models import Profile
 from university.models import Department
 from utils.variables import project_variables
 from utils.transactions.transaction_functions import create_ref_code
@@ -28,6 +30,7 @@ class User(AbstractUser):
     verification_tries_count = models.IntegerField(default=0)
     last_verification_sent = models.DateTimeField(null=True, blank=True, default=datetime.now)
     has_verification_tries_reset = models.BooleanField(default=False)
+    profile = GenericRelation(to=Profile, related_query_name='user')
 
     def get_default_profile_name(self):
         return self.email.split('@')[0]

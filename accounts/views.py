@@ -2,6 +2,7 @@ import random
 from datetime import timedelta
 
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import generics, viewsets
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
@@ -39,11 +40,6 @@ class SignUpView(APIView):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
-        # validate password
-        try:
-            validate_password(request.data['password1'])
-        except exception.ValidationError as e:
-            return Response({"password": e.messages}, status=400)
         email = str.lower(validated_data['email'])
 
         verification_code = str(random.randint(1000, 9999))
@@ -61,7 +57,7 @@ class SignUpView(APIView):
             # Save user
             user = User.objects.create(
                 department=validated_data['department'],
-                username=email,
+                username=validated_data['username'],
                 email=email,
                 gender=validated_data['gender'],
                 password=make_password(validated_data['password1']),
@@ -69,6 +65,10 @@ class SignUpView(APIView):
                 verification_tries_count=1,
                 last_verification_sent=datetime.now(),
             )
+
+        # Saving profile
+        profile = Profile.get_profile_for_user(user=user)
+        profile.name = validated_data['name']
 
         token = self.get_token_for_user(user)
         subject = 'تایید ایمیل ثبت نام'
@@ -82,7 +82,8 @@ class SignUpView(APIView):
         return Response({
             "user": {"department": user.department.name,
                      "email": email,
-                     "gender": user.gender},
+                     "gender": user.gender,
+                     "username": user.username, },
             "message": "User created successfully. Please check your email to activate your account. ",
             "code": verification_code,
             "url": f'http://katyushaiust.ir/accounts/activation-confirm/{token}',

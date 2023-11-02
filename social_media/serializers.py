@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from accounts.models import User
-from .models import Profile
+from .models import Profile, Follow
 from utils.variables import project_variables
 
 
@@ -20,12 +20,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ['email', 'gender', 'department']
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(read_only=True)
+class ProfileUsernameSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = ['username']
+
+
+class ProfileImageSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField(read_only=True)
-    profile_type = serializers.CharField(read_only=True)
-    created_at = serializers.DateTimeField(read_only=True)
 
     def get_image(self, obj: Profile):
         return project_variables.DOMAIN + obj.image.url \
@@ -34,7 +38,61 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['name', 'username', 'image', 'created_at', 'profile_type']
+        fields = ['name', 'image']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(read_only=True)
+    username = serializers.CharField(read_only=True)
+    image = serializers.SerializerMethodField(read_only=True)
+    profile_type = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    is_private = serializers.BooleanField(read_only=True)
+    able_to_view = serializers.SerializerMethodField(read_only=True)
+    is_following_me = serializers.SerializerMethodField(read_only=True)
+    is_followed = serializers.SerializerMethodField(read_only=True)
+    followers_count = serializers.SerializerMethodField(read_only=True)
+    following_count = serializers.SerializerMethodField(read_only=True)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        if me == instance:
+            data.pop('is_following_me')
+            data.pop('is_followed')
+        return data
+
+    def get_able_to_view(self, obj: Profile):
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        if me == obj:
+            return True
+        if obj.is_private:
+            return Follow.objects.filter(follower=me, following=obj).exists()
+        return True
+
+    def get_followers_count(self, obj: Profile):
+        return obj.followers.count()
+
+    def get_following_count(self, obj: Profile):
+        return obj.following.count()
+
+    def get_is_followed(self, obj: Profile):
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        return Follow.objects.filter(follower=me, following=obj).exists()
+
+    def get_is_following_me(self, obj: Profile):
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        return Follow.objects.filter(follower=obj, following=me).exists()
+
+    def get_image(self, obj: Profile):
+        return project_variables.DOMAIN + obj.image.url \
+            if obj.image \
+            else project_variables.DOMAIN + '/media/profile_pics/default.png'
+
+    class Meta:
+        model = Profile
+        fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'is_private', 'able_to_view',
+                  'is_following_me', 'is_followed', 'followers_count', 'following_count']
 
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
@@ -67,5 +125,46 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'content_object']
+        fields = ['name', 'username', 'image', 'created_at',
+                  'profile_type', 'is_private', 'content_object']
 
+
+class FollowersYouFollowSerializer(serializers.ModelSerializer):
+    followers_you_follow = serializers.SerializerMethodField(read_only=True)
+
+    def get_followers_you_follow(self, obj: Profile):
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        common_followers = obj.followers.filter(follower=me).prefetch_related('follower').all()
+        common_followers_profiles = [common_follower.follower for common_follower in common_followers]
+        return ProfileImageSerializer(common_followers_profiles, many=True).data
+
+    class Meta:
+        model = Follow
+        fields = ['followers_you_follow']
+
+
+class FollowSerializer(serializers.Serializer):
+    username = serializers.CharField(read_only=True)
+
+    def validate(self, attrs):
+        attrs = super().validate(self.initial_data)
+
+        username = attrs.get('username', None)
+
+        if username:
+            profile = Profile.objects.filter(username=username).first()
+
+            if not profile:
+                raise serializers.ValidationError({"detail": "profile does not exist."})
+        else:
+            raise serializers.ValidationError({"detail": "username is required."})
+
+        return {'following': profile}
+
+
+class FollowingSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True)
+
+    class Meta:
+        model = Follow
+        fields = ['profile']

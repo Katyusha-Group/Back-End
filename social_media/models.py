@@ -25,10 +25,11 @@ class Profile(models.Model):
     content_object = GenericForeignKey('content_type', 'object_id')
 
     name = models.CharField(max_length=100, blank=True, null=True)
-    username = models.CharField(max_length=100, blank=True, null=True)
+    username = models.CharField(max_length=100, blank=True, null=True, unique=True)
     image = models.ImageField(upload_to='images/profile_pics', default='images/profile_pics/default.png')
     profile_type = models.CharField(max_length=1, choices=ACTION_CHOICES, default=TYPE_USER)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_private = models.BooleanField(default=False)
 
     class Meta:
         indexes = [
@@ -83,3 +84,18 @@ class Profile(models.Model):
         user_model = get_user_model()
         user_model = ContentType.objects.get_for_model(user_model)
         return Profile.objects.filter(content_type=user_model, object_id=user.pk).first()
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(Profile, related_name='following', on_delete=models.CASCADE)
+    following = models.ForeignKey(Profile, related_name='followers', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('follower', 'following')
+        indexes = [
+            models.Index(fields=["follower", "following"]),
+        ]
+
+    def __str__(self):
+        return f'{self.follower} follows {self.following}'
