@@ -36,7 +36,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()[0:10]
+        queryset = self.get_queryset().exclude(content_type=ContentType.objects.get_for_model(get_user_model()),
+                                               object_id=request.user.id)[0:10]
         serializer = self.get_serializer(
             queryset,
             context=self.get_serializer_context(),
