@@ -29,7 +29,7 @@ class Profile(models.Model):
     image = models.ImageField(upload_to='images/profile_pics', default='images/profile_pics/default.png')
     profile_type = models.CharField(max_length=1, choices=ACTION_CHOICES, default=TYPE_USER)
     created_at = models.DateTimeField(auto_now_add=True)
-    description = models.TextField(blank=True, null=True)
+    is_private = models.BooleanField(default=False)
 
     class Meta:
         indexes = [

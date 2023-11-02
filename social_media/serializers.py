@@ -47,7 +47,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField(read_only=True)
     profile_type = serializers.CharField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
-    description = serializers.CharField(read_only=True)
+    is_private = serializers.BooleanField(read_only=True)
+    able_to_view = serializers.SerializerMethodField(read_only=True)
     is_following_me = serializers.SerializerMethodField(read_only=True)
     is_followed = serializers.SerializerMethodField(read_only=True)
     followers_count = serializers.SerializerMethodField(read_only=True)
@@ -60,6 +61,14 @@ class ProfileSerializer(serializers.ModelSerializer):
             data.pop('is_following_me')
             data.pop('is_followed')
         return data
+
+    def get_able_to_view(self, obj: Profile):
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        if me == obj:
+            return True
+        if obj.is_private:
+            return Follow.objects.filter(follower=me, following=obj).exists()
+        return True
 
     def get_followers_count(self, obj: Profile):
         return obj.followers.count()
@@ -82,8 +91,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'description', 'is_following_me',
-                  'is_followed', 'followers_count', 'following_count']
+        fields = ['name', 'username', 'image', 'created_at', 'profile_type', 'is_private', 'able_to_view',
+                  'is_following_me', 'is_followed', 'followers_count', 'following_count']
 
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
@@ -116,7 +125,8 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['name', 'username', 'image', 'created_at', 'description', 'profile_type', 'content_object']
+        fields = ['name', 'username', 'image', 'created_at',
+                  'profile_type', 'is_private', 'content_object']
 
 
 class FollowersYouFollowSerializer(serializers.ModelSerializer):
