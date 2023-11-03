@@ -10,9 +10,9 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Profile, Follow
+from .models import Profile, Follow, Twitte
 from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer, \
-    ProfileUsernameSerializer
+    ProfileUsernameSerializer, TwitteSerializer
 from utils.variables import project_variables
 
 
@@ -180,3 +180,41 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def get_token_for_user(user):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
+
+
+class TwitteViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'post', 'delete', 'patch', 'head', 'options']
+    serializer_class = TwitteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_context(self):
+        token = self.get_token_for_user(self.request.user)
+        return {'csrftoken': self.request.COOKIES.get('csrftoken'),
+                'token': token,
+                'request': self.request}
+
+    def get_permissions(self):
+        if self.action == 'delete':
+            return [IsAdminUser()]
+        if self.action == 'retrieve':
+            return [IsAdminUser()]
+        return super().get_permissions()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().exclude(profile__content_type=ContentType.objects.get_for_model(get_user_model()),
+                                               profile__object_id=request.user.id)[0:10]
+        serializer = self.get_serializer(
+            queryset,
+            context=self.get_serializer_context(),
+            many=True,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        profile = Profile.get_profile_for_user(request.user)
+        serializer = self.get_serializer(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save
