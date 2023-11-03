@@ -134,9 +134,11 @@ class FollowersYouFollowSerializer(serializers.ModelSerializer):
 
     def get_followers_you_follow(self, obj: Profile):
         me = Profile.get_profile_for_user(self.context['request'].user)
-        common_followers = obj.followers.filter(follower=me).prefetch_related('follower').all()
-        common_followers_profiles = [common_follower.follower for common_follower in common_followers]
-        return ProfileImageSerializer(common_followers_profiles, many=True).data
+        common_followers = (
+            Follow.objects.filter(follower=me, following__in=[follow.follower for follow in
+                                                              obj.followers.all().exclude(follower=me, following=obj)]))
+        common_followers_profiles = [common_follower.following for common_follower in common_followers]
+        return ProfileSerializer(common_followers_profiles, many=True, context=self.context).data
 
     class Meta:
         model = Follow
