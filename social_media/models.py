@@ -107,3 +107,22 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'{self.follower} follows {self.following}'
+
+
+class Twitte(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    content = models.TextField(max_length=280, validators=[
+        MinLengthValidator(1),
+        MaxLengthValidator(280)
+    ])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.profile} twitted {self.content}'
+        
+    class Meta:
+        indexes = [
+            models.Index(fields=["profile"]),
+        ]
+        
+   
