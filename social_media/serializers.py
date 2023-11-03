@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from accounts.models import User
-from .models import Profile, Follow
+from .models import Profile, Follow, Twitte
 from utils.variables import project_variables
 
 
@@ -170,3 +170,63 @@ class FollowingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = ['profile']
+        
+
+class TwitteSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True)
+    likes_count = serializers.SerializerMethodField(read_only=True)
+    replies_count = serializers.SerializerMethodField(read_only=True)
+    children_count = serializers.SerializerMethodField(read_only=True)
+    likes = serializers.SerializerMethodField(read_only=True)
+    parent = serializers.SerializerMethodField(read_only=True)
+    children = serializers.SerializerMethodField(read_only=True)
+    replies = serializers.SerializerMethodField(read_only=True)
+
+    def get_likes(self, obj: Twitte):
+        return ProfileSerializer(obj.likes.all(), many=True, context=self.context).data
+
+    def get_parent(self, obj: Twitte):
+        return TwitteSerializer(obj.get_parent(), context=self.context).data
+
+    def get_children(self, obj: Twitte):
+        return TwitteSerializer(obj.get_children(), many=True, context=self.context).data
+
+    def get_replies(self, obj: Twitte):
+        return TwitteSerializer(obj.get_replies(), many=True, context=self.context).data
+
+    def get_likes_count(self, obj: Twitte):
+        return obj.get_likes_count()
+
+    def get_replies_count(self, obj: Twitte):
+        return obj.get_replies_count()
+
+    def get_children_count(self, obj: Twitte):
+        return obj.get_children_count()
+
+    class Meta:
+        model = Twitte
+        fields = ['id', 'profile', 'content', 'created_at', 'likes_count', 'replies_count', 'children_count', 'likes', 'parent', 'children', 'replies']
+        
+    def create(self, validated_data):
+        profile = Profile.get_profile_for_user(self.context['request'].user)
+        twitte = Twitte.objects.create(profile=profile, **validated_data)
+        return twitte
+    
+    def update(self, instance, validated_data):
+        instance.content = validated_data.get('content', instance.content)
+        instance.save()
+        return instance
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        if me == instance.profile:
+            data.pop('parent')
+        return data
+    
+    def get_fields(self):
+        fields = super().get_fields()
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        if me == self.instance.profile:
+            fields.pop('parent')
+        return fields
