@@ -152,6 +152,3 @@ class Twitte(models.Model):
     
     def get_children_count(self):
         return self.children.count()
-
-        
-   
