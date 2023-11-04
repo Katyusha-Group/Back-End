@@ -1,4 +1,4 @@
-FROM python:3.10.0-slim-buster
+FROM python:3.9.0-slim-buster
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y libpq-dev gcc
 # Copy only the Pipfile and Pipfile.lock first to leverage Docker caching
 COPY Pipfile Pipfile.lock /app/
 
+RUN pipenv lock
 # Install project dependencies
 RUN pipenv install --system --deploy
 

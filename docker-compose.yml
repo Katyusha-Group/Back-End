@@ -1,12 +1,43 @@
-version: '3.8'
+version: "3.9"
 
 services:
-  web:
-    build: ./app
-    command: python manage.py runserver 0.0.0.0:8000
+  backend:
+    build: .
+    container_name: backend
+    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
     volumes:
-      - ./app/:/usr/src/app/
+      - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
+
+    depends_on:
+      - db
+
+  db:
+    container_name: database
+    image: postgres:13.1-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=katyush2_admin
+      - POSTGRES_PASSWORD=katyusha@dmin2023
+      - POSTGRES_DB=katyush2_db
+
+  nginx:
+    image: nginx
+    container_name: nginx
+    restart: always
     ports:
-      - 8000:8000
-    # env_file:
-    #   - ./.env.dev
+      - "80:80"
+    volumes:
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/home/app/static
+      - media_volume:/home/app/media
+    depends_on:
+      - backend
+
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
