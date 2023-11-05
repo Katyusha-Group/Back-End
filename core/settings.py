@@ -84,7 +84,7 @@ DATABASES = {
         'NAME': 'katyush1_db',
         'USER': 'katyush1_admin',
         'PASSWORD': 'katyusha@dmin2023',
-        'HOST': 'localhost',
+        'HOST': 'database',
         'PORT': '5432',
     }
 }

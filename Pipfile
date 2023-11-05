@@ -39,6 +39,7 @@ kavenegar = "*"
 python-telegram-bot = "*"
 cffi = "*"
 webdriver-manager = "*"
+gunicorn = "*"
 
 [dev-packages]
 
