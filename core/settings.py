@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django_crontab',
     'accounts',
     'university',
+    'social_media',
     'custom_config',
 ]
 
@@ -167,6 +168,11 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 }
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'accounts.model_backends.username_email_backend.CustomBackend',
+]
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=10),
