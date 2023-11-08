@@ -257,11 +257,13 @@ class BaseAllCourseDepartment(APIView):
 
 
 class AllCourseDepartmentList(BaseAllCourseDepartment):
+    # Retrieves courses of user's department
     def get(self, request, *args, **kwargs):
         return super(AllCourseDepartmentList, self).get(request, request.user.department_id, *args, **kwargs)
 
 
 class AllCourseDepartmentRetrieve(BaseAllCourseDepartment):
+    # Retrieves courses of specified department
     def get(self, request, department_number, *args, **kwargs):
         return super(AllCourseDepartmentRetrieve, self).get(request, department_number, *args, **kwargs)
 
