@@ -75,6 +75,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
             url_path='(?P<username>\w+)', url_name='view-profile')
     def view_profile(self, request, username, *args, **kwargs):
         profile = Profile.objects.filter(username=username).first()
+        if not profile:
+            return Response({'detail': 'profile not found'}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(
             profile,
             context=self.get_serializer_context(),
@@ -119,6 +121,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/followers', serializer_class=ProfileSerializer, )
     def view_followers(self, request, username):
         profile = Profile.objects.filter(username=username).first()
+        if not profile:
+            return Response({'detail': 'profile not found'}, status=status.HTTP_404_NOT_FOUND)
         followers = Follow.objects.filter(following=profile).prefetch_related('follower').all()
         followers_profile = [follow.follower for follow in followers]
         serializer = self.get_serializer(
@@ -131,6 +135,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/following', serializer_class=ProfileSerializer, )
     def view_following(self, request, username):
         profile = Profile.objects.filter(username=username).first()
+        if not profile:
+            return Response({'detail': 'profile not found'}, status=status.HTTP_404_NOT_FOUND)
         followings = Follow.objects.filter(follower=profile).prefetch_related('following').all()
         following_profile = [following.following for following in followings]
         serializer = self.get_serializer(
@@ -144,6 +150,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
             serializer_class=FollowersYouFollowSerializer, )
     def view_followers_you_follow(self, request, username):
         profile = Profile.objects.filter(username=username).first()
+        if not profile:
+            return Response({'detail': 'profile not found'}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(
             profile,
             context=self.get_serializer_context(),
