@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator, RegexValidator
+from django.core.validators import MinValueValidator, RegexValidator, MaxValueValidator
 from django_jalali.db import models as jmodels
 from django.conf import settings
 
@@ -26,8 +26,8 @@ class Semester(models.Model):
 class Department(models.Model):
     objects = managers.SignalSenderManager()
 
-    department_number = models.SmallIntegerField(primary_key=True, verbose_name='کد دانشکده')
-    name = models.CharField(max_length=255, unique=True, verbose_name='نام دانشکده')
+    department_number = models.PositiveSmallIntegerField(primary_key=True, verbose_name='کد دانشکده')
+    name = models.CharField(max_length=50, unique=True, verbose_name='نام دانشکده')
 
     def __str__(self):
         return str(self.name)
@@ -40,8 +40,8 @@ class Department(models.Model):
 class CourseStudyingGP(models.Model):
     objects = managers.SignalSenderManager()
 
-    gp_id = models.IntegerField(verbose_name='کد گروه آموزشی')
-    name = models.CharField(max_length=255, unique=True, verbose_name='نام گروه آموزشی')
+    gp_id = models.PositiveSmallIntegerField(verbose_name='کد گروه آموزشی')
+    name = models.CharField(max_length=50, unique=True, verbose_name='نام گروه آموزشی')
 
     def __str__(self):
         return str(self.gp_id) + ' --- ' + self.name
@@ -55,7 +55,7 @@ class BaseCourse(models.Model):
     objects = managers.SignalSenderManager()
 
     course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس', db_index=True,
-                                        validators=[RegexValidator(r'^\d{7}$', 'Must be an 7-digit number')])
+                                        validators=[MinValueValidator(1000000), MaxValueValidator(9999999)])
     name = models.CharField(max_length=50, verbose_name='نام درس')
     total_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='کل واحد')
     practical_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='واحد های عملی')
@@ -69,7 +69,7 @@ class BaseCourse(models.Model):
         return str(self.name)
 
     def get_default_profile_username(self):
-        return str(self.course_number)
+        return 'C_' + str(self.course_number)
 
     def get_default_profile_image(self):
         return 'images/profile_pics/course_default.png'
@@ -88,7 +88,7 @@ class Teacher(models.Model):
     name = models.CharField(max_length=50, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
     golestan_name = models.CharField(max_length=50, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
     email_address = models.CharField(max_length=255, verbose_name='ایمیل', null=True, blank=True)
-    lms_id = models.IntegerField(verbose_name='شماره استاد در سامانه LMS', null=True, blank=True)
+    lms_id = models.PositiveIntegerField(verbose_name='شماره استاد در سامانه LMS', null=True, blank=True)
     teacher_image_url = models.CharField(max_length=255, verbose_name='آدرس تصویر استاد', null=True, blank=True)
     teacher_image = models.ImageField(upload_to='images/teachers_image/', verbose_name='تصویر استاد',
                                       default='images/teachers_image/default.png', blank=True)
@@ -106,7 +106,7 @@ class Teacher(models.Model):
         return self.name
 
     def get_default_profile_username(self):
-        return 'Teacher_' + str(self.id)
+        return 'T_' + str(self.id)
 
     def get_default_profile_image(self):
         return self.teacher_image

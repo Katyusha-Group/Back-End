@@ -54,6 +54,11 @@ def teacher_timeline_view_url():
 
 
 @pytest.fixture
+def semesters_list_view_url():
+    return reverse('all-course-department')
+
+
+@pytest.fixture
 def simple_user():
     return baker.make(User)
 
