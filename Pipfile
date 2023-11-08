@@ -39,6 +39,7 @@ kavenegar = "*"
 python-telegram-bot = "*"
 cffi = "*"
 webdriver-manager = "*"
+pytest-cov = "*"
 
 [dev-packages]
 pytest = "*"
