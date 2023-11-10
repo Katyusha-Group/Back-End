@@ -194,6 +194,9 @@ class TwitteViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'patch', 'head', 'options']
     serializer_class = TwitteSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    queryset = Twitte.objects.filter(parent=None).order_by('-created_at').all()
+    
 
     def get_serializer_context(self):
         token = self.get_token_for_user(self.request.user)
@@ -209,8 +212,8 @@ class TwitteViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset().exclude(profile__content_type=ContentType.objects.get_for_model(get_user_model()),
-                                               profile__object_id=request.user.id)[0:10]
+        queryset = self.get_queryset().filter(profile__content_type=ContentType.objects.get_for_model(get_user_model()),
+                                               profile__object_id=request.user.id)
         serializer = self.get_serializer(
             queryset,
             context=self.get_serializer_context(),
@@ -225,4 +228,10 @@ class TwitteViewSet(viewsets.ModelViewSet):
             context=self.get_serializer_context(),
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+    @staticmethod
+    def get_token_for_user(user):
+        refresh = RefreshToken.for_user(user)
+        return str(refresh.access_token)

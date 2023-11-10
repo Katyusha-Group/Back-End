@@ -174,13 +174,12 @@ class FollowingSerializer(serializers.ModelSerializer):
 
 class TwitteSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(read_only=True)
+    conversation_id = serializers.SerializerMethodField(read_only=True)
     likes_count = serializers.SerializerMethodField(read_only=True)
     replies_count = serializers.SerializerMethodField(read_only=True)
     children_count = serializers.SerializerMethodField(read_only=True)
     likes = serializers.SerializerMethodField(read_only=True)
-    parent = serializers.SerializerMethodField(read_only=True)
     children = serializers.SerializerMethodField(read_only=True)
-    replies = serializers.SerializerMethodField(read_only=True)
 
     def get_likes(self, obj: Twitte):
         return ProfileSerializer(obj.likes.all(), many=True, context=self.context).data
@@ -191,9 +190,6 @@ class TwitteSerializer(serializers.ModelSerializer):
     def get_children(self, obj: Twitte):
         return TwitteSerializer(obj.get_children(), many=True, context=self.context).data
 
-    def get_replies(self, obj: Twitte):
-        return TwitteSerializer(obj.get_replies(), many=True, context=self.context).data
-
     def get_likes_count(self, obj: Twitte):
         return obj.get_likes_count()
 
@@ -202,14 +198,17 @@ class TwitteSerializer(serializers.ModelSerializer):
 
     def get_children_count(self, obj: Twitte):
         return obj.get_children_count()
+    
+    def get_conversation_id(self, obj: Twitte):
+        return obj.get_conversation().id
 
     class Meta:
         model = Twitte
-        fields = ['id', 'profile', 'content', 'created_at', 'likes_count', 'replies_count', 'children_count', 'likes', 'parent', 'children', 'replies']
+        fields = ['id', 'profile', 'content', 'created_at', 'likes_count', 'replies_count', 'children_count', 'likes', 'parent', 'children', 'conversation_id']
         
     def create(self, validated_data):
         profile = Profile.get_profile_for_user(self.context['request'].user)
-        twitte = Twitte.objects.create(profile=profile, **validated_data)
+        twitte = Twitte.objects.create_twitte(profile=profile, **validated_data)
         return twitte
     
     def update(self, instance, validated_data):
@@ -223,10 +222,3 @@ class TwitteSerializer(serializers.ModelSerializer):
         if me == instance.profile:
             data.pop('parent')
         return data
-    
-    def get_fields(self):
-        fields = super().get_fields()
-        me = Profile.get_profile_for_user(self.context['request'].user)
-        if me == self.instance.profile:
-            fields.pop('parent')
-        return fields
