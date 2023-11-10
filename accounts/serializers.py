@@ -11,6 +11,7 @@ from accounts.models import *
 from utils.telegram.telegram_functions import get_bot_url
 
 
+
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     username = serializers.CharField(
@@ -39,12 +40,22 @@ class SignUpSerializer(serializers.ModelSerializer):
             'password2': {'write_only': True},
         }
 
-    def validate(self, attrs):
-        if attrs['password1'] != attrs['password2']:
-            raise serializers.ValidationError({
-                'password2': ['Passwords must match.'],
-            })
-        return attrs
+
+    def validate_password2(self, value):
+        if value != self.initial_data.get('password1'):
+            raise serializers.ValidationError('Passwords must match.')
+        return value
+    def validate_password(self, value):
+        if value != self.initial_data.get('password2'):
+            raise serializers.ValidationError('Passwords must match.')
+        password_validation.validate_password(value)
+        return value
+    # def validate(self, attrs):
+    #     if attrs['password1'] != attrs['password2']:
+    #         raise serializers.ValidationError({
+    #             'password2': ['Passwords must match.'],
+    #         })
+    #     return attrs
 
     def validate_email(self, value):
         user = User.objects.filter(email__iexact=value)

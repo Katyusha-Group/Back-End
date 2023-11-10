@@ -1,5 +1,7 @@
 import random
+import threading
 from datetime import timedelta
+from functools import partial
 
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
@@ -22,14 +24,16 @@ from rest_framework.authtoken.models import Token
 from rest_framework import status
 from .signals import wallet_updated_signal
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, CreateAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import ActivationResendSerializer
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 
+from .utils import get_access_token_for_user, EmailThread
 
-class SignUpView(APIView):
+
+class SignUpView(GenericAPIView):
     serializer_class = SignUpSerializer
 
     permission_classes = []
@@ -70,29 +74,47 @@ class SignUpView(APIView):
         profile = Profile.get_profile_for_user(user=user)
         profile.name = validated_data['name']
 
-        token = self.get_token_for_user(user)
+        # utils.get_access_token_for_user(user)
+        token = get_access_token_for_user(user)
+
         subject = 'تایید ایمیل ثبت نام'
         show_text = user.has_verification_tries_reset or user.verification_tries_count > 1
-        email_handler.send_verification_message(subject=subject,
+        # email_handler.send_verification_message(subject=subject,
+        #                                         recipient_list=[user.email],
+        #                                         verification_token=verification_code,
+        #                                         registration_tries=user.verification_tries_count,
+        #                                         show_text=show_text)
+
+        # email_obj = email_handler.send_verification_message(subject=subject,
+        #                                         recipient_list=[user.email],
+        #                                         verification_token=verification_code,
+        #                                         registration_tries=user.verification_tries_count,
+        #                                         show_text=show_text)
+
+        email_thread = EmailThread(email_handler, subject=subject,
                                                 recipient_list=[user.email],
                                                 verification_token=verification_code,
                                                 registration_tries=user.verification_tries_count,
-                                                show_text=show_text)
+                                                 show_text=show_text)
 
-        return Response({
-            "user": {"department": user.department.name,
-                     "email": email,
-                     "gender": user.gender,
-                     "username": user.username, },
-            "message": "User created successfully. Please check your email to activate your account. ",
+        email_thread.start()
+
+
+        user_data = {
+            "user": {
+                "department": user.department.name,
+                "email": email,
+                "gender": user.gender,
+                "username": user.username,
+            },
+            "message": "User created successfully. Please check your email to activate your account.",
             "code": verification_code,
             "url": f'http://katyushaiust.ir/accounts/activation-confirm/{token}',
             "token": token,
-        }, status=201)
+        }
 
-    def get_token_for_user(self, user):
-        refresh = RefreshToken.for_user(user)
-        return str(refresh.access_token)
+        return Response(user_data, status=status.HTTP_201_CREATED)
+
 
 
 class LoginView(TokenObtainPairView):
@@ -248,7 +270,7 @@ class ActivationResend(generics.GenericAPIView):
             user.last_verification_sent = datetime.now()
             user.save()
             show_text = user.has_verification_tries_reset or user.verification_tries_count > 1
-            token = self.get_token_for_user(user)
+            token = get_access_token_for_user(user)
             email_handler.send_verification_message(subject=subject,
                                                     recipient_list=[user.email],
                                                     verification_token=verification_code,
@@ -261,9 +283,6 @@ class ActivationResend(generics.GenericAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def get_token_for_user(self, user):
-        refresh = RefreshToken.for_user(user)
-        return str(refresh.access_token)
 
 
 class WalletViewSet(viewsets.GenericViewSet, ListModelMixin):
@@ -325,7 +344,8 @@ class ForgotPasswordView(APIView):
 
         verification_code = str(random.randint(1000, 9999))
 
-        token = self.get_token_for_user(user)
+        # utils.get_access_token_for_user(user)
+        token = get_access_token_for_user(user)
 
         user.verification_code = verification_code
         user.verification_tries_count = user.verification_tries_count + 1
@@ -345,9 +365,7 @@ class ForgotPasswordView(APIView):
             }
         )
 
-    def get_token_for_user(self, user):
-        refresh = RefreshToken.for_user(user)
-        return str(refresh.access_token)
+
 
 
 class PasswordChangeAPIView(APIView):
