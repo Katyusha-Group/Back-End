@@ -12,6 +12,14 @@ from utils.telegram.telegram_functions import get_bot_url
 
 
 
+
+# user serializer
+class UserSerializer(serializers.ModelSerializer):
+    department = serializers.CharField(source='department.name')
+    class Meta:
+        model = User
+        fields = ["username", "gender", "department", "email", "is_email_verified", "has_verification_tries_reset", "verification_tries_count" ]
+
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     username = serializers.CharField(
@@ -40,7 +48,22 @@ class SignUpSerializer(serializers.ModelSerializer):
             'password2': {'write_only': True},
         }
 
+    def validate(self, data):
+        username = data.get('username')
+        email = data.get('email')
 
+        # Check if the username already exists
+        existing_user = User.objects.filter(username__iexact=username).first()
+
+
+        if existing_user:
+            # If the username exists, check if the email matches
+            if existing_user.email.lower() == email.lower():
+                return data
+            else:
+                raise serializers.ValidationError("Email does not match the existing username.")
+        else:
+            return data
     def validate_password2(self, value):
         if value != self.initial_data.get('password1'):
             raise serializers.ValidationError('Passwords must match.')
@@ -59,13 +82,10 @@ class SignUpSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Email already exists.")
             if user.verification_tries_count >= project_variables.MAX_VERIFICATION_TRIES:
                 raise serializers.ValidationError("You have reached the maximum number of registration tries.")
+            if user.username != self.initial_data.get('username'):
+                raise serializers.ValidationError("Email already exists.")
         return str.lower(value)
 
-    def validate_username(self, value):
-        user = User.objects.filter(username__iexact=value)
-        if user.exists():
-            raise serializers.ValidationError("Username already exists.")
-        return str.lower(value)
 
 
 class LoginSerializer(serializers.Serializer):

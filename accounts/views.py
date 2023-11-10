@@ -92,17 +92,14 @@ class SignUpView(GenericAPIView):
 
 
         user_data = {
-            "user": {
-                "department": user.department.name,
-                "email": email,
-                "gender": user.gender,
-                "username": user.username,
-            },
+            "user" : UserSerializer(user).data,
             "message": "User created successfully. Please check your email to activate your account.",
             "code": verification_code,
             "url": f'http://katyushaiust.ir/accounts/activation-confirm/{token}',
             "token": token,
+
         }
+
 
         return Response(user_data, status=status.HTTP_201_CREATED)
 
@@ -114,15 +111,18 @@ class LoginView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        # token, created = Token.objects.get_or_create(user=user)
-        token = self.generate_jwt_token(user.id)
-        login(request, user)
-        return Response({'token': token,
-                         'user_id': user.id,
-                         'username': user.username,
-                         'email': user.email,
-                         })
+        # user = serializer.validated_data['user']
+        response_data = serializer.save()
+
+        # # token, created = Token.objects.get_or_create(user=user)
+        # token = self.generate_jwt_token(user.id)
+        # login(request, user)
+        # return Response({'token': token,
+        #                  'user_id': user.id,
+        #                  'username': user.username,
+        #                  'email': user.email,
+        #                  })
+        return Response(response_data)
 
     @staticmethod
     def generate_jwt_token(user_id):
