@@ -50,12 +50,6 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Passwords must match.')
         password_validation.validate_password(value)
         return value
-    # def validate(self, attrs):
-    #     if attrs['password1'] != attrs['password2']:
-    #         raise serializers.ValidationError({
-    #             'password2': ['Passwords must match.'],
-    #         })
-    #     return attrs
 
     def validate_email(self, value):
         user = User.objects.filter(email__iexact=value)

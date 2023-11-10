@@ -48,6 +48,8 @@ class SignUpView(GenericAPIView):
 
         verification_code = str(random.randint(1000, 9999))
         user = User.objects.filter(email__iexact=email)
+
+        # if user signup before and not verified
         if user.exists():
             user = user.first()
             user.department = validated_data['department']
@@ -58,7 +60,7 @@ class SignUpView(GenericAPIView):
             user.last_verification_sent = datetime.now()
             user.save()
         else:
-            # Save user
+            # if user didnt signup before
             user = User.objects.create(
                 department=validated_data['department'],
                 username=validated_data['username'],
@@ -79,24 +81,13 @@ class SignUpView(GenericAPIView):
 
         subject = 'تایید ایمیل ثبت نام'
         show_text = user.has_verification_tries_reset or user.verification_tries_count > 1
-        # email_handler.send_verification_message(subject=subject,
-        #                                         recipient_list=[user.email],
-        #                                         verification_token=verification_code,
-        #                                         registration_tries=user.verification_tries_count,
-        #                                         show_text=show_text)
 
-        # email_obj = email_handler.send_verification_message(subject=subject,
-        #                                         recipient_list=[user.email],
-        #                                         verification_token=verification_code,
-        #                                         registration_tries=user.verification_tries_count,
-        #                                         show_text=show_text)
-
+        # sending email verification with thread
         email_thread = EmailThread(email_handler, subject=subject,
                                                 recipient_list=[user.email],
                                                 verification_token=verification_code,
                                                 registration_tries=user.verification_tries_count,
                                                  show_text=show_text)
-
         email_thread.start()
 
 
