@@ -107,7 +107,20 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'{self.follower} follows {self.following}'
+        
 
+
+class TwitteManager(models.Manager):
+    def create_twitte(self, *args, **kwargs):
+        parent = kwargs.get('parent', None)
+        if parent:
+            kwargs['conversation'] = parent.get_conversation()
+            twitte = super().create(*args, **kwargs)
+        else:
+            twitte = super().create(*args, **kwargs)
+            twitte.conversation = twitte
+            twitte.save()
+        return twitte
 
 class Twitte(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
@@ -123,23 +136,16 @@ class Twitte(models.Model):
     def __str__(self):
         return f'{self.profile} twitted {self.content}'
         
-    def save(self, *args, **kwargs):
-        if self.parent:
-            self.conversation = self.parent.conversation
-        else:
-            self.conversation = self
-        super().save(*args, **kwargs)
-        
     def get_parent(self):
         if self.parent:
             return self.parent
         return self
     
     def get_children(self):
-        return self.children.all()
+        return self.children.all().order_by('-created_at')
     
     def get_replies(self):
-        return self.replies.all()
+        return self.replies.all().order_by('-created_at')
     
     def get_likes(self):
         return self.likes.all()
@@ -152,3 +158,8 @@ class Twitte(models.Model):
     
     def get_children_count(self):
         return self.children.count()
+    
+    def get_conversation(self):
+        return self.conversation
+    
+    objects = TwitteManager()
