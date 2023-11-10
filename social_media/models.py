@@ -107,3 +107,48 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'{self.follower} follows {self.following}'
+
+
+class Twitte(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    content = models.TextField(max_length=280, validators=[
+        MinLengthValidator(1),
+        MaxLengthValidator(280)
+    ])
+    created_at = models.DateTimeField(auto_now_add=True)
+    likes = models.ManyToManyField(Profile, related_name='liked_tweets', blank=True)
+    conversation = models.ForeignKey('self', related_name='replies', blank=True, null=True, on_delete=models.CASCADE)
+    parent = models.ForeignKey('self', related_name='children', blank=True, null=True, on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return f'{self.profile} twitted {self.content}'
+        
+    def save(self, *args, **kwargs):
+        if self.parent:
+            self.conversation = self.parent.conversation
+        else:
+            self.conversation = self
+        super().save(*args, **kwargs)
+        
+    def get_parent(self):
+        if self.parent:
+            return self.parent
+        return self
+    
+    def get_children(self):
+        return self.children.all()
+    
+    def get_replies(self):
+        return self.replies.all()
+    
+    def get_likes(self):
+        return self.likes.all()
+    
+    def get_likes_count(self):
+        return self.likes.count()
+    
+    def get_replies_count(self):
+        return self.replies.count()
+    
+    def get_children_count(self):
+        return self.children.count()
