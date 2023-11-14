@@ -154,6 +154,7 @@ class Course(models.Model):
     class Meta:
         verbose_name = 'درس'
         verbose_name_plural = 'درس ها'
+        unique_together = ('class_gp', 'base_course', 'semester')
 
 
 class ExamTimePlace(models.Model):
