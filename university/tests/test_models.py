@@ -4,7 +4,8 @@ from model_bakery import baker
 from django.core.exceptions import ValidationError
 
 from core import settings
-from university.models import Department, Semester, CourseStudyingGP, BaseCourse, Teacher, Course
+from university.models import Department, Semester, CourseStudyingGP, BaseCourse, Teacher, Course, ExamTimePlace, \
+    AllowedDepartment
 
 pytestmark = pytest.mark.django_db
 
@@ -122,7 +123,9 @@ class TestBaseCourseModel:
         # should raise validation error if negative
         base_course = baker.make(BaseCourse, course_number=1234567, name='Base Course 1', total_unit=3.0)
 
-        assert base_course._meta.get_field('total_unit').validators[0].limit_value == 0
+        with pytest.raises(ValidationError):
+            base_course.total_unit = -1.5
+            base_course.full_clean()
 
     def test_practical_unit_is_float_field(self):
         base_course = baker.make(BaseCourse, course_number=1234567, name='Base Course 1', practical_unit=1.5)
@@ -133,7 +136,9 @@ class TestBaseCourseModel:
         # should raise validation error if negative
         base_course = baker.make(BaseCourse, course_number=1234567, name='Base Course 1', practical_unit=-1.5)
 
-        assert base_course._meta.get_field('practical_unit').validators[0].limit_value == 0
+        with pytest.raises(ValidationError):
+            base_course.practical_unit = -1.5
+            base_course.full_clean()
 
     def test_department_relation_is_cascade(self):
         department = baker.make(Department, name='Department 1', department_number=1)
@@ -309,3 +314,35 @@ class TestCourseModel:
     def test_waiting_count_cannot_be_negative(self, current_semester, single_base_course):
         with pytest.raises(ValidationError):
             baker.make(Course, waiting_count=-1, semester=current_semester, base_course=single_base_course).full_clean()
+
+
+class TestAllowedDepartment:
+    def test_department_is_foreign_key(self, single_department, single_base_course, current_semester):
+        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
+        allowed_department = baker.make(AllowedDepartment, department=single_department, course=course)
+
+        assert allowed_department._meta.get_field('department').get_internal_type() == 'ForeignKey'
+
+    def test_department_relation_is_cascade(self, single_department, single_base_course, current_semester):
+        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
+        allowed_department = baker.make(AllowedDepartment, department=single_department, course=course)
+
+        assert allowed_department._meta.get_field('department').remote_field.on_delete == models.CASCADE
+
+    def test_course_is_foreign_key(self, single_department, single_base_course, current_semester):
+        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
+        allowed_department = baker.make(AllowedDepartment, department=single_department, course=course)
+
+        assert allowed_department._meta.get_field('course').get_internal_type() == 'ForeignKey'
+
+    def test_course_relation_is_cascade(self, single_department, single_base_course, current_semester):
+        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
+        allowed_department = baker.make(AllowedDepartment, department=single_department, course=course)
+
+        assert allowed_department._meta.get_field('course').remote_field.on_delete == models.CASCADE
+
+    def test_allowed_department_str(self, single_department, single_base_course, current_semester):
+        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
+        allowed_department = baker.make(AllowedDepartment, department=single_department, course=course)
+
+        assert str(allowed_department) == allowed_department.department.name

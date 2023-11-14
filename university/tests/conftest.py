@@ -6,7 +6,7 @@ from model_bakery import baker
 from rest_framework.test import APIClient
 import pytest
 
-from university.models import Semester, BaseCourse, Teacher, Course
+from university.models import Semester, BaseCourse, Teacher, Course, Department, AllowedDepartment
 from utils.variables import project_variables
 
 
@@ -71,6 +71,11 @@ def current_semester():
 @pytest.fixture
 def single_base_course():
     return baker.make(BaseCourse, course_number='1234567')
+
+
+@pytest.fixture
+def single_department():
+    return baker.make(Department, name='Computer Engineering', department_number=12)
 
 
 @pytest.fixture
