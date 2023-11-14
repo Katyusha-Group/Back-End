@@ -8,6 +8,7 @@ import pytest
 
 from university.models import Semester, BaseCourse, Teacher, Course, Department, AllowedDepartment
 from utils.variables import project_variables
+from utils.variables.project_variables import DOMAIN
 
 
 # URLs:
@@ -51,11 +52,6 @@ def teacher_timeline_view_url():
         return reverse('teacher-timeline', kwargs={'teacher_pk': teacher_pk})
 
     return do_teacher_timeline_view_url
-
-
-@pytest.fixture
-def semesters_list_view_url():
-    return reverse('all-course-department')
 
 
 @pytest.fixture
