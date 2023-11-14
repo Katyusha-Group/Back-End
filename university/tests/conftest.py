@@ -69,6 +69,11 @@ def current_semester():
 
 
 @pytest.fixture
+def single_base_course():
+    return baker.make(BaseCourse, course_number='1234567')
+
+
+@pytest.fixture
 def teachers():
     return baker.make(Teacher, _quantity=5)
 
