@@ -205,144 +205,130 @@ class TestTeacherModel:
 
 
 class TestCourseModel:
-    def test_return_str(self, current_semester, single_base_course):
-        course = baker.make(Course, class_gp='01', base_course=single_base_course, semester=current_semester)
+    def test_return_str(self, current_semester, base_course_instance):
+        course = baker.make(Course, class_gp='01', base_course=base_course_instance, semester=current_semester)
 
         assert str(course) == '1234567_01'
 
-    def test_class_gp_max_length(self, current_semester, single_base_course):
-        course = baker.make(Course, class_gp='01', semester=current_semester, base_course=single_base_course)
+    def test_class_gp_max_length(self, current_semester, base_course_instance):
+        course = baker.make(Course, class_gp='01', semester=current_semester, base_course=base_course_instance)
 
         max_length = course._meta.get_field('class_gp').max_length
 
         assert max_length == 2
 
-    def test_capacity_is_positive_small_integer_field(self, current_semester, single_base_course):
-        course = baker.make(Course, capacity=10, semester=current_semester, base_course=single_base_course)
+    def test_capacity_is_positive_small_integer_field(self, current_semester, base_course_instance):
+        course = baker.make(Course, capacity=10, semester=current_semester, base_course=base_course_instance)
 
         assert course._meta.get_field('capacity').get_internal_type() == 'SmallIntegerField'
         assert course.capacity >= 0
         assert course._meta.get_field('capacity').validators[0].limit_value == 0
 
-    def test_registered_count_is_positive_small_integer_field(self, current_semester, single_base_course):
-        course = baker.make(Course, registered_count=5, semester=current_semester, base_course=single_base_course)
+    def test_registered_count_is_positive_small_integer_field(self, current_semester, base_course_instance):
+        course = baker.make(Course, registered_count=5, semester=current_semester, base_course=base_course_instance)
 
         assert course._meta.get_field('registered_count').get_internal_type() == 'SmallIntegerField'
         assert course.registered_count >= 0
         assert course._meta.get_field('capacity').validators[0].limit_value == 0
 
-    def test_waiting_count_is_positive_small_integer_field(self, current_semester, single_base_course):
-        course = baker.make(Course, waiting_count=3, semester=current_semester, base_course=single_base_course)
+    def test_waiting_count_is_positive_small_integer_field(self, current_semester, base_course_instance):
+        course = baker.make(Course, waiting_count=3, semester=current_semester, base_course=base_course_instance)
 
         assert course._meta.get_field('waiting_count').get_internal_type() == 'SmallIntegerField'
         assert course.waiting_count >= 0
         assert course._meta.get_field('capacity').validators[0].limit_value == 0
 
-    def test_guest_able_is_boolean_field(self, current_semester, single_base_course):
-        course = baker.make(Course, guest_able=True, base_course=single_base_course, semester=current_semester)
+    def test_guest_able_is_boolean_field(self, current_semester, base_course_instance):
+        course = baker.make(Course, guest_able=True, base_course=base_course_instance, semester=current_semester)
 
         assert course._meta.get_field('guest_able').get_internal_type() == 'BooleanField'
 
-    def test_registration_limit_max_length(self, current_semester, single_base_course):
+    def test_registration_limit_max_length(self, current_semester, base_course_instance):
         course = baker.make(Course, registration_limit='This is a test registration limit',
-                            base_course=single_base_course, semester=current_semester)
+                            base_course=base_course_instance, semester=current_semester)
 
         max_length = course._meta.get_field('registration_limit').max_length
 
         assert max_length == 2000
 
-    def test_description_max_length(self, current_semester, single_base_course):
-        course = baker.make(Course, description='This is a test description', base_course=single_base_course,
+    def test_description_max_length(self, current_semester, base_course_instance):
+        course = baker.make(Course, description='This is a test description', base_course=base_course_instance,
                             semester=current_semester)
 
         max_length = course._meta.get_field('description').max_length
 
         assert max_length == 400
 
-    def test_sex_choices(self, current_semester, single_base_course):
-        course = baker.make(Course, sex='M', base_course=single_base_course, semester=current_semester)
+    def test_sex_choices(self, current_semester, base_course_instance):
+        course = baker.make(Course, sex='M', base_course=base_course_instance, semester=current_semester)
 
         assert course._meta.get_field('sex').choices == (('M', 'مرد'), ('F', 'زن'), ('B', 'مختلط'))
 
-    def test_presentation_type_choices(self, current_semester, single_base_course):
-        course = baker.make(Course, presentation_type='N', base_course=single_base_course, semester=current_semester)
+    def test_presentation_type_choices(self, current_semester, base_course_instance):
+        course = baker.make(Course, presentation_type='N', base_course=base_course_instance, semester=current_semester)
 
         assert course._meta.get_field('presentation_type').choices == (('N', 'عادی'), ('E', 'الکترونیکی'),
                                                                        ('B', 'عادی-نوری'), ('A', 'آرشیو'))
 
-    def test_base_course_relation_is_cascade(self, current_semester, single_base_course):
-        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
+    def test_base_course_relation_is_cascade(self, current_semester, base_course_instance):
+        course = baker.make(Course, base_course=base_course_instance, semester=current_semester)
 
         assert course._meta.get_field('base_course').remote_field.on_delete == models.CASCADE
 
-    def test_teachers_relation(self, current_semester, single_base_course):
+    def test_teachers_relation(self, current_semester, base_course_instance):
         teacher1 = baker.make(Teacher, name='Teacher 1')
         teacher2 = baker.make(Teacher, name='Teacher 2')
-        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
+        course = baker.make(Course, base_course=base_course_instance, semester=current_semester)
         course.teachers.add(teacher1, teacher2)
 
         assert course.teachers.count() == 2
 
-    def test_students_relation(self, current_semester, single_base_course):
-        course = baker.make(Course, semester=current_semester, base_course=single_base_course)
+    def test_students_relation(self, current_semester, base_course_instance):
+        course = baker.make(Course, semester=current_semester, base_course=base_course_instance)
         user1 = baker.make(settings.AUTH_USER_MODEL)
         user2 = baker.make(settings.AUTH_USER_MODEL)
         course.students.add(user1, user2)
 
         assert course.students.count() == 2
 
-    def test_semester_relation_is_cascade(self, current_semester, single_base_course):
+    def test_semester_relation_is_cascade(self, current_semester, base_course_instance):
         semester = baker.make(Semester, year=4021)
-        course = baker.make(Course, semester=semester, base_course=single_base_course)
+        course = baker.make(Course, semester=semester, base_course=base_course_instance)
 
         assert course._meta.get_field('semester').remote_field.on_delete == models.CASCADE
 
-    def test_class_gp_and_base_course_unique_together(self, current_semester, single_base_course):
-        baker.make(Course, class_gp='01', base_course=single_base_course, semester=current_semester)
+    def test_class_gp_and_base_course_unique_together(self, current_semester, base_course_instance):
+        baker.make(Course, class_gp='01', base_course=base_course_instance, semester=current_semester)
         with pytest.raises(IntegrityError):
-            baker.make(Course, class_gp='01', base_course=single_base_course, semester=current_semester)
+            baker.make(Course, class_gp='01', base_course=base_course_instance, semester=current_semester)
 
-    def test_capacity_cannot_be_negative(self, current_semester, single_base_course):
+    def test_capacity_cannot_be_negative(self, current_semester, base_course_instance):
         with pytest.raises(ValidationError):
-            baker.make(Course, capacity=-1, semester=current_semester, base_course=single_base_course).full_clean()
+            baker.make(Course, capacity=-1, semester=current_semester, base_course=base_course_instance).full_clean()
 
-    def test_registered_count_cannot_be_negative(self, current_semester, single_base_course):
+    def test_registered_count_cannot_be_negative(self, current_semester, base_course_instance):
         with pytest.raises(ValidationError):
             baker.make(Course, registered_count=-1, semester=current_semester,
-                       base_course=single_base_course).full_clean()
+                       base_course=base_course_instance).full_clean()
 
-    def test_waiting_count_cannot_be_negative(self, current_semester, single_base_course):
+    def test_waiting_count_cannot_be_negative(self, current_semester, base_course_instance):
         with pytest.raises(ValidationError):
-            baker.make(Course, waiting_count=-1, semester=current_semester, base_course=single_base_course).full_clean()
+            baker.make(Course, waiting_count=-1, semester=current_semester,
+                       base_course=base_course_instance).full_clean()
 
 
 class TestAllowedDepartment:
-    def test_department_is_foreign_key(self, single_department, single_base_course, current_semester):
-        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
-        allowed_department = baker.make(AllowedDepartment, department=single_department, course=course)
+    def test_department_is_foreign_key(self, allowed_department_instance):
+        assert allowed_department_instance._meta.get_field('department').get_internal_type() == 'ForeignKey'
 
-        assert allowed_department._meta.get_field('department').get_internal_type() == 'ForeignKey'
+    def test_department_relation_is_cascade(self, allowed_department_instance):
+        assert allowed_department_instance._meta.get_field('department').remote_field.on_delete == models.CASCADE
 
-    def test_department_relation_is_cascade(self, single_department, single_base_course, current_semester):
-        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
-        allowed_department = baker.make(AllowedDepartment, department=single_department, course=course)
+    def test_course_is_foreign_key(self, allowed_department_instance):
+        assert allowed_department_instance._meta.get_field('course').get_internal_type() == 'ForeignKey'
 
-        assert allowed_department._meta.get_field('department').remote_field.on_delete == models.CASCADE
+    def test_course_relation_is_cascade(self, allowed_department_instance):
+        assert allowed_department_instance._meta.get_field('course').remote_field.on_delete == models.CASCADE
 
-    def test_course_is_foreign_key(self, single_department, single_base_course, current_semester):
-        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
-        allowed_department = baker.make(AllowedDepartment, department=single_department, course=course)
-
-        assert allowed_department._meta.get_field('course').get_internal_type() == 'ForeignKey'
-
-    def test_course_relation_is_cascade(self, single_department, single_base_course, current_semester):
-        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
-        allowed_department = baker.make(AllowedDepartment, department=single_department, course=course)
-
-        assert allowed_department._meta.get_field('course').remote_field.on_delete == models.CASCADE
-
-    def test_allowed_department_str(self, single_department, single_base_course, current_semester):
-        course = baker.make(Course, base_course=single_base_course, semester=current_semester)
-        allowed_department = baker.make(AllowedDepartment, department=single_department, course=course)
-
-        assert str(allowed_department) == allowed_department.department.name
+    def test_allowed_department_str(self, allowed_department_instance):
+        assert str(allowed_department_instance) == allowed_department_instance.department.name

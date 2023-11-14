@@ -55,7 +55,7 @@ def teacher_timeline_view_url():
 
 
 @pytest.fixture
-def simple_user():
+def user_instance():
     return baker.make(User)
 
 
@@ -65,13 +65,23 @@ def current_semester():
 
 
 @pytest.fixture
-def single_base_course():
+def base_course_instance():
     return baker.make(BaseCourse, course_number='1234567')
 
 
 @pytest.fixture
-def single_department():
+def course_instance(base_course_instance, current_semester):
+    return baker.make(Course, base_course=base_course_instance, semester=current_semester, class_gp='01')
+
+
+@pytest.fixture
+def department_instance():
     return baker.make(Department, name='Computer Engineering', department_number=12)
+
+
+@pytest.fixture
+def allowed_department_instance(course_instance, department_instance):
+    return baker.make(AllowedDepartment, course=course_instance, department=department_instance)
 
 
 @pytest.fixture

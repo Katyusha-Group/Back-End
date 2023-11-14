@@ -10,10 +10,10 @@ from utils.variables import project_variables
 
 @pytest.mark.django_db
 class TestCourseTimeLine:
-    def test_if_get_request_is_status_200_for_login_user(self, api_client, simple_user, current_semester,
+    def test_if_get_request_is_status_200_for_login_user(self, api_client, user_instance, current_semester,
                                                          base_courses, course_timeline_view_url):
         course = baker.make(Course, base_course=base_courses[0], class_gp='01', semester=current_semester)
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.get(course_timeline_view_url(course.base_course_id))
 
@@ -27,46 +27,46 @@ class TestCourseTimeLine:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_if_put_request_is_status_405(self, api_client, simple_user, current_semester,
+    def test_if_put_request_is_status_405(self, api_client, user_instance, current_semester,
                                           base_courses, course_timeline_view_url):
         course = baker.make(Course, base_course=base_courses[0], class_gp='01', semester=current_semester)
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.put(course_timeline_view_url(course.base_course_id))
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_post_request_is_status_405(self, api_client, simple_user, current_semester,
+    def test_if_post_request_is_status_405(self, api_client, user_instance, current_semester,
                                            base_courses, course_timeline_view_url):
         course = baker.make(Course, base_course=base_courses[0], class_gp='01', semester=current_semester)
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.post(course_timeline_view_url(course.base_course_id))
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_delete_request_is_status_405(self, api_client, simple_user, current_semester,
+    def test_if_delete_request_is_status_405(self, api_client, user_instance, current_semester,
                                              base_courses, course_timeline_view_url):
         course = baker.make(Course, base_course=base_courses[0], class_gp='01', semester=current_semester)
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.delete(course_timeline_view_url(course.base_course_id))
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_patch_request_is_status_405(self, api_client, simple_user, current_semester,
+    def test_if_patch_request_is_status_405(self, api_client, user_instance, current_semester,
                                             base_courses, course_timeline_view_url):
         course = baker.make(Course, base_course=base_courses[0], class_gp='01', semester=current_semester)
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.patch(course_timeline_view_url(course.base_course_id))
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_get_request_has_correct_keys(self, api_client, simple_user,
+    def test_if_get_request_has_correct_keys(self, api_client, user_instance,
                                              courses, course_timeline_view_url):
         first_teacher_name = courses[0].teachers.all()[0].name
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.get(course_timeline_view_url(courses[0].base_course_id))
         assert response.data[0].keys() == {'course_number', 'name', 'data'}
@@ -81,9 +81,9 @@ class TestCourseTimeLine:
             response.data[0]['data'][project_variables.CURRENT_SEMESTER][first_teacher_name]['courses'][0].keys() == {
                 'capacity', 'registered_count', 'complete_course_number'}
 
-    def test_if_get_request_has_correct_values(self, api_client, simple_user,
+    def test_if_get_request_has_correct_values(self, api_client, user_instance,
                                                courses, course_timeline_view_url):
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
         first_teacher_name = courses[0].teachers.all()[0].name
 
         response = api_client.get(course_timeline_view_url(courses[0].base_course_id))
@@ -95,9 +95,9 @@ class TestCourseTimeLine:
         assert response.data[0]['data'][project_variables.CURRENT_SEMESTER][first_teacher_name]['courses'][0][
                    'registered_count'] == courses[0].registered_count
 
-    def test_if_get_request_has_correct_values_for_multiple_teachers(self, api_client, simple_user,
+    def test_if_get_request_has_correct_values_for_multiple_teachers(self, api_client, user_instance,
                                                                      courses, course_timeline_view_url):
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.get(course_timeline_view_url(courses[0].base_course_id))
 
@@ -107,9 +107,9 @@ class TestCourseTimeLine:
             assert course['registered_count'] == courses[0].registered_count
             assert course['capacity'] == courses[0].capacity
 
-    def test_if_get_request_has_correct_length_of_teachers_for_multiple_teachers(self, api_client, simple_user,
+    def test_if_get_request_has_correct_length_of_teachers_for_multiple_teachers(self, api_client, user_instance,
                                                                                  courses, course_timeline_view_url):
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.get(course_timeline_view_url(courses[0].base_course_id))
 
@@ -118,9 +118,9 @@ class TestCourseTimeLine:
         course_teachers = list(set(course_teachers))
         assert len(response.data[0]['data'][project_variables.CURRENT_SEMESTER].keys()) == len(course_teachers)
 
-    def test_if_total_capacity_is_correct(self, api_client, simple_user,
+    def test_if_total_capacity_is_correct(self, api_client, user_instance,
                                           courses, course_timeline_view_url):
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.get(course_timeline_view_url(courses[0].base_course_id))
 
@@ -131,9 +131,9 @@ class TestCourseTimeLine:
                 total_capacity += course['capacity']
             assert total_capacity == current_semester_data[teacher]['total_capacity']
 
-    def test_if_total_registered_count_is_correct(self, api_client, simple_user,
+    def test_if_total_registered_count_is_correct(self, api_client, user_instance,
                                                   courses, course_timeline_view_url):
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.get(course_timeline_view_url(courses[0].base_course_id))
 
@@ -147,8 +147,8 @@ class TestCourseTimeLine:
 
 @pytest.mark.django_db
 class TestTeacherTimeLine:
-    def test_if_get_request_is_status_200(self, api_client, simple_user, teachers, teacher_timeline_view_url):
-        api_client.force_login(simple_user)
+    def test_if_get_request_is_status_200(self, api_client, user_instance, teachers, teacher_timeline_view_url):
+        api_client.force_login(user_instance)
 
         response = api_client.get(teacher_timeline_view_url(teachers[0].id))
 
@@ -160,37 +160,37 @@ class TestTeacherTimeLine:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_if_put_request_is_status_405(self, api_client, simple_user, teachers, teacher_timeline_view_url):
-        api_client.force_login(simple_user)
+    def test_if_put_request_is_status_405(self, api_client, user_instance, teachers, teacher_timeline_view_url):
+        api_client.force_login(user_instance)
 
         response = api_client.put(teacher_timeline_view_url(teachers[0].id))
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_post_request_is_status_405(self, api_client, simple_user, teachers, teacher_timeline_view_url):
-        api_client.force_login(simple_user)
+    def test_if_post_request_is_status_405(self, api_client, user_instance, teachers, teacher_timeline_view_url):
+        api_client.force_login(user_instance)
 
         response = api_client.post(teacher_timeline_view_url(teachers[0].id))
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_delete_request_is_status_405(self, api_client, simple_user, teachers, teacher_timeline_view_url):
-        api_client.force_login(simple_user)
+    def test_if_delete_request_is_status_405(self, api_client, user_instance, teachers, teacher_timeline_view_url):
+        api_client.force_login(user_instance)
 
         response = api_client.delete(teacher_timeline_view_url(teachers[0].id))
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_patch_request_is_status_405(self, api_client, simple_user, teachers, teacher_timeline_view_url):
-        api_client.force_login(simple_user)
+    def test_if_patch_request_is_status_405(self, api_client, user_instance, teachers, teacher_timeline_view_url):
+        api_client.force_login(user_instance)
 
         response = api_client.patch(teacher_timeline_view_url(teachers[0].id))
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_if_get_request_has_correct_keys(self, api_client, simple_user, teachers, courses,
+    def test_if_get_request_has_correct_keys(self, api_client, user_instance, teachers, courses,
                                              teacher_timeline_view_url):
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
         first_teacher_course_names = [course.base_course.name for course in teachers[0].courses.all()]
 
         response = api_client.get(teacher_timeline_view_url(teachers[0].id))
@@ -208,9 +208,9 @@ class TestTeacherTimeLine:
         assert response.data[0]['data'][project_variables.CURRENT_SEMESTER]['courses'][first_teacher_course_names[0]][
                    'detail'][0].keys() == {'capacity', 'registered_count'}
 
-    def test_if_get_request_has_correct_values_single_course_check(self, api_client, simple_user, teachers, courses,
+    def test_if_get_request_has_correct_values_single_course_check(self, api_client, user_instance, teachers, courses,
                                                                    teacher_timeline_view_url):
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
         first_teacher_course_name = teachers[0].courses.all()[0].base_course.name
 
         response = api_client.get(teacher_timeline_view_url(teachers[0].id))
@@ -220,10 +220,10 @@ class TestTeacherTimeLine:
         assert response.data[0]['data'][project_variables.CURRENT_SEMESTER]['courses'][first_teacher_course_name][
                    'detail'][0]['registered_count'] == courses[0].registered_count
 
-    def test_if_get_request_has_correct_values_for_multiple_courses(self, api_client, simple_user, teachers, courses,
+    def test_if_get_request_has_correct_values_for_multiple_courses(self, api_client, user_instance, teachers, courses,
                                                                     teacher_timeline_view_url):
         first_teacher_course = [course for course in teachers[0].courses.all()]
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.get(teacher_timeline_view_url(teachers[0].id))
 
@@ -235,10 +235,10 @@ class TestTeacherTimeLine:
             assert response.data[0]['data'][project_variables.CURRENT_SEMESTER]['courses'][response_course][
                        'detail'][0]['registered_count'] == course.registered_count
 
-    def test_if_get_request_has_correct_counts_for_multiple_courses(self, api_client, simple_user, teachers, courses,
+    def test_if_get_request_has_correct_counts_for_multiple_courses(self, api_client, user_instance, teachers, courses,
                                                                     teacher_timeline_view_url):
         first_teacher_course = [course for course in teachers[0].courses.all()]
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
         total = 0
 
         response = api_client.get(teacher_timeline_view_url(teachers[0].id))
@@ -248,9 +248,9 @@ class TestTeacherTimeLine:
 
         assert total == len(first_teacher_course)
 
-    def test_if_total_capacity_is_correct(self, api_client, simple_user, teachers, courses,
+    def test_if_total_capacity_is_correct(self, api_client, user_instance, teachers, courses,
                                           teacher_timeline_view_url):
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.get(teacher_timeline_view_url(teachers[0].id))
 
@@ -261,9 +261,9 @@ class TestTeacherTimeLine:
                 total_capacity += d['capacity']
             assert total_capacity == current_semester_data[course]['course_total_capacity']
 
-    def test_if_total_registered_count_is_correct(self, api_client, simple_user, teachers, courses,
+    def test_if_total_registered_count_is_correct(self, api_client, user_instance, teachers, courses,
                                                   teacher_timeline_view_url):
-        api_client.force_login(simple_user)
+        api_client.force_login(user_instance)
 
         response = api_client.get(teacher_timeline_view_url(teachers[0].id))
 
