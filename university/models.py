@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator, RegexValidator, MaxValueValidator
-from django_jalali.db import models as jmodels
 from django.conf import settings
+from jdatetime import jalali
 
 from university import managers
 from utils.variables import project_variables
@@ -158,15 +158,19 @@ class Course(models.Model):
 
 
 class ExamTimePlace(models.Model):
-    objects = managers.jSignalSenderManager()
+    objects = managers.SignalSenderManager()
 
-    date = jmodels.jDateField(verbose_name='تاریخ امتحان', help_text='سال را به فرم yyyy-mm-dd وارد کنید.')
+    date = models.DateField(verbose_name='تاریخ امتحان', help_text='سال را به فرم yyyy-mm-dd وارد کنید.')
     start_time = models.TimeField(verbose_name='زمان شروع')
     end_time = models.TimeField(verbose_name='زمان پایان')
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس', related_name='exam_times')
 
     def __str__(self):
-        return str(self.date) + ' - ' + str(self.start_time) + ' - ' + str(self.end_time)
+        return self.get_persian_date()
+
+    def get_persian_date(self):
+        jd = jalali.GregorianToJalali(self.date.year, self.date.month, self.date.day)
+        return str(jd.jyear) + '-' + str(jd.jmonth) + '-' + str(jd.jday)
 
     class Meta:
         verbose_name = 'تاریخ امتحان'

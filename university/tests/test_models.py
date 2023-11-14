@@ -4,8 +4,7 @@ from model_bakery import baker
 from django.core.exceptions import ValidationError
 
 from core import settings
-from university.models import Department, Semester, CourseStudyingGP, BaseCourse, Teacher, Course, ExamTimePlace, \
-    AllowedDepartment
+from university.models import Department, Semester, CourseStudyingGP, BaseCourse, Teacher, Course
 
 pytestmark = pytest.mark.django_db
 
@@ -120,11 +119,8 @@ class TestBaseCourseModel:
         assert base_course._meta.get_field('total_unit').get_internal_type() == 'FloatField'
 
     def test_total_unit_is_positive(self):
-        # should raise validation error if negative
-        base_course = baker.make(BaseCourse, course_number=1234567, name='Base Course 1', total_unit=3.0)
-
         with pytest.raises(ValidationError):
-            base_course.total_unit = -1.5
+            base_course = baker.make(BaseCourse, course_number=1234567, name='Base Course 1', total_unit=-3.0)
             base_course.full_clean()
 
     def test_practical_unit_is_float_field(self):
@@ -133,11 +129,8 @@ class TestBaseCourseModel:
         assert base_course._meta.get_field('practical_unit').get_internal_type() == 'FloatField'
 
     def test_practical_unit_is_positive(self):
-        # should raise validation error if negative
-        base_course = baker.make(BaseCourse, course_number=1234567, name='Base Course 1', practical_unit=-1.5)
-
         with pytest.raises(ValidationError):
-            base_course.practical_unit = -1.5
+            base_course = baker.make(BaseCourse, course_number=1234567, name='Base Course 1', practical_unit=1.5)
             base_course.full_clean()
 
     def test_department_relation_is_cascade(self):
