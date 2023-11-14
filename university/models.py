@@ -4,6 +4,7 @@ from django.conf import settings
 from jdatetime import jalali
 
 from university import managers
+from utils.model_functions.date import get_persian_date
 from utils.variables import project_variables
 from utils.variables.project_variables import day_mapper
 
@@ -169,8 +170,7 @@ class ExamTimePlace(models.Model):
         return self.get_persian_date()
 
     def get_persian_date(self):
-        jd = jalali.GregorianToJalali(self.date.year, self.date.month, self.date.day)
-        return str(jd.jyear) + '-' + str(jd.jmonth) + '-' + str(jd.jday)
+        return get_persian_date(self.date)
 
     class Meta:
         verbose_name = 'تاریخ امتحان'
