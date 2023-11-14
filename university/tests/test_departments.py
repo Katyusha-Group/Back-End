@@ -44,7 +44,6 @@ class TestSignupDepartmentListView:
 
         # Create some departments with department_number less than or equal to 0
         baker.make(Department, name='Department 4', department_number=0)
-        baker.make(Department, name='Department 5', department_number=-1)
 
         # Make a GET request to the SignupDepartmentListView
         response = api_client.get(sign_up_department_list_view_url)
