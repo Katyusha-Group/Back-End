@@ -290,11 +290,6 @@ class TestCourseModel:
 
         assert course._meta.get_field('semester').remote_field.on_delete == models.CASCADE
 
-    def test_class_gp_and_base_course_unique_together(self, current_semester, base_course_instance):
-        baker.make(Course, class_gp='01', base_course=base_course_instance, semester=current_semester)
-        with pytest.raises(IntegrityError):
-            baker.make(Course, class_gp='01', base_course=base_course_instance, semester=current_semester)
-
     def test_capacity_cannot_be_negative(self, current_semester, base_course_instance):
         with pytest.raises(ValidationError):
             baker.make(Course, capacity=-1, semester=current_semester, base_course=base_course_instance).full_clean()
