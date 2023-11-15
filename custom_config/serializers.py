@@ -145,7 +145,7 @@ class OrderSerializer(serializers.ModelSerializer):
     placed_at = serializers.SerializerMethodField(read_only=True)
 
     def get_placed_at(self, obj: Order):
-        return obj.get_persian_date()
+        return obj.jalali_placed_at
 
     def get_total_number(self, obj: Cart):
         return obj.items.count()
@@ -409,7 +409,7 @@ class WebNotificationSerializer(serializers.ModelSerializer):
     is_read = serializers.BooleanField()
 
     def get_applied_at(self, web_notification: WebNotification):
-        return web_notification.get_persian_date()
+        return web_notification.jalali_applied_at
 
     class Meta:
         model = WebNotification

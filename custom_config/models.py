@@ -144,7 +144,8 @@ class Order(models.Model):
             total += float(item.unit_price)
         return total * project_variables.TAX + total
 
-    def get_persian_date(self):
+    @property
+    def jalali_placed_at(self):
         return get_persian_date(self.placed_at)
 
     class Meta:
@@ -196,7 +197,8 @@ class WebNotification(models.Model):
     def __str__(self):
         return str(self.id) + ' : ' + self.title
 
-    def get_persian_date(self):
+    @property
+    def jalali_applied_at(self):
         return get_persian_date(self.applied_at)
 
     class Meta:
