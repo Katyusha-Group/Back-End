@@ -112,6 +112,10 @@ class Teacher(models.Model):
     def get_default_profile_image(self):
         return self.teacher_image
 
+    @property
+    def image_full_path(self):
+        return project_variables.DOMAIN + settings.MEDIA_URL + str(self.teacher_image)
+
     def __str__(self):
         return self.name
 
