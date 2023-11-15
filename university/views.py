@@ -243,7 +243,7 @@ class CourseGroupListView(ModelViewSet):
 class BaseAllCourseDepartment(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, department_number, *args, **kwargs):
+    def get(self, request, department_number, only_my_department, *args, **kwargs):
         all_courses = (
             Course.objects
             .filter(base_course__department_id=department_number, semester=project_variables.CURRENT_SEMESTER)
@@ -251,7 +251,8 @@ class BaseAllCourseDepartment(APIView):
             .prefetch_related('course_times', 'exam_times', 'students', 'teachers')
             .all()
         )
-        validate_queryset_existence(all_courses, 'No course with this department_number in database.')
+        if not only_my_department:
+            validate_queryset_existence(all_courses, 'No course with this department_number in database.')
         return Response(
             AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
 
@@ -259,13 +260,15 @@ class BaseAllCourseDepartment(APIView):
 class AllCourseDepartmentList(BaseAllCourseDepartment):
     # Retrieves courses of user's department
     def get(self, request, *args, **kwargs):
-        return super(AllCourseDepartmentList, self).get(request, request.user.department_id, *args, **kwargs)
+        return super(AllCourseDepartmentList, self).get(request, request.user.department_id, *args, **kwargs,
+                                                        only_my_department=True)
 
 
 class AllCourseDepartmentRetrieve(BaseAllCourseDepartment):
     # Retrieves courses of specified department
     def get(self, request, department_number, *args, **kwargs):
-        return super(AllCourseDepartmentRetrieve, self).get(request, department_number, *args, **kwargs)
+        return super(AllCourseDepartmentRetrieve, self).get(request, department_number, *args, **kwargs,
+                                                            only_my_department=True)
 
 
 class TeacherViewSet(ModelViewSet):
