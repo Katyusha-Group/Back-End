@@ -6,12 +6,10 @@ from model_bakery import baker
 from rest_framework.test import APIClient
 import pytest
 
-from university.models import Semester, BaseCourse, Teacher, Course, Department, AllowedDepartment
+from university.models import Semester, BaseCourse, Teacher, Course, Department, AllowedDepartment, CourseTimePlace, \
+    ExamTimePlace
 from utils.variables import project_variables
-from utils.variables.project_variables import DOMAIN
 
-
-# URLs:
 
 @pytest.fixture
 def api_client():
@@ -56,7 +54,7 @@ def teacher_timeline_view_url():
 
 @pytest.fixture
 def user_instance():
-    return baker.make(User)
+    return baker.make(User, gender='M')
 
 
 @pytest.fixture
@@ -90,24 +88,38 @@ def teachers():
 
 
 @pytest.fixture
-def base_courses():
+def departments():
+    return baker.make(Department, _quantity=5)
+
+
+@pytest.fixture
+def base_courses(departments):
     base_courses_list = []
     for i in range(1, 6):
-        base_courses_list.append(baker.make(BaseCourse, course_number=1211011 + i))
+        base_courses_list.append(baker.make(BaseCourse, course_number=1211011 + i, department=departments[i-1]))
     return base_courses_list
 
 
 @pytest.fixture
-def courses(base_courses, teachers, current_semester):
+def courses(base_courses, teachers, current_semester, departments):
     courses_list = []
     for i in range(5):
         for j in range(1, 5):
             course = baker.make(Course,
-                                base_course=base_courses[i], class_gp=f'0{j}',
+                                base_course=base_courses[i],
+                                class_gp=f'0{j}',
                                 semester=current_semester,
                                 capacity=random.randint(1, 100),
                                 registered_count=random.randint(1, 100),
-                                waiting_count=random.randint(1, 100), )
+                                waiting_count=random.randint(1, 100),
+                                sex=random.choice(['M', 'F', 'B']),
+                                )
+            baker.make(CourseTimePlace, course=course, _quantity=2)
+            baker.make(ExamTimePlace, course=course, _quantity=1)
+            department = random.choice(departments)
+            if department != base_courses[i].department:
+                baker.make(AllowedDepartment, course=course, department=department)
+            baker.make(AllowedDepartment, course=course, department=base_courses[i].department)
             course.teachers.add(*teachers[i:j+1])
             courses_list.append(course)
     return courses_list
