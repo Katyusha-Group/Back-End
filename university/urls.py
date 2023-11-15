@@ -24,7 +24,7 @@ urlpatterns = [
 
     # courses:
     path('coursegroups/<base_course_pk>', views.CourseGroupListView.as_view({'get': 'list'}), name='course-groups'),
-    path('allcoursesdepartment/', views.AllCourseDepartmentList.as_view(), name='all-course-department'),
+    path('allcoursesdepartment/', views.AllCourseDepartmentList.as_view(), name='all-departments-courses'),
     path('allcourses-based-department/<int:department_number>', views.AllCourseDepartmentRetrieve.as_view(),
          name='all-course-department_retrieve'),
 ]
