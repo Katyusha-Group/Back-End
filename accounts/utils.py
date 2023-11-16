@@ -1,5 +1,7 @@
 import threading
 
+from accounts.models import User
+
 
 class EmailThread(threading.Thread):
     def __init__(self, email_handler ,subject,recipient_list, verification_token, registration_tries, show_text):
@@ -24,8 +26,9 @@ class EmailThread(threading.Thread):
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
-def get_access_token_for_user(user):
-    refresh = RefreshToken.for_user(user)
-    access_token = str(refresh.access_token)
-    return access_token
-
+def generate_tokens(user_id):
+    refresh = RefreshToken.for_user(User.objects.get(id=user_id))
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }

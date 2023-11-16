@@ -128,25 +128,28 @@ class LoginView(TokenObtainPairView):
 
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]  # permission_classes = []
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         refresh_token = request.COOKIES.get('token')
+
         if refresh_token:
-            token = Token.objects.get(refresh_token=refresh_token)
-            token.blacklist()
-            response = Response()
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception as e:
+                return Response(data={'detail': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+
+            response = Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
             response.delete_cookie('refresh_token')
             response.delete_cookie('access_token')
+            return response
+
+        if request.user.is_authenticated:
+            logout(request)
             return Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
-        else:
-            if request.user.is_authenticated:
-                logout(request)
-                return Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
-            else:
-                return Response(data={'detail': 'Not logged in, so cannot log out'}, status=status.HTTP_400_BAD_REQUEST)
 
-
+        return Response(data={'detail': 'Not logged in, so cannot log out'}, status=status.HTTP_400_BAD_REQUEST)
 class ChangePasswordView(generics.GenericAPIView):
     model = User
     permission_classes = [IsAuthenticated]
