@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
     department = serializers.CharField(source='department.name')
     class Meta:
         model = User
-        fields = ["username", "gender", "department", "email", "is_email_verified", "has_verification_tries_reset", "verification_tries_count" ]
+        fields = ["username", "gender", "department", "email", "is_email_verified", "has_verification_tries_reset", "verification_tries_count", "id" ]
 
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
@@ -104,30 +104,46 @@ class LoginSerializer(serializers.Serializer):
         read_only=True
     )
 
+    def get_lookup_field(self, value):
+        return 'email__iexact' if '@' in value else 'username__iexact'
+
     def validate(self, attrs):
         email_or_username = attrs.get('email_or_username', None)
         password = attrs.get('password', None)
 
         if email_or_username and password:
-            email_or_username = str.lower(email_or_username)
-            user = User.objects.filter(email__iexact=email_or_username)
-            user = authenticate(request=self.context.get('request'),
-                                username=email_or_username, password=password)
+            lookup_field = self.get_lookup_field(email_or_username)
+            email_or_username = self.validate_email_or_username(email_or_username)
+            user = User.objects.get(**{lookup_field: email_or_username})
 
-            # The authenticate call simply returns None for is_active=False
-            # users. (Assuming the default ModelBackend authentication
-            # backend.)
-            if not user:
-                msg = _('Does not exist or wrong password.')
+            if not user.check_password(password):
+                msg = _('Incorrect password.')
                 raise serializers.ValidationError(msg, code='authorization')
+
+
             if not user.is_email_verified:
-                raise serializers.ValidationError({"detail": "user is not verified."})
+                raise serializers.ValidationError({"detail": "User is not verified."})
+
+
+            attrs['user'] = user
         else:
-            msg = _('Must include "username" and "password".')
+            msg = _('Must include "email_or_username" and "password".')
             raise serializers.ValidationError(msg, code='authorization')
 
-        attrs['user'] = user
         return attrs
+    def validate_email_or_username(self, value):
+        if '@' in value:
+            lookup_field = 'email__iexact'
+            msg = _('Email does not exist.')
+        else:
+            lookup_field = 'username__iexact'
+            msg = _('Username does not exist.')
+
+        user_exists = User.objects.filter(**{lookup_field: value}).exists()
+        if not user_exists:
+            raise serializers.ValidationError(msg)
+
+        return str.lower(value)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

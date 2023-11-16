@@ -30,7 +30,7 @@ from .serializers import ActivationResendSerializer
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 
-from .utils import get_access_token_for_user, EmailThread
+from .utils import  EmailThread, generate_tokens
 
 
 class SignUpView(GenericAPIView):
@@ -77,7 +77,7 @@ class SignUpView(GenericAPIView):
         profile.name = validated_data['name']
 
         # utils.get_access_token_for_user(user)
-        token = get_access_token_for_user(user)
+        token = generate_tokens(user.id)["access"]
 
         subject = 'تایید ایمیل ثبت نام'
         show_text = user.has_verification_tries_reset or user.verification_tries_count > 1
@@ -111,40 +111,20 @@ class LoginView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # user = serializer.validated_data['user']
-        response_data = serializer.save()
+        user = serializer.validated_data['user']
+        if user is not None:
+            tokens = generate_tokens(user.id)
 
-        # # token, created = Token.objects.get_or_create(user=user)
-        # token = self.generate_jwt_token(user.id)
-        # login(request, user)
-        # return Response({'token': token,
-        #                  'user_id': user.id,
-        #                  'username': user.username,
-        #                  'email': user.email,
-        #                  })
-        return Response(response_data)
 
-    @staticmethod
-    def generate_jwt_token(user_id):
-        # Define the expiration time of the token
-        exp_time = datetime.utcnow() + timedelta(days=7)
+            login(request, user)
 
-        # Define the payload of the token
-        # payload = {
-        #     'user_id': user_id,
-        #     'exp': exp_time
-        # }
+            return Response({
+                'refresh': tokens['refresh'],
+                'access': tokens['access'],
+                'user' : UserSerializer(user).data,
+            })
 
-        # Generate the token using the JWT package and your Django SECRET_KEY setting
-        # token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-        refresh = RefreshToken.for_user(User.objects.get(id=user_id))
-        token = {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
-
-        # Return the token as a string
-        return token
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutView(APIView):
@@ -261,7 +241,7 @@ class ActivationResend(generics.GenericAPIView):
             user.last_verification_sent = datetime.now()
             user.save()
             show_text = user.has_verification_tries_reset or user.verification_tries_count > 1
-            token = get_access_token_for_user(user)
+            token = generate_tokens(user)["access"]
             email_handler.send_verification_message(subject=subject,
                                                     recipient_list=[user.email],
                                                     verification_token=verification_code,
