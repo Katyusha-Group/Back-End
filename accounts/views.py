@@ -430,19 +430,19 @@ class CodeVerificationView(APIView):
     #
 
 
-class ChangePasswordlogView(APIView):
+class ChangePasswordlogView(GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = request.user
-            current_password = serializer.validated_data['old_password']
+            old_password = serializer.validated_data['old_password']
             new_password = serializer.validated_data['new_password']
 
             # Check if the current password matches the user's actual password
-            if not user.check_password(current_password):
+            if not user.check_password(old_password):
                 return Response({'error': 'Invalid current password.'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Change the user's password

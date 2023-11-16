@@ -15,7 +15,7 @@ urlpatterns = [
       path('signup/', views.SignUpView.as_view(), name='signup'),
       path('login/', views.LoginView.as_view(), name='login'),
       path('logout/', views.LogoutView.as_view(), name='logout'),
-      # # path('change-password/', views.ActivationResend.as_view(), name='change-password'),
+      # path('change-password/', views.ActivationResend.as_view(), name='change-password'),
       # # path('confirm-email/', views.ConfirmEmailView.as_view(), name='confirm-email'),
       path('activation-confirm/<str:token>/', views.ActivationConfirmView.as_view(), name='activation-confirm'),
       # path('activation-resend/', views.ActivationResend.as_view(), name='activation-resend'),
@@ -25,6 +25,6 @@ urlpatterns = [
       # path('reset-password/', views.ForgotPasswordView.as_view()),
       # path('change-password/<str:token>/', views.PasswordChangeAPIView.as_view()),
       # path('code_verification_view/<str:token>/', views.CodeVerificationView.as_view()),
-      # path('changepassword/', views.ChangePasswordlogView.as_view()),
+      path('changepassword/', views.ChangePasswordlogView.as_view()),
       path('', include('django.contrib.auth.urls')),
 ]

@@ -61,7 +61,8 @@ class SignUpSerializer(serializers.ModelSerializer):
             if existing_user.email.lower() == email.lower():
                 return data
             else:
-                raise serializers.ValidationError("Email does not match the existing username.")
+                # If the username exists and the email doesn't match, raise an error
+                raise serializers.ValidationError("This username is already taken.")
         else:
             return data
     def validate_password2(self, value):
@@ -147,9 +148,9 @@ class LoginSerializer(serializers.Serializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True)
-    new_password1 = serializers.CharField(required=True)
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True)
+    new_password1 = serializers.CharField(required=True, write_only=True)
 
     def validate(self, attrs):
         if attrs['new_password'] != attrs['new_password1']:
@@ -162,7 +163,7 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 'new_password': list(e.messages)
             })
-        return super().validate(attrs)
+        return attrs
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
