@@ -142,6 +142,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     total_number = serializers.SerializerMethodField(read_only=True)
+    placed_at = serializers.SerializerMethodField(read_only=True)
+
+    def get_placed_at(self, obj: Order):
+        return obj.jalali_placed_at
 
     def get_total_number(self, obj: Cart):
         return obj.items.count()
@@ -401,8 +405,11 @@ class WebNotificationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     title = serializers.CharField(read_only=True)
     text = serializers.CharField(read_only=True)
-    applied_at = serializers.DateTimeField(read_only=True)
+    applied_at = serializers.SerializerMethodField(read_only=True)
     is_read = serializers.BooleanField()
+
+    def get_applied_at(self, web_notification: WebNotification):
+        return web_notification.jalali_applied_at
 
     class Meta:
         model = WebNotification

@@ -1,9 +1,10 @@
 from django.db import models
 from django.core.validators import MinValueValidator, RegexValidator, MaxValueValidator
-from django_jalali.db import models as jmodels
 from django.conf import settings
+from jdatetime import jalali
 
 from university import managers
+from utils.model_functions.date import get_persian_date
 from utils.variables import project_variables
 from utils.variables.project_variables import day_mapper
 
@@ -111,6 +112,10 @@ class Teacher(models.Model):
     def get_default_profile_image(self):
         return self.teacher_image
 
+    @property
+    def image_full_path(self):
+        return project_variables.DOMAIN + settings.MEDIA_URL + str(self.teacher_image)
+
     def __str__(self):
         return self.name
 
@@ -151,21 +156,43 @@ class Course(models.Model):
     def __str__(self):
         return str(self.base_course.course_number) + '_' + str(self.class_gp)
 
+    @property
+    def complete_course_number(self):
+        return str(self.base_course.course_number) + '_' + str(self.class_gp)
+
+    @property
+    def color_intensity_percentage(self):
+        """
+        Color intensity percentage = ((Remaining capacity - Number of people on the waiting list) / (Total capacity + Number of people on the waiting list + (1.2 * Number of people who want to take the course))) * 100
+        """
+        if self.capacity == 0:
+            return 100
+
+        color_intensity_percentage = (((self.capacity - self.registered_count) * 100) / (self.capacity))
+
+        if color_intensity_percentage <= 0:
+            return 0
+        return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
+
     class Meta:
         verbose_name = 'درس'
         verbose_name_plural = 'درس ها'
 
 
 class ExamTimePlace(models.Model):
-    objects = managers.jSignalSenderManager()
+    objects = managers.SignalSenderManager()
 
-    date = jmodels.jDateField(verbose_name='تاریخ امتحان', help_text='سال را به فرم yyyy-mm-dd وارد کنید.')
+    date = models.DateField(verbose_name='تاریخ امتحان', help_text='سال را به فرم yyyy-mm-dd وارد کنید.')
     start_time = models.TimeField(verbose_name='زمان شروع')
     end_time = models.TimeField(verbose_name='زمان پایان')
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس', related_name='exam_times')
 
     def __str__(self):
-        return str(self.date) + ' - ' + str(self.start_time) + ' - ' + str(self.end_time)
+        return self.jalali_date
+
+    @property
+    def jalali_date(self):
+        return get_persian_date(self.date)
 
     class Meta:
         verbose_name = 'تاریخ امتحان'

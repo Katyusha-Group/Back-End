@@ -198,6 +198,7 @@ class TeachersTimeLineListAPIView(ListAPIView):
 
 
 class CourseGroupListView(ModelViewSet):
+    http_method_names = ['get', 'put', 'head', 'options']
     serializer_class = CourseGroupSerializer
     permission_classes = [IsAuthenticated]
 
@@ -219,13 +220,6 @@ class CourseGroupListView(ModelViewSet):
                 F('capacity') - F('registered_count'),
                 output_field=IntegerField()
             ))
-            .annotate(student_count=Count('students'))
-            .annotate(
-                color_intensity_percentage_first=ExpressionWrapper(
-                    (((F('capacity') - F('registered_count') - F('waiting_count')) * 100) / (
-                            F('capacity') + F('waiting_count') + (1.2 * F('student_count')))),
-                    output_field=FloatField())
-            )
             .annotate(
                 capacity_is_less_zero=Case(
                     When(empty_capacity__lte=0, then=Value(True)),
@@ -233,25 +227,28 @@ class CourseGroupListView(ModelViewSet):
                     output_field=BooleanField()
                 )
             )
-            .order_by('capacity_is_less_zero', 'empty_capacity', 'color_intensity_percentage_first')
             .all()
         )
         validate_queryset_existence(courses, 'No course with this course_number in database.')
-        return courses
+        return sorted(courses, key=lambda x: (
+            x.capacity_is_less_zero, x.empty_capacity, x.color_intensity_percentage
+        ))
 
 
 class BaseAllCourseDepartment(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, department_number, *args, **kwargs):
+    def get(self, request, department_number, only_my_department, *args, **kwargs):
         all_courses = (
             Course.objects
-            .filter(base_course__department_id=department_number, semester=project_variables.CURRENT_SEMESTER)
+            .filter(base_course__department_id=department_number, semester=project_variables.CURRENT_SEMESTER,
+                    sex__in=[self.request.user.gender, 'B'])
             .select_related('base_course')
             .prefetch_related('course_times', 'exam_times', 'students', 'teachers')
             .all()
         )
-        validate_queryset_existence(all_courses, 'No course with this department_number in database.')
+        if not only_my_department:
+            validate_queryset_existence(all_courses, 'No course with this department_number in database.')
         return Response(
             AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
 
@@ -259,13 +256,15 @@ class BaseAllCourseDepartment(APIView):
 class AllCourseDepartmentList(BaseAllCourseDepartment):
     # Retrieves courses of user's department
     def get(self, request, *args, **kwargs):
-        return super(AllCourseDepartmentList, self).get(request, request.user.department_id, *args, **kwargs)
+        return super(AllCourseDepartmentList, self).get(request, request.user.department_id, *args, **kwargs,
+                                                        only_my_department=True)
 
 
 class AllCourseDepartmentRetrieve(BaseAllCourseDepartment):
     # Retrieves courses of specified department
     def get(self, request, department_number, *args, **kwargs):
-        return super(AllCourseDepartmentRetrieve, self).get(request, department_number, *args, **kwargs)
+        return super(AllCourseDepartmentRetrieve, self).get(request, department_number, *args, **kwargs,
+                                                            only_my_department=False)
 
 
 class TeacherViewSet(ModelViewSet):

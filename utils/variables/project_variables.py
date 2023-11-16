@@ -188,7 +188,7 @@ course_field_mapper_en_to_fa_notification = {
     'presentation_type': PRESENTATION_TYPE,
     'guest_able': GUEST_ABLE,
     'description': DESCRIPTION,
-    'allowed_department': ALLOWED_DEPARTMENTS,
+    'allowed_departments': ALLOWED_DEPARTMENTS,
     'exam_time_place': EXAM_TIME_PLACE_NOTIF,
     'course_time_place': COURSE_TIME_PLACE,
 }

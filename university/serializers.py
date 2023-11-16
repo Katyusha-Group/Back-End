@@ -71,7 +71,7 @@ class ShoppingCourseSerializer(serializers.ModelSerializer):
     teachers = SimpleTeacherSerializer(read_only=True, many=True)
 
     def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+        return obj.complete_course_number
 
     class Meta:
         model = Course
@@ -82,6 +82,10 @@ class ShoppingCourseSerializer(serializers.ModelSerializer):
 class SimpleExamTimePlaceSerializer(serializers.ModelSerializer):
     exam_start_time = serializers.CharField(source='start_time')
     exam_end_time = serializers.CharField(source='end_time')
+    date = serializers.SerializerMethodField(read_only=True)
+
+    def get_date(self, obj: ExamTimePlace):
+        return obj.jalali_date
 
     class Meta:
         model = ExamTimePlace
@@ -122,7 +126,7 @@ class SimpleCourseSerializer(serializers.ModelSerializer):
     complete_course_number = serializers.SerializerMethodField(read_only=True)
 
     def get_complete_course_number(self, obj: Course):
-        return str(obj.base_course.course_number) + '_' + str(obj.class_gp)
+        return obj.complete_course_number
 
     class Meta:
         model = Course
@@ -150,7 +154,7 @@ class CourseSerializer(serializers.ModelSerializer):
         return model_based_functions.get_is_allowed(obj, self.context['user'])
 
     def get_complete_course_number(self, obj: Course):
-        return model_based_functions.get_complete_course_number(obj)
+        return obj.complete_course_number
 
     def get_course_times(self, obj: Course):
         return SimpleCourseTimePlaceSerializer(obj.course_times.all().order_by('day'), many=True, read_only=True).data
@@ -197,9 +201,13 @@ class ModifyMyCourseSerializer(serializers.Serializer):
 
 class CourseExamTimeSerializer(serializers.ModelSerializer):
     complete_course_number = serializers.SerializerMethodField(read_only=True)
+    date = serializers.SerializerMethodField(read_only=True)
 
     def get_complete_course_number(self, obj: ExamTimePlace):
-        return model_based_functions.get_complete_course_number(obj.course)
+        return obj.course.complete_course_number
+
+    def get_date(self, obj: ExamTimePlace):
+        return obj.jalali_date
 
     class Meta:
         model = ExamTimePlace
@@ -281,8 +289,10 @@ class BaseCourseTimeLineSerializer(serializers.ModelSerializer):
             for teacher in data[semester]:
                 courses = data[semester][teacher]['courses']
                 data[semester][teacher]['total_capacity'] = sum(course['capacity'] for course in courses)
-                data[semester][teacher]['total_registered_count'] = sum(course['registered_count'] for course in courses)
-                data[semester][teacher]['popularity'] = int(data[semester][teacher]['total_registered_count'] / data[semester][teacher]['total_capacity'] * 100)
+                data[semester][teacher]['total_registered_count'] = sum(
+                    course['registered_count'] for course in courses)
+                data[semester][teacher]['popularity'] = int(
+                    data[semester][teacher]['total_registered_count'] / data[semester][teacher]['total_capacity'] * 100)
                 data[semester][teacher]['total_classes'] = len(courses)
         representation['data'] = data
         return representation
@@ -309,9 +319,13 @@ class TeacherTimeLineSerializer(serializers.ModelSerializer):
         for semester in data:
             for course_name in data[semester]['courses']:
                 courses = data[semester]['courses'][course_name]['detail']
-                data[semester]['courses'][course_name]['course_total_capacity'] = sum(course['capacity'] for course in courses)
-                data[semester]['courses'][course_name]['course_total_registered_count'] = sum(course['registered_count'] for course in courses)
-                data[semester]['courses'][course_name]['course_popularity'] = int(data[semester]['courses'][course_name]['course_total_registered_count'] / data[semester]['courses'][course_name]['course_total_capacity'] * 100)
+                data[semester]['courses'][course_name]['course_total_capacity'] = sum(
+                    course['capacity'] for course in courses)
+                data[semester]['courses'][course_name]['course_total_registered_count'] = sum(
+                    course['registered_count'] for course in courses)
+                data[semester]['courses'][course_name]['course_popularity'] = int(
+                    data[semester]['courses'][course_name]['course_total_registered_count'] /
+                    data[semester]['courses'][course_name]['course_total_capacity'] * 100)
                 data[semester]['courses'][course_name]['course_total_classes'] = len(courses)
         representation['data'] = data
         return representation
@@ -349,10 +363,10 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
         return model_based_functions.get_is_allowed(obj, self.context['user'])
 
     def get_color_intensity_percentage(self, obj: Course):
-        return model_based_functions.get_color_intensity_percentage(obj)
+        return obj.color_intensity_percentage
 
     def get_complete_course_number(self, obj: Course):
-        return model_based_functions.get_complete_course_number(obj)
+        return obj.complete_course_number
 
     class Meta:
         model = Course
@@ -365,8 +379,8 @@ class AllCourseDepartmentSerializer(serializers.ModelSerializer):
 class CourseGroupSerializer(CourseSerializer):
     color_intensity_percentage = serializers.SerializerMethodField(read_only=True)
 
-    def get_color_intensity_percentage(self, obj):
-        return model_based_functions.get_color_intensity_percentage(obj)
+    def get_color_intensity_percentage(self, obj: Course):
+        return obj.color_intensity_percentage
 
     class Meta:
         model = Course

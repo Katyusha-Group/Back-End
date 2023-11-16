@@ -4,9 +4,8 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
-from django_jalali.db import models as jmodels
-
 from university.models import Course, Teacher, AllowedDepartment, CourseTimePlace, ExamTimePlace
+from utils.model_functions.date import get_persian_date
 from utils.variables import project_variables
 from utils.transactions.transaction_functions import create_ref_code
 
@@ -126,9 +125,7 @@ class Order(models.Model):
         (PAY_WALLET, 'پرداخت از طریق کیف پول'),
     )
 
-    objects = jmodels.jManager
-
-    placed_at = jmodels.jDateTimeField(auto_now_add=True)
+    placed_at = models.DateTimeField(auto_now_add=True)
     payment_status = models.CharField(
         max_length=1, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_STATUS_PENDING
     )
@@ -146,6 +143,10 @@ class Order(models.Model):
         for item in self.items.all():
             total += float(item.unit_price)
         return total * project_variables.TAX + total
+
+    @property
+    def jalali_placed_at(self):
+        return get_persian_date(self.placed_at)
 
     class Meta:
         verbose_name = 'سفارش'
@@ -186,17 +187,19 @@ class OrderItem(models.Model):
 
 
 class WebNotification(models.Model):
-    objects = jmodels.jManager()
-
     is_read = models.BooleanField(default=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     tracker = models.ForeignKey(ModelTracker, on_delete=models.SET_NULL, related_name='trackers', null=True)
     title = models.CharField(max_length=100)
     text = models.TextField()
-    applied_at = jmodels.jDateTimeField(auto_now_add=True)
+    applied_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return str(self.id) + ' : ' + self.title
+
+    @property
+    def jalali_applied_at(self):
+        return get_persian_date(self.applied_at)
 
     class Meta:
         verbose_name = 'اعلان'
