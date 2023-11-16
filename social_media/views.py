@@ -76,53 +76,53 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def view_profile(self, request, username, *args, **kwargs):
         profile = Profile.objects.filter(username=username).first()
         if not profile:
-            return Response({'detail': 'profile not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': ['profile not found']}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(
             profile,
             context=self.get_serializer_context(),
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['post'], url_path='follow', serializer_class=FollowSerializer, )
-    def follow(self, request):
+    @action(detail=False, methods=['post'], url_path='follow/(?P<username>\w+)', serializer_class=FollowSerializer, )
+    def follow(self, request, username):
         follower = Profile.get_profile_for_user(request.user)
-        following = FollowSerializer(data=request.data)
+        following = FollowSerializer(data={'username': username})
         following.is_valid(raise_exception=True)
         following = following.validated_data['following']
 
         if follower == following:
-            return Response({'detail': 'cannot follow yourself'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': ['cannot follow yourself']}, status=status.HTTP_400_BAD_REQUEST)
 
         follow, created = Follow.objects.get_or_create(follower=follower, following=following)
 
         if created:
-            return Response({'detail': 'followed'}, status=status.HTTP_201_CREATED)
+            return Response({'detail': ['followed']}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'detail': 'already followed'}, status=status.HTTP_200_OK)
+            return Response({'detail': ['already followed']}, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['post'], url_path='unfollow', serializer_class=FollowSerializer, )
-    def unfollow(self, request):
+    @action(detail=False, methods=['post'], url_path='unfollow/(?P<username>\w+)', serializer_class=FollowSerializer, )
+    def unfollow(self, request, username):
         follower = Profile.get_profile_for_user(request.user)
-        following = FollowSerializer(data=request.data)
+        following = FollowSerializer(data={'username': username})
         following.is_valid(raise_exception=True)
         following = following.validated_data['following']
 
         if follower == following:
-            return Response({'detail': 'cannot unfollow yourself'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': ['cannot unfollow yourself']}, status=status.HTTP_400_BAD_REQUEST)
 
         follow = Follow.objects.filter(follower=follower, following=following)
 
         if follow.exists():
             follow.delete()
-            return Response({'detail': 'unfollowed'}, status=status.HTTP_204_NO_CONTENT)
+            return Response({'detail': ['unfollowed']}, status=status.HTTP_204_NO_CONTENT)
         else:
-            return Response({'detail': 'not following'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': ['not following']}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/followers', serializer_class=ProfileSerializer, )
     def view_followers(self, request, username):
         profile = Profile.objects.filter(username=username).first()
         if not profile:
-            return Response({'detail': 'profile not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': ['profile not found']}, status=status.HTTP_404_NOT_FOUND)
         followers = Follow.objects.filter(following=profile).prefetch_related('follower').all()
         followers_profile = [follow.follower for follow in followers]
         serializer = self.get_serializer(
@@ -136,7 +136,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def view_following(self, request, username):
         profile = Profile.objects.filter(username=username).first()
         if not profile:
-            return Response({'detail': 'profile not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': ['profile not found']}, status=status.HTTP_404_NOT_FOUND)
         followings = Follow.objects.filter(follower=profile).prefetch_related('following').all()
         following_profile = [following.following for following in followings]
         serializer = self.get_serializer(
@@ -151,7 +151,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def view_followers_you_follow(self, request, username):
         profile = Profile.objects.filter(username=username).first()
         if not profile:
-            return Response({'detail': 'profile not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': ['profile not found']}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(
             profile,
             context=self.get_serializer_context(),
