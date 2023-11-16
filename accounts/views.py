@@ -180,11 +180,16 @@ class ActivationConfirmView(GenericAPIView):
     permission_classes = []
 
     def post(self, request, token):
-        self.is_valid_token(token)
+        token = self.validate_token(token)
+        if not token:
+            return Response({'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         user = self.get_user_from_token(token)
+        if not user:
+            return Response({'message': 'Invalid user'}, status=status.HTTP_400_BAD_REQUEST)
 
         if request.data.get('verification_code') != user.verification_code:
             return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
@@ -195,34 +200,22 @@ class ActivationConfirmView(GenericAPIView):
 
         return Response({'message': 'Email verified successfully'}, status=status.HTTP_200_OK)
 
-    @staticmethod
-    def get_user_from_token(token):
-        # decode the token
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        # get the user
-        user = User.objects.filter(id=payload['user_id']).first()
-        return user
-
-    @staticmethod
-    def is_valid_token(token):
+    def get_user_from_token(self, token):
         try:
-            # Decode the token with the secret key
-            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-            # If decoding is successful, the token is valid
-            return True
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            return User.objects.filter(id=user_id).first()
         except ExpiredSignatureError:
-            # If the token has expired, it is invalid
-            return False
-        except InvalidSignatureError:
-            # If the signature is invalid, the token is invalid
-            return False
+            return None
 
-    def get(self, request, token):
+    def validate_token(self, token):
         try:
-            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        except:
-            return Response({'message': 'Invalid URL'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'message': 'Please enter code verification'}, status=status.HTTP_200_OK)
+            jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            return token
+        except ExpiredSignatureError:
+            return None
+        except InvalidSignatureError:
+            return None
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
