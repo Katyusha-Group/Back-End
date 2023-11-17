@@ -12,8 +12,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Profile, Follow, Twitte
 from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer, \
-    ProfileUsernameSerializer, TwitteSerializer
+    ProfileUsernameSerializer, TwitteSerializer, LikeSerializer
 from utils.variables import project_variables
+
+from .permissions import IsTwitterOwner
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -191,12 +193,21 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
 
 class TwitteViewSet(viewsets.ModelViewSet):
-    http_method_names = ['get', 'post', 'delete', 'patch', 'head', 'options']
-    serializer_class = TwitteSerializer
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
-    queryset = Twitte.objects.filter(parent=None).order_by('-created_at').all()
     
+    def get_queryset(self):
+        if self.action == 'list':
+            return Twitte.objects.order_by('-created_at').filter(parent=None)
+        return Twitte.objects.order_by('-created_at').all()
+
+    def get_serializer_class(self):
+        if self.action in ['like', 'unlike']:
+            return LikeSerializer
+        elif self.action == 'likes':
+            return ProfileSerializer
+        return TwitteSerializer
 
     def get_serializer_context(self):
         token = self.get_token_for_user(self.request.user)
@@ -206,9 +217,7 @@ class TwitteViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'delete':
-            return [IsAdminUser()]
-        if self.action == 'retrieve':
-            return [IsAdminUser()]
+            return [IsTwitterOwner()]
         return super().get_permissions()
 
     def list(self, request, *args, **kwargs):
@@ -230,6 +239,40 @@ class TwitteViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    @action(detail=False, methods=['get'], url_path='(?P<pk>\d+)/likes', serializer_class=ProfileSerializer, url_name='twittes-view-likes')
+    def likes(self, request, *args, **kwargs):
+        twitte = self.get_object()
+        serializer = self.get_serializer(
+            twitte.likes.all(),
+            context=self.get_serializer_context(),
+            many=True,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'], url_path='(?P<pk>\d+)/children', serializer_class=TwitteSerializer, url_name='twittes-view-children')
+    def children(self, request, *args, **kwargs):
+        twitte = self.get_object()
+        serializer = self.get_serializer(
+            twitte.get_children(),
+            context=self.get_serializer_context(),
+            many=True,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['post'], url_path='(?P<pk>\d+)/like', serializer_class=LikeSerializer, )
+    def like(self, request, *args, **kwargs):
+        profile = Profile.get_profile_for_user(request.user)
+        twitte = self.get_object()
+        twitte.likes.add(profile)
+        return Response({'detail': ['liked']}, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['post'], url_path='(?P<pk>\d+)/unlike', serializer_class=LikeSerializer, )
+    def unlike(self, request, *args, **kwargs):
+        profile = Profile.get_profile_for_user(request.user)
+        twitte = self.get_object()
+        twitte.likes.remove(profile)
+        return Response({'detail': ['unliked']}, status=status.HTTP_200_OK)
         
     @staticmethod
     def get_token_for_user(user):
