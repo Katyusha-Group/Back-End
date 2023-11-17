@@ -130,7 +130,7 @@ class TestBaseCourseModel:
 
     def test_practical_unit_is_positive(self):
         with pytest.raises(ValidationError):
-            base_course = baker.make(BaseCourse, course_number=1234567, name='Base Course 1', practical_unit=1.5)
+            base_course = baker.make(BaseCourse, course_number=1234567, name='Base Course 1', practical_unit=-1.5)
             base_course.full_clean()
 
     def test_department_relation_is_cascade(self):

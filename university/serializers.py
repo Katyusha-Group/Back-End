@@ -82,10 +82,6 @@ class ShoppingCourseSerializer(serializers.ModelSerializer):
 class SimpleExamTimePlaceSerializer(serializers.ModelSerializer):
     exam_start_time = serializers.CharField(source='start_time')
     exam_end_time = serializers.CharField(source='end_time')
-    date = serializers.SerializerMethodField(read_only=True)
-
-    def get_date(self, obj: ExamTimePlace):
-        return obj.jalali_date
 
     class Meta:
         model = ExamTimePlace
@@ -201,13 +197,9 @@ class ModifyMyCourseSerializer(serializers.Serializer):
 
 class CourseExamTimeSerializer(serializers.ModelSerializer):
     complete_course_number = serializers.SerializerMethodField(read_only=True)
-    date = serializers.SerializerMethodField(read_only=True)
 
     def get_complete_course_number(self, obj: ExamTimePlace):
         return obj.course.complete_course_number
-
-    def get_date(self, obj: ExamTimePlace):
-        return obj.jalali_date
 
     class Meta:
         model = ExamTimePlace
