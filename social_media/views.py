@@ -200,6 +200,26 @@ class ProfileViewSet(viewsets.ModelViewSet):
         response = requests.get(domain + url, headers=headers)
         return Response(response.json(), status=response.status_code)
 
+    @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/student-calendar', )
+    def view_student_calendar(self, request, username: str):
+        profile = Profile.objects.filter(username=username).first()
+        if not profile:
+            return Response({'detail': ['profile not found']}, status=status.HTTP_404_NOT_FOUND)
+        if profile.profile_type != Profile.TYPE_USER and profile.profile_type != Profile.TYPE_VERIFIED_USER:
+            return Response({'detail': ['this calendar is for students']}, status=status.HTTP_400_BAD_REQUEST)
+        student = profile.content_object
+        if not student:
+            return Response({'detail': ['student not found']}, status=status.HTTP_404_NOT_FOUND)
+        courses = CourseSerializer(
+            (student.courses.prefetch_related('course_times',
+                                              'teachers',
+                                              'exam_times', )
+             .select_related('base_course__department')
+             .prefetch_related(Prefetch('base_course__department', Department.objects.all())).all()),
+            many=True,
+            context=self.get_serializer_context()
+        )
+        return Response(status=status.HTTP_200_OK, data=courses.data)
 
     def get_queryset(self):
         # This will order queryset first by users' profiles and then by other profiles. Also, if the query string
