@@ -181,7 +181,25 @@ class ProfileViewSet(viewsets.ModelViewSet):
         }
         response = requests.get(domain + url, headers=headers)
         return Response(response.json(), status=response.status_code)
-    
+
+    @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/teacher-timeline', )
+    def view_teacher_timeline(self, request, username: str):
+        profile = Profile.objects.filter(username=username).first()
+        if not profile:
+            return Response({'detail': ['profile not found']}, status=status.HTTP_404_NOT_FOUND)
+        if profile.profile_type != Profile.TYPE_TEACHER:
+            return Response({'detail': ['this timeline is for teachers']}, status=status.HTTP_400_BAD_REQUEST)
+        teacher = profile.content_object
+        if not teacher:
+            return Response({'detail': ['teacher not found']}, status=status.HTTP_404_NOT_FOUND)
+        url = reverse('teacher-timeline', kwargs={'teacher_id': teacher.id})
+        domain = self.get_serializer_context()['request'].build_absolute_uri('/')[:-1]
+        headers = {
+            'Authorization': f'Bearer {self.get_serializer_context()["token"]}'
+        }
+        response = requests.get(domain + url, headers=headers)
+        return Response(response.json(), status=response.status_code)
+
 
     def get_queryset(self):
         # This will order queryset first by users' profiles and then by other profiles. Also, if the query string
