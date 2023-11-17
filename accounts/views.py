@@ -1,35 +1,30 @@
 import random
-import threading
-from datetime import timedelta
-from functools import partial
+from datetime import datetime
 
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.password_validation import validate_password
 from rest_framework import generics, viewsets
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
-from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-
+from social_media.models import Profile
 from utils.email import email_handler
-from .serializers import *
-from .serializers import LoginSerializer
-from accounts.models import User
+from utils.variables import project_variables
+from .serializers import LoginSerializer, SignUpSerializer, UserSerializer, ChangePasswordSerializer, \
+    ActivationConfirmSerializer, CustomTokenObtainPairSerializer, WalletSerializer, ModifyWalletSerializer, \
+    WalletTransactionSerializer, ForgotPasswordSerializer, ResetPasswordSerializer, CodeVerificationSerializer
+from accounts.models import User, Wallet, WalletTransaction
 from django.conf import settings
 from rest_framework.views import APIView
 from django.contrib.auth import login, logout
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.shortcuts import get_object_or_404
-from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .signals import wallet_updated_signal
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.generics import GenericAPIView, CreateAPIView
+from rest_framework.generics import GenericAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import ActivationResendSerializer
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
-
 from .utils import  EmailThread, generate_tokens
 
 

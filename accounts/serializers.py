@@ -1,16 +1,13 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import RegexValidator
 from django.contrib.auth import password_validation
-from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 from django.core import exceptions as exception
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from accounts.models import *
 
-from utils.telegram.telegram_functions import get_bot_url
-
-
+from accounts.models import User, Wallet, WalletTransaction
+from utils.variables import project_variables
 
 
 # user serializer
