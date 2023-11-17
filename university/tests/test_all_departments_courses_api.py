@@ -1,9 +1,6 @@
 import pytest
 from django.urls import reverse
 from rest_framework import status
-from model_bakery import baker
-
-from accounts.models import User
 from utils.variables import project_variables
 
 pytestmark = pytest.mark.django_db
@@ -14,20 +11,10 @@ def all_departments_courses_view_url():
     return reverse('all-departments-courses')
 
 
-@pytest.fixture
-def user_with_department(departments):
-    return baker.make(User, department=departments[0], gender='M')
-
-
-@pytest.fixture
-def courses_in_first_department(courses, departments, user_with_department):
-    return [course for course in courses if
-            course.base_course.department == departments[0] and (course.sex == 'M' or course.sex == 'B')]
-
-
 class TestCoursesBasedDepartments:
-    def test_if_get_request_is_status_200(self, api_client, user_instance, all_departments_courses_view_url):
-        api_client.force_login(user_instance)
+    def test_if_get_request_is_status_200(self, api_client, user_with_department, courses,
+                                          all_departments_courses_view_url):
+        api_client.force_login(user_with_department)
 
         response = api_client.get(all_departments_courses_view_url)
 
@@ -78,7 +65,7 @@ class TestCoursesBasedDepartments:
             [1 for course in courses if course.base_course.department == departments[0] and (
                         course.sex == user_with_department.gender or course.sex is 'B')])
 
-    def test_if_returned_data_has_correct_length_of_fields(self, api_client, user_with_department,
+    def test_if_returned_data_has_correct_length_of_keys(self, api_client, user_with_department,
                                                            all_departments_courses_view_url, courses):
         api_client.force_login(user=user_with_department)
 
@@ -100,21 +87,21 @@ class TestCoursesBasedDepartments:
 
     def test_if_returned_single_data_values_have_correct_values(self, api_client, user_with_department,
                                                                 all_departments_courses_view_url,
-                                                                courses_in_first_department):
+                                                                courses_with_user_department):
         api_client.force_login(user=user_with_department)
 
         response = api_client.get(all_departments_courses_view_url)
 
-        assert response.data[0]['id'] == courses_in_first_department[0].id
-        assert response.data[0]['name'] == courses_in_first_department[0].base_course.name
-        assert response.data[0]['class_gp'] == courses_in_first_department[0].class_gp
-        assert response.data[0]['capacity'] == courses_in_first_department[0].capacity
-        assert response.data[0]['registered_count'] == courses_in_first_department[0].registered_count
-        assert response.data[0]['waiting_count'] == courses_in_first_department[0].waiting_count
-        assert response.data[0]['guest_able'] == courses_in_first_department[0].guest_able
-        assert response.data[0]['registration_limit'] == courses_in_first_department[0].registration_limit
-        assert response.data[0]['description'] == courses_in_first_department[0].description
-        assert response.data[0]['base_course'] == courses_in_first_department[0].base_course.course_number
+        assert response.data[0]['id'] == courses_with_user_department[0].id
+        assert response.data[0]['name'] == courses_with_user_department[0].base_course.name
+        assert response.data[0]['class_gp'] == courses_with_user_department[0].class_gp
+        assert response.data[0]['capacity'] == courses_with_user_department[0].capacity
+        assert response.data[0]['registered_count'] == courses_with_user_department[0].registered_count
+        assert response.data[0]['waiting_count'] == courses_with_user_department[0].waiting_count
+        assert response.data[0]['guest_able'] == courses_with_user_department[0].guest_able
+        assert response.data[0]['registration_limit'] == courses_with_user_department[0].registration_limit
+        assert response.data[0]['description'] == courses_with_user_department[0].description
+        assert response.data[0]['base_course'] == courses_with_user_department[0].base_course.course_number
 
     def test_if_returned_data_has_correct_keys_in_course_times(self, api_client, user_with_department,
                                                                all_departments_courses_view_url, courses):
@@ -143,12 +130,12 @@ class TestCoursesBasedDepartments:
 
     def test_if_returned_data_has_correct_values_in_course_times_list(self, api_client, user_with_department,
                                                                       all_departments_courses_view_url,
-                                                                      courses_in_first_department):
+                                                                      courses_with_user_department):
         api_client.force_login(user=user_with_department)
 
         response = api_client.get(all_departments_courses_view_url)
 
-        course_time = courses_in_first_department[0].course_times.all()
+        course_time = courses_with_user_department[0].course_times.all()
         response_course_time = response.data[0]['course_times']
         assert len(response_course_time) == len(course_time)
         for i in range(len(response_course_time)):
@@ -166,12 +153,12 @@ class TestCoursesBasedDepartments:
 
     def test_if_returned_data_has_correct_values_in_exam_times_list(self, api_client, user_with_department,
                                                                     all_departments_courses_view_url,
-                                                                    courses_in_first_department):
+                                                                    courses_with_user_department):
         api_client.force_login(user=user_with_department)
 
         response = api_client.get(all_departments_courses_view_url)
 
-        course_exam_time = courses_in_first_department[0].exam_times.all()
+        course_exam_time = courses_with_user_department[0].exam_times.all()
         response_exam_time = response.data[0]['exam_times']
 
         assert len(response_exam_time) == len(course_exam_time)
@@ -182,12 +169,12 @@ class TestCoursesBasedDepartments:
 
     def test_if_returned_data_has_correct_values_in_teachers_list(self, api_client, user_with_department,
                                                                   all_departments_courses_view_url,
-                                                                  courses_in_first_department):
+                                                                  courses_with_user_department):
         api_client.force_login(user=user_with_department)
 
         response = api_client.get(all_departments_courses_view_url)
 
-        course_teachers = courses_in_first_department[0].teachers.all()
+        course_teachers = courses_with_user_department[0].teachers.all()
         response_teachers = response.data[0]['teachers']
 
         assert len(response_teachers) == len(course_teachers)
@@ -198,28 +185,28 @@ class TestCoursesBasedDepartments:
 
     def test_if_returned_data_has_correct_complete_course_number(self, api_client, user_with_department,
                                                                  all_departments_courses_view_url,
-                                                                 courses_in_first_department):
+                                                                 courses_with_user_department):
         api_client.force_login(user=user_with_department)
 
         response = api_client.get(all_departments_courses_view_url)
 
-        assert response.data[0]['complete_course_number'] == courses_in_first_department[0].complete_course_number
+        assert response.data[0]['complete_course_number'] == courses_with_user_department[0].complete_course_number
 
     def test_if_returned_data_has_correct_color_intensity(self, api_client, user_with_department,
                                                           all_departments_courses_view_url,
-                                                          courses_in_first_department):
+                                                          courses_with_user_department):
         api_client.force_login(user=user_with_department)
 
         response = api_client.get(all_departments_courses_view_url)
 
-        assert response.data[0]['color_intensity_percentage'] == courses_in_first_department[
+        assert response.data[0]['color_intensity_percentage'] == courses_with_user_department[
             0].color_intensity_percentage
 
     def test_if_returned_data_has_correct_is_allowed_field(self, api_client, user_with_department,
                                                            all_departments_courses_view_url,
-                                                           courses_in_first_department):
+                                                           courses_with_user_department):
         api_client.force_login(user=user_with_department)
-        is_first_allowed = courses_in_first_department[0].allowed_departments.filter(
+        is_first_allowed = courses_with_user_department[0].allowed_departments.filter(
             department__department_number=user_with_department.department.department_number).exists()
 
         response = api_client.get(all_departments_courses_view_url)
@@ -228,9 +215,9 @@ class TestCoursesBasedDepartments:
 
     def test_if_returned_data_has_correct_allowed_departments_values(self, api_client, user_with_department,
                                                                      all_departments_courses_view_url,
-                                                                     courses_in_first_department):
+                                                                     courses_with_user_department):
         api_client.force_login(user=user_with_department)
-        first_course_allowed_departments = list(courses_in_first_department[0].allowed_departments.values_list(
+        first_course_allowed_departments = list(courses_with_user_department[0].allowed_departments.values_list(
             'department__name', flat=True).order_by('department__name'))
 
         response = api_client.get(all_departments_courses_view_url)
