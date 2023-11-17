@@ -58,6 +58,11 @@ def user_instance():
 
 
 @pytest.fixture
+def user_with_department(departments):
+    return baker.make(User, department=departments[0], gender='M')
+
+
+@pytest.fixture
 def current_semester():
     return baker.make(Semester, year=project_variables.CURRENT_SEMESTER)
 
@@ -89,14 +94,17 @@ def teachers():
 
 @pytest.fixture
 def departments():
-    return baker.make(Department, _quantity=5)
+    department_list = []
+    for i in range(1, 6):
+        department_list.append(baker.make(Department, department_number=i))
+    return department_list
 
 
 @pytest.fixture
 def base_courses(departments):
     base_courses_list = []
     for i in range(1, 6):
-        base_courses_list.append(baker.make(BaseCourse, course_number=1211011 + i, department=departments[i-1]))
+        base_courses_list.append(baker.make(BaseCourse, course_number=1211011 + i, department=departments[i - 1]))
     return base_courses_list
 
 
@@ -120,9 +128,23 @@ def courses(base_courses, teachers, current_semester, departments):
             if department != base_courses[i].department:
                 baker.make(AllowedDepartment, course=course, department=department)
             baker.make(AllowedDepartment, course=course, department=base_courses[i].department)
-            course.teachers.add(*teachers[i:j+1])
+            course.teachers.add(*teachers[i:j + 1])
             courses_list.append(course)
     return courses_list
+
+
+@pytest.fixture
+def courses_in_first_department(courses, departments, user_instance):
+    return [course for course in courses if
+            course.base_course.department == departments[0] and (
+                    course.sex == user_instance.gender or course.sex == 'B')]
+
+
+@pytest.fixture
+def courses_with_user_department(courses, departments, user_with_department):
+    return [course for course in courses if
+            course.base_course.department.department_number == user_with_department.department.department_number and (
+                    course.sex == user_with_department.gender or course.sex == 'B')]
 
 
 @pytest.fixture
