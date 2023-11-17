@@ -282,10 +282,8 @@ class TwitteViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset().filter(profile__content_type=ContentType.objects.get_for_model(get_user_model()),
-                                              profile__object_id=request.user.id)
         serializer = self.get_serializer(
-            queryset,
+            self.get_queryset(),
             context=self.get_serializer_context(),
             many=True,
         )
