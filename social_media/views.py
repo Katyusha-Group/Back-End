@@ -325,16 +325,14 @@ class TwitteViewSet(viewsets.ModelViewSet):
     def like(self, request, *args, **kwargs):
         profile = Profile.get_profile_for_user(request.user)
         twitte = self.get_object()
-        twitte.likes.add(profile)
-        return Response({'detail': ['liked']}, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=['post'], url_path='(?P<pk>\d+)/unlike', serializer_class=LikeSerializer, )
-    def unlike(self, request, *args, **kwargs):
-        profile = Profile.get_profile_for_user(request.user)
-        twitte = self.get_object()
-        twitte.likes.remove(profile)
-        return Response({'detail': ['unliked']}, status=status.HTTP_200_OK)
-
+        # if twitte liked by me, unlike it
+        if twitte.is_liked_by(profile):
+            twitte.unlike(profile)
+            return Response({'detail': ['unliked']}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            twitte.like(profile)
+            return Response({'detail': ['liked']}, status=status.HTTP_201_CREATED)
+        
     @staticmethod
     def get_token_for_user(user):
         refresh = RefreshToken.for_user(user)

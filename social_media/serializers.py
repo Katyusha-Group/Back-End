@@ -180,7 +180,8 @@ class TwitteSerializer(serializers.ModelSerializer):
     children_count = serializers.SerializerMethodField(read_only=True)
     likes_link = serializers.SerializerMethodField(read_only=True)
     children_link = serializers.SerializerMethodField(read_only=True)
-
+    liked_by_me = serializers.SerializerMethodField(read_only=True)
+    
     def get_likes_link(self, obj: Twitte):
         domain = self.context['request'].META['HTTP_HOST']
         return f'http://{domain}/twittes/{obj.id}/likes/'
@@ -188,6 +189,10 @@ class TwitteSerializer(serializers.ModelSerializer):
     def get_children_link(self, obj: Twitte):
         domain = self.context['request'].META['HTTP_HOST']
         return f'http://{domain}/twittes/{obj.id}/children/'
+    
+    def get_liked_by_me(self, obj: Twitte):
+        me = Profile.get_profile_for_user(self.context['request'].user)
+        return obj.is_liked_by(me)
 
     def get_parent(self, obj: Twitte):
         return TwitteSerializer(obj.get_parent(), context=self.context).data
@@ -206,9 +211,8 @@ class TwitteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Twitte
-        fields = ['id', 'profile', 'content', 'created_at', 'likes_count', 'replies_count', 'children_count',
-                  'likes_link', 'parent', 'children_link', 'conversation_id']
-
+        fields = ['id', 'profile', 'content', 'created_at', 'likes_count', 'replies_count', 'children_count', 'likes_link', 'parent', 'children_link', 'conversation_id', 'liked_by_me']
+        
     def create(self, validated_data):
         profile = Profile.get_profile_for_user(self.context['request'].user)
         twitte = Twitte.objects.create_twitte(profile=profile, **validated_data)
