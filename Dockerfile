@@ -5,24 +5,26 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
 
-# Install pipenv
-RUN pip install pipenv
-
 # Install system dependencies necessary for psycopg2
-RUN apt-get update && apt-get install -y libpq-dev gcc
-
+#RUN apt-get update && apt-get install -y libpq-dev gcc
+#RUN apt-get update && apt-get install -y netcat
 # Copy only the Pipfile and Pipfile.lock first to leverage Docker caching
-COPY Pipfile Pipfile.lock /app/
+COPY requirements.txt /app/
 
-RUN pipenv lock
+
 # Install project dependencies
-RUN pipenv install --system --deploy
+RUN pip install --upgrade pip
+
+RUN pip install -r requirements.txt
+
+RUN python manage.py migrate
+RUN python manage.py populate_university_database golestan_courses.xlsx
+RUN python manage.py fix_teachers_name
+RUN python manage.py delete_additional_departments
+RUN python manage.py add_profile_to_existing_entities
 
 # Copy the rest of the application's code
 COPY . /app/
 
 # Expose the necessary port(s)
 EXPOSE 8000
-
-# Run the application
-#CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
