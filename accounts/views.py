@@ -86,7 +86,7 @@ class SignUpView(APIView):
                      "username": user.username, },
             "message": "User created successfully. Please check your email to activate your account. ",
             "code": verification_code,
-            "url": f'http://katyushaiust.ir/accounts/activation-confirm/{token}',
+            "url": f'{project_variables.DOMAIN}/accounts/activation-confirm/{token}',
             "token": token,
         }, status=201)
 
@@ -341,7 +341,7 @@ class ForgotPasswordView(APIView):
         return Response(
             {
                 'detail': 'Code Sent',
-                'link': f'http://katyushaiust.ir/accounts/code_verification_view/{token}/'
+                'link': f'{project_variables.DOMAIN}/accounts/code_verification_view/{token}/'
             }
         )
 
@@ -412,7 +412,7 @@ class CodeVerificationView(APIView):
         user.save()
 
         return Response(
-            {'message': 'code is valid', 'link': f'http://katyushaiust.ir/accounts/change-password/{token}/'},
+            {'message': 'code is valid', 'link': f'{project_variables.DOMAIN}/accounts/change-password/{token}/'},
             status=status.HTTP_200_OK)
 
     @staticmethod
