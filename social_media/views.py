@@ -1,7 +1,9 @@
+import requests
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q, Value, Case, When, BooleanField, ExpressionWrapper, F, IntegerField
+from django.db.models import Q, Value, Case, When, BooleanField, ExpressionWrapper, F, IntegerField, Prefetch
 from django.db.models.functions import StrIndex, Lower
+from django.urls import reverse
 
 from rest_framework.response import Response
 from rest_framework import viewsets, status
@@ -10,6 +12,8 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from university.models import Course, Department
+from university.serializers import CourseSerializer
 from .models import Profile, Follow, Twitte
 from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer, \
     ProfileUsernameSerializer, TwitteSerializer, LikeSerializer
@@ -160,6 +164,63 @@ class ProfileViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/course-timeline', )
+    def view_course_timeline(self, request, username: str):
+        profile = Profile.objects.filter(username=username).first()
+        if not profile:
+            return Response({'detail': ['profile not found']}, status=status.HTTP_404_NOT_FOUND)
+        if profile.profile_type != Profile.TYPE_COURSE:
+            return Response({'detail': ['this timeline is for courses']}, status=status.HTTP_400_BAD_REQUEST)
+        course = profile.content_object
+        if not course:
+            return Response({'detail': ['course not found']}, status=status.HTTP_404_NOT_FOUND)
+        url = reverse('course-timeline', kwargs={'course_number': course.course_number})
+        domain = self.get_serializer_context()['request'].build_absolute_uri('/')[:-1]
+        headers = {
+            'Authorization': f'Bearer {self.get_serializer_context()["token"]}'
+        }
+        response = requests.get(domain + url, headers=headers)
+        return Response(response.json(), status=response.status_code)
+
+    @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/teacher-timeline', )
+    def view_teacher_timeline(self, request, username: str):
+        profile = Profile.objects.filter(username=username).first()
+        if not profile:
+            return Response({'detail': ['profile not found']}, status=status.HTTP_404_NOT_FOUND)
+        if profile.profile_type != Profile.TYPE_TEACHER:
+            return Response({'detail': ['this timeline is for teachers']}, status=status.HTTP_400_BAD_REQUEST)
+        teacher = profile.content_object
+        if not teacher:
+            return Response({'detail': ['teacher not found']}, status=status.HTTP_404_NOT_FOUND)
+        url = reverse('teacher-timeline', kwargs={'teacher_id': teacher.id})
+        domain = self.get_serializer_context()['request'].build_absolute_uri('/')[:-1]
+        headers = {
+            'Authorization': f'Bearer {self.get_serializer_context()["token"]}'
+        }
+        response = requests.get(domain + url, headers=headers)
+        return Response(response.json(), status=response.status_code)
+
+    @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/student-calendar', )
+    def view_student_calendar(self, request, username: str):
+        profile = Profile.objects.filter(username=username).first()
+        if not profile:
+            return Response({'detail': ['profile not found']}, status=status.HTTP_404_NOT_FOUND)
+        if profile.profile_type != Profile.TYPE_USER and profile.profile_type != Profile.TYPE_VERIFIED_USER:
+            return Response({'detail': ['this calendar is for students']}, status=status.HTTP_400_BAD_REQUEST)
+        student = profile.content_object
+        if not student:
+            return Response({'detail': ['student not found']}, status=status.HTTP_404_NOT_FOUND)
+        courses = CourseSerializer(
+            (student.courses.prefetch_related('course_times',
+                                              'teachers',
+                                              'exam_times', )
+             .select_related('base_course__department')
+             .prefetch_related(Prefetch('base_course__department', Department.objects.all())).all()),
+            many=True,
+            context=self.get_serializer_context()
+        )
+        return Response(status=status.HTTP_200_OK, data=courses.data)
+
     def get_queryset(self):
         # This will order queryset first by users' profiles and then by other profiles. Also, if the query string
         # is found in both name or username, the queryset will be ordered by the sum of the indexes. So that the
@@ -196,7 +257,7 @@ class TwitteViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
-    
+
     def get_queryset(self):
         if self.action == 'list':
             return Twitte.objects.order_by('-created_at').filter(parent=None)
@@ -222,7 +283,7 @@ class TwitteViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().filter(profile__content_type=ContentType.objects.get_for_model(get_user_model()),
-                                               profile__object_id=request.user.id)
+                                              profile__object_id=request.user.id)
         serializer = self.get_serializer(
             queryset,
             context=self.get_serializer_context(),
@@ -239,8 +300,9 @@ class TwitteViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    @action(detail=False, methods=['get'], url_path='(?P<pk>\d+)/likes', serializer_class=ProfileSerializer, url_name='twittes-view-likes')
+
+    @action(detail=False, methods=['get'], url_path='(?P<pk>\d+)/likes', serializer_class=ProfileSerializer,
+            url_name='twittes-view-likes')
     def likes(self, request, *args, **kwargs):
         twitte = self.get_object()
         serializer = self.get_serializer(
@@ -249,8 +311,9 @@ class TwitteViewSet(viewsets.ModelViewSet):
             many=True,
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    @action(detail=False, methods=['get'], url_path='(?P<pk>\d+)/children', serializer_class=TwitteSerializer, url_name='twittes-view-children')
+
+    @action(detail=False, methods=['get'], url_path='(?P<pk>\d+)/children', serializer_class=TwitteSerializer,
+            url_name='twittes-view-children')
     def children(self, request, *args, **kwargs):
         twitte = self.get_object()
         serializer = self.get_serializer(
@@ -259,21 +322,21 @@ class TwitteViewSet(viewsets.ModelViewSet):
             many=True,
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
     @action(detail=False, methods=['post'], url_path='(?P<pk>\d+)/like', serializer_class=LikeSerializer, )
     def like(self, request, *args, **kwargs):
         profile = Profile.get_profile_for_user(request.user)
         twitte = self.get_object()
         twitte.likes.add(profile)
         return Response({'detail': ['liked']}, status=status.HTTP_200_OK)
-    
+
     @action(detail=False, methods=['post'], url_path='(?P<pk>\d+)/unlike', serializer_class=LikeSerializer, )
     def unlike(self, request, *args, **kwargs):
         profile = Profile.get_profile_for_user(request.user)
         twitte = self.get_object()
         twitte.likes.remove(profile)
         return Response({'detail': ['unliked']}, status=status.HTTP_200_OK)
-        
+
     @staticmethod
     def get_token_for_user(user):
         refresh = RefreshToken.for_user(user)
