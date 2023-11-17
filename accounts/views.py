@@ -312,7 +312,7 @@ class ForgotPasswordView(APIView):
         verification_code = str(random.randint(1000, 9999))
 
         # utils.get_access_token_for_user(user)
-        token = get_access_token_for_user(user)
+        token = generate_tokens(user_id=user.id)["access"]
 
         user.verification_code = verification_code
         user.verification_tries_count = user.verification_tries_count + 1
