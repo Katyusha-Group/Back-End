@@ -162,4 +162,13 @@ class Twitte(models.Model):
     def get_conversation(self):
         return self.conversation
     
+    def is_liked_by(self, profile):
+        return self.likes.filter(pk=profile.pk).exists()
+    
+    def like(self, profile):
+        self.likes.add(profile)
+        
+    def unlike(self, profile):
+        self.likes.remove(profile)
+    
     objects = TwitteManager()
