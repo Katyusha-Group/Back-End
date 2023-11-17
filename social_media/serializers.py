@@ -178,17 +178,19 @@ class TwitteSerializer(serializers.ModelSerializer):
     likes_count = serializers.SerializerMethodField(read_only=True)
     replies_count = serializers.SerializerMethodField(read_only=True)
     children_count = serializers.SerializerMethodField(read_only=True)
-    likes = serializers.SerializerMethodField(read_only=True)
-    children = serializers.SerializerMethodField(read_only=True)
-
-    def get_likes(self, obj: Twitte):
-        return ProfileSerializer(obj.likes.all(), many=True, context=self.context).data
+    likes_link = serializers.SerializerMethodField(read_only=True)
+    children_link = serializers.SerializerMethodField(read_only=True)
+    
+    def get_likes_link(self, obj: Twitte):
+        domain = self.context['request'].META['HTTP_HOST']
+        return f'http://{domain}/twittes/{obj.id}/likes/'
+    
+    def get_children_link(self, obj: Twitte):
+        domain = self.context['request'].META['HTTP_HOST']
+        return f'http://{domain}/twittes/{obj.id}/children/'
 
     def get_parent(self, obj: Twitte):
         return TwitteSerializer(obj.get_parent(), context=self.context).data
-
-    def get_children(self, obj: Twitte):
-        return TwitteSerializer(obj.get_children(), many=True, context=self.context).data
 
     def get_likes_count(self, obj: Twitte):
         return obj.get_likes_count()
@@ -204,7 +206,7 @@ class TwitteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Twitte
-        fields = ['id', 'profile', 'content', 'created_at', 'likes_count', 'replies_count', 'children_count', 'likes', 'parent', 'children', 'conversation_id']
+        fields = ['id', 'profile', 'content', 'created_at', 'likes_count', 'replies_count', 'children_count', 'likes_link', 'parent', 'children_link', 'conversation_id']
         
     def create(self, validated_data):
         profile = Profile.get_profile_for_user(self.context['request'].user)
@@ -222,3 +224,10 @@ class TwitteSerializer(serializers.ModelSerializer):
         if me == instance.profile:
             data.pop('parent')
         return data
+    
+class LikeSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True)
+    
+    class Meta:
+        model = Twitte.likes.through
+        fields = ['profile']
