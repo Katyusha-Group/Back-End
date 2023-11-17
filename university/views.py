@@ -6,6 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.mixins import ListModelMixin
@@ -247,10 +248,12 @@ class BaseAllCourseDepartment(APIView):
             .prefetch_related('course_times', 'exam_times', 'students', 'teachers')
             .all()
         )
-        if not only_my_department:
+        try:
             validate_queryset_existence(all_courses, 'No course with this department_number in database.')
-        return Response(
-            AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
+            return Response(
+                AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
+        except ValidationError as e:
+            return Response(data={'detail': e.detail}, status=status.HTTP_404_NOT_FOUND)
 
 
 class AllCourseDepartmentList(BaseAllCourseDepartment):
