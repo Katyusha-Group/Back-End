@@ -188,7 +188,7 @@ class ExamTimePlace(models.Model):
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس', related_name='exam_times')
 
     def __str__(self):
-        return self.date
+        return str(self.date.year) + '-' + str(self.date.month) + '-' + str(self.date.day)
 
     class Meta:
         verbose_name = 'تاریخ امتحان'

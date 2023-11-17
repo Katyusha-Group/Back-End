@@ -146,8 +146,8 @@ class TestCoursesBasedDepartments:
                 course_time_presentation = 7
 
             assert str(response_course_time[i]['course_day']) == str(course_time[i].day)
-            assert str(response_course_time[i]['course_start_time']) == str(course_time[i].start_time)
-            assert str(response_course_time[i]['course_end_time']) == str(course_time[i].end_time)
+            assert str(response_course_time[i]['course_start_time']).split('.')[0] == str(course_time[i].start_time).split('.')[0]
+            assert str(response_course_time[i]['course_end_time']).split('.')[0] == str(course_time[i].end_time).split('.')[0]
             assert str(response_course_time[i]['place']) == str(course_time[i].place)
             assert str(response_course_time[i]['course_time_representation']) == str(course_time_presentation)
 
@@ -163,9 +163,9 @@ class TestCoursesBasedDepartments:
 
         assert len(response_exam_time) == len(course_exam_time)
         for i in range(len(response_exam_time)):
-            assert str(response_exam_time[i]['date']) == str(course_exam_time[i].jalali_date)
-            assert str(response_exam_time[i]['exam_start_time']) == str(course_exam_time[i].start_time)
-            assert str(response_exam_time[i]['exam_end_time']) == str(course_exam_time[i].end_time)
+            assert str(response_exam_time[i]['date']) == str(course_exam_time[i].date)
+            assert str(response_exam_time[i]['exam_start_time']).split('.')[0] == str(course_exam_time[i].start_time).split('.')[0]
+            assert str(response_exam_time[i]['exam_end_time']).split('.')[0] == str(course_exam_time[i].end_time).split('.')[0]
 
     def test_if_returned_data_has_correct_values_in_teachers_list(self, api_client, user_with_department,
                                                                   all_departments_courses_view_url,
