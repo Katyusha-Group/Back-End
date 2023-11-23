@@ -25,11 +25,13 @@ services:
   worker:
     build: .
     container_name: worker
+    volumes:
+      - .:/app
+
     command: celery -A core worker --loglevel=info
     depends_on:
       - redis
       - backend
-
 
   db:
     container_name: database
