@@ -259,3 +259,5 @@ CRONJOBS = [
     # ('0 0 * * *', 'custom_config.cron.delete_expired_carts'),
 ]
 
+# celery configs
+CELERY_BROKER_URL = 'redis://redis:6379/1'

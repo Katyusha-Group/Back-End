@@ -7,6 +7,7 @@ services:
     ports:
       - "6379:6379"
     command:  redis-server --save 60 1 --loglevel warning
+    restart: always
 
   backend:
     build: .
@@ -19,6 +20,16 @@ services:
 
     depends_on:
       - db
+      - redis
+
+  worker:
+    build: .
+    container_name: worker
+    command: celery -A core worker --loglevel=info
+    depends_on:
+      - redis
+      - backend
+
 
   db:
     container_name: database
