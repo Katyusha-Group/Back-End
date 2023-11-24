@@ -12,16 +12,13 @@ router.register(r'course-cart-order-info',
                 viewset=views.CourseCartOrderInfoRetrieveViewSet,
                 basename='course-cart-order-info')
 router.register(r'notifications', viewset=views.WebNotificationViewSet, basename='notifications')
-
-carts_router = routers.NestedSimpleRouter(router, r'carts', lookup='cart')
-carts_router.register(r'items', viewset=views.CartItemViewSet, basename='cart-items')
+router.register(r'carts', viewset=views.CartViewSet, basename='carts')
 
 reviews_router = routers.NestedSimpleRouter(router, r'teacher-reviews/(?P<teacher_pk>\d+)', lookup='teacher_review')
 reviews_router.register(r'votes', viewset=views.ReviewVoteViewSet, basename='votes')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('', include(carts_router.urls)),
     path('', include(reviews_router.urls)),
     path('get-prices/', views.GetPricesView.as_view(), name='get-prices'),
 ]
