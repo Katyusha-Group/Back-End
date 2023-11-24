@@ -40,6 +40,8 @@ python-telegram-bot = "*"
 cffi = "*"
 webdriver-manager = "*"
 pytest-cov = "*"
+gunicorn = "*"
+openpyxl = "*"
 
 [dev-packages]
 pytest = "*"

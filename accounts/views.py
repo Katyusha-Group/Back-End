@@ -1,24 +1,22 @@
 import random
-from datetime import timedelta
+from datetime import datetime
 
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.password_validation import validate_password
 from rest_framework import generics, viewsets
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
-from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-
+from social_media.models import Profile
 from utils.email import email_handler
-from .serializers import *
-from .serializers import LoginSerializer
-from accounts.models import User
+from utils.variables import project_variables
+from .serializers import LoginSerializer, SignUpSerializer, UserSerializer, ChangePasswordSerializer, \
+    ActivationConfirmSerializer, CustomTokenObtainPairSerializer, WalletSerializer, ModifyWalletSerializer, \
+    WalletTransactionSerializer, ForgotPasswordSerializer, ResetPasswordSerializer, CodeVerificationSerializer
+from accounts.models import User, Wallet, WalletTransaction
 from django.conf import settings
 from rest_framework.views import APIView
 from django.contrib.auth import login, logout
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.shortcuts import get_object_or_404
-from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .signals import wallet_updated_signal
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -27,9 +25,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import ActivationResendSerializer
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
+from .utils import  EmailThread, generate_tokens
 
 
-class SignUpView(APIView):
+class SignUpView(GenericAPIView):
     serializer_class = SignUpSerializer
 
     permission_classes = []
@@ -44,6 +43,8 @@ class SignUpView(APIView):
 
         verification_code = str(random.randint(1000, 9999))
         user = User.objects.filter(email__iexact=email)
+
+        # if user signup before and not verified
         if user.exists():
             user = user.first()
             user.department = validated_data['department']
@@ -54,7 +55,7 @@ class SignUpView(APIView):
             user.last_verification_sent = datetime.now()
             user.save()
         else:
-            # Save user
+            # if user didnt signup before
             user = User.objects.create(
                 department=validated_data['department'],
                 username=validated_data['username'],
@@ -70,29 +71,33 @@ class SignUpView(APIView):
         profile = Profile.get_profile_for_user(user=user)
         profile.name = validated_data['name']
 
-        token = self.get_token_for_user(user)
+        # utils.get_access_token_for_user(user)
+        token = generate_tokens(user.id)["access"]
+
         subject = 'تایید ایمیل ثبت نام'
         show_text = user.has_verification_tries_reset or user.verification_tries_count > 1
-        email_handler.send_verification_message(subject=subject,
+
+        # sending email verification with thread
+        email_thread = EmailThread(email_handler, subject=subject,
                                                 recipient_list=[user.email],
                                                 verification_token=verification_code,
                                                 registration_tries=user.verification_tries_count,
-                                                show_text=show_text)
+                                                 show_text=show_text)
+        email_thread.start()
 
-        return Response({
-            "user": {"department": user.department.name,
-                     "email": email,
-                     "gender": user.gender,
-                     "username": user.username, },
-            "message": "User created successfully. Please check your email to activate your account. ",
+
+        user_data = {
+            "user" : UserSerializer(user).data,
+            "message": "User created successfully. Please check your email to activate your account.",
             "code": verification_code,
             "url": f'{project_variables.DOMAIN}/accounts/activation-confirm/{token}',
             "token": token,
-        }, status=201)
 
-    def get_token_for_user(self, user):
-        refresh = RefreshToken.for_user(user)
-        return str(refresh.access_token)
+        }
+
+
+        return Response(user_data, status=status.HTTP_201_CREATED)
+
 
 
 class LoginView(TokenObtainPairView):
@@ -102,58 +107,44 @@ class LoginView(TokenObtainPairView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        # token, created = Token.objects.get_or_create(user=user)
-        token = self.generate_jwt_token(user.id)
-        login(request, user)
-        return Response({'token': token,
-                         'user_id': user.id,
-                         'username': user.username,
-                         'email': user.email,
-                         })
+        if user is not None:
+            tokens = generate_tokens(user.id)
 
-    @staticmethod
-    def generate_jwt_token(user_id):
-        # Define the expiration time of the token
-        exp_time = datetime.utcnow() + timedelta(days=7)
 
-        # Define the payload of the token
-        # payload = {
-        #     'user_id': user_id,
-        #     'exp': exp_time
-        # }
+            login(request, user)
 
-        # Generate the token using the JWT package and your Django SECRET_KEY setting
-        # token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-        refresh = RefreshToken.for_user(User.objects.get(id=user_id))
-        token = {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
+            return Response({
+                'refresh': tokens['refresh'],
+                'access': tokens['access'],
+                'user' : UserSerializer(user).data,
+            })
 
-        # Return the token as a string
-        return token
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]  # permission_classes = []
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         refresh_token = request.COOKIES.get('token')
+
         if refresh_token:
-            token = Token.objects.get(refresh_token=refresh_token)
-            token.blacklist()
-            response = Response()
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception as e:
+                return Response(data={'detail': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+
+            response = Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
             response.delete_cookie('refresh_token')
             response.delete_cookie('access_token')
+            return response
+
+        if request.user.is_authenticated:
+            logout(request)
             return Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
-        else:
-            if request.user.is_authenticated:
-                logout(request)
-                return Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
-            else:
-                return Response(data={'detail': 'Not logged in, so cannot log out'}, status=status.HTTP_400_BAD_REQUEST)
 
-
+        return Response(data={'detail': 'Not logged in, so cannot log out'}, status=status.HTTP_400_BAD_REQUEST)
 class ChangePasswordView(generics.GenericAPIView):
     model = User
     permission_classes = [IsAuthenticated]
@@ -184,11 +175,16 @@ class ActivationConfirmView(GenericAPIView):
     permission_classes = []
 
     def post(self, request, token):
-        self.is_valid_token(token)
+        token = self.validate_token(token)
+        if not token:
+            return Response({'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         user = self.get_user_from_token(token)
+        if not user:
+            return Response({'message': 'Invalid user'}, status=status.HTTP_400_BAD_REQUEST)
 
         if request.data.get('verification_code') != user.verification_code:
             return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
@@ -199,34 +195,22 @@ class ActivationConfirmView(GenericAPIView):
 
         return Response({'message': 'Email verified successfully'}, status=status.HTTP_200_OK)
 
-    @staticmethod
-    def get_user_from_token(token):
-        # decode the token
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        # get the user
-        user = User.objects.filter(id=payload['user_id']).first()
-        return user
-
-    @staticmethod
-    def is_valid_token(token):
+    def get_user_from_token(self, token):
         try:
-            # Decode the token with the secret key
-            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-            # If decoding is successful, the token is valid
-            return True
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            return User.objects.filter(id=user_id).first()
         except ExpiredSignatureError:
-            # If the token has expired, it is invalid
-            return False
-        except InvalidSignatureError:
-            # If the signature is invalid, the token is invalid
-            return False
+            return None
 
-    def get(self, request, token):
+    def validate_token(self, token):
         try:
-            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        except:
-            return Response({'message': 'Invalid URL'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'message': 'Please enter code verification'}, status=status.HTTP_200_OK)
+            jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            return token
+        except ExpiredSignatureError:
+            return None
+        except InvalidSignatureError:
+            return None
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -248,7 +232,7 @@ class ActivationResend(generics.GenericAPIView):
             user.last_verification_sent = datetime.now()
             user.save()
             show_text = user.has_verification_tries_reset or user.verification_tries_count > 1
-            token = self.get_token_for_user(user)
+            token = generate_tokens(user)["access"]
             email_handler.send_verification_message(subject=subject,
                                                     recipient_list=[user.email],
                                                     verification_token=verification_code,
@@ -261,9 +245,6 @@ class ActivationResend(generics.GenericAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def get_token_for_user(self, user):
-        refresh = RefreshToken.for_user(user)
-        return str(refresh.access_token)
 
 
 class WalletViewSet(viewsets.GenericViewSet, ListModelMixin):
@@ -325,7 +306,8 @@ class ForgotPasswordView(APIView):
 
         verification_code = str(random.randint(1000, 9999))
 
-        token = self.get_token_for_user(user)
+        # utils.get_access_token_for_user(user)
+        token = generate_tokens(user_id=user.id)["access"]
 
         user.verification_code = verification_code
         user.verification_tries_count = user.verification_tries_count + 1
@@ -345,9 +327,7 @@ class ForgotPasswordView(APIView):
             }
         )
 
-    def get_token_for_user(self, user):
-        refresh = RefreshToken.for_user(user)
-        return str(refresh.access_token)
+
 
 
 class PasswordChangeAPIView(APIView):
@@ -438,19 +418,19 @@ class CodeVerificationView(APIView):
     #
 
 
-class ChangePasswordlogView(APIView):
+class ChangePasswordlogView(GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = request.user
-            current_password = serializer.validated_data['old_password']
+            old_password = serializer.validated_data['old_password']
             new_password = serializer.validated_data['new_password']
 
             # Check if the current password matches the user's actual password
-            if not user.check_password(current_password):
+            if not user.check_password(old_password):
                 return Response({'error': 'Invalid current password.'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Change the user's password
