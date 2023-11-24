@@ -40,7 +40,6 @@ python-telegram-bot = "*"
 cffi = "*"
 webdriver-manager = "*"
 pytest-cov = "*"
-djoser = "*"
 gunicorn = "*"
 openpyxl = "*"
 
