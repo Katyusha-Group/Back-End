@@ -69,7 +69,6 @@ class Cart(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='carts')
     created_at = models.DateTimeField(auto_now_add=True)
-    submitted = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.id) + ' : ' + str(self.created_at)
@@ -81,8 +80,8 @@ class Cart(models.Model):
         return total * project_variables.TAX + total
 
     @staticmethod
-    def get_unsubmitted_carts(user):
-        return user.carts.filter(submitted=False)
+    def get_user_available_carts(user):
+        return user.carts.filter()
 
     class Meta:
         verbose_name = 'سبد خرید'
@@ -180,7 +179,7 @@ class OrderItem(models.Model):
         return (OrderItem.objects
                 .prefetch_related('order__user')
                 .filter(order__user=user,
-                        order__payment_status=Order.PAYMENT_STATUS_COMPLETED,
+                        order__payment_status__in=[Order.PAYMENT_STATUS_COMPLETED, Order.PAYMENT_STATUS_PENDING],
                         course=course)
                 .first())
 
