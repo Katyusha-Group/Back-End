@@ -70,16 +70,19 @@ class OrderViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_permissions(self):
-        if self.request.method in ['PATCH', 'DELETE']:
+        if self.request.method in ['PATCH']:
             return [IsAdminUser(), IsOwner()]
-        return [IsAuthenticated()]
+        elif self.request.method in ['GET']:
+            return [IsAuthenticated()]
+        elif self.request.method in ['POST']:
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
 
     def create(self, request, *args, **kwargs):
         token = self.get_token_for_user(request.user)
         csrf_token = request.COOKIES.get('csrftoken', None)
         serializer = CreateOrderSerializer(data=request.data,
-                                           context={'user_id': request.user.id,
-                                                    'user': request.user,
+                                           context={'user': request.user,
                                                     'token': token,
                                                     'csrftoken': csrf_token, })
         serializer.is_valid(raise_exception=True)
