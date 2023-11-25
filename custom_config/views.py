@@ -12,7 +12,7 @@ from custom_config.permissions import IsOwner
 from custom_config.serializers import CartSerializer, CartItemSerializer, \
     AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, \
     TeacherVoteSerializer, ModifyTeacherVoteSerializer, ModifyTeacherReviewSerializer, TeacherReviewSerializer, \
-    ModifyReviewVoteSerializer, ReviewVoteSerializer, UpdateCartItemViewSerializer, CourseCartOrderInfoSerializer, \
+    ModifyReviewVoteSerializer, ReviewVoteSerializer, CartItemsViewSerializer, CourseCartOrderInfoSerializer, \
     WebNotificationSerializer
 from university.models import Teacher, Course
 from university.scripts.get_or_create import get_course
@@ -20,66 +20,69 @@ from utils.variables import project_variables
 
 
 class CartViewSet(ModelViewSet):
-    http_method_names = ['get', 'post', 'delete', 'options', 'head']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
     queryset = Cart.objects.prefetch_related('items', 'items__course').all()
     serializer_class = CartSerializer
 
     def get_permissions(self):
-        if self.request.method == 'POST':
+        if self.action == 'list':
             return [IsAuthenticated()]
-        if self.action == 'retrieve':
+        elif self.action == 'update_cart':
+            return [IsAuthenticated()]
+        elif self.action == 'add_to_cart':
             return [IsAuthenticated()]
         return [IsAdminUser()]
 
+    def get_object(self):
+        return Cart.objects.get_or_create(user=self.request.user)[0]
 
-class CartItemViewSet(ModelViewSet):
-    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
-    permission_classes = [IsAuthenticated]
+    def list(self, request, *args, **kwargs):
+        if self.request.user.is_staff:
+            return super().list(request, *args, **kwargs)
+        cart = self.get_object()
+        serializer = self.get_serializer(cart)
+        return Response(serializer.data)
 
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return AddCartItemSerializer
-        if self.request.method == 'PATCH':
-            return UpdateCartItemSerializer
-        return CartItemSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data,
-                                         context={'cart_id': self.kwargs['cart_pk'], 'request': self.request})
+    @action(detail=False, methods=['post'], url_name='add-to-cart', url_path='add-to-cart',
+            serializer_class=AddCartItemSerializer)
+    def add_to_cart(self, request, *args, **kwargs):
+        cart = self.get_object()
+        serializer = self.get_serializer(data=self.request.data, context={'cart_id': cart.id, 'request': self.request})
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-        serializer = UpdateCartItemViewSerializer(instance)
+        serializer = CartItemsViewSerializer(instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data,
-                                         context={'cart_id': self.kwargs['cart_pk'], 'request': self.request})
+    @action(detail=False, methods=['patch'], url_name='update-cart', url_path='update-cart/(?P<item_id>\d+)',
+            serializer_class=UpdateCartItemSerializer)
+    def update_cart(self, request, item_id, *args, **kwargs):
+        cart = self.get_object()
+        cart_item = CartItem.objects.filter(id=item_id).first()
+        validators.not_null(value=cart_item, message='Cart item not found.')
+        serializer = self.get_serializer(data=self.request.data, context={'cart_id': cart.id, 'request': self.request})
         serializer.is_valid(raise_exception=True)
-        instance = serializer.update(self.get_object(), serializer.validated_data)
-        serializer = UpdateCartItemViewSerializer(instance)
+        instance = serializer.update(cart_item, serializer.validated_data)
+        serializer = CartItemsViewSerializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def get_serializer_context(self):
-        return {'cart_id': self.kwargs['cart_pk'], 'request': self.request}
-
-    def get_queryset(self):
-        return CartItem.objects.filter(cart_id=self.kwargs['cart_pk']).select_related('course')
 
 
 class OrderViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_permissions(self):
-        if self.request.method in ['PATCH', 'DELETE']:
+        if self.request.method in ['PATCH']:
             return [IsAdminUser(), IsOwner()]
-        return [IsAuthenticated()]
+        elif self.request.method in ['GET']:
+            return [IsAuthenticated()]
+        elif self.request.method in ['POST']:
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
 
     def create(self, request, *args, **kwargs):
         token = self.get_token_for_user(request.user)
         csrf_token = request.COOKIES.get('csrftoken', None)
         serializer = CreateOrderSerializer(data=request.data,
-                                           context={'user_id': request.user.id,
-                                                    'user': request.user,
+                                           context={'user': request.user,
                                                     'token': token,
                                                     'csrftoken': csrf_token, })
         serializer.is_valid(raise_exception=True)

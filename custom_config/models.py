@@ -67,6 +67,7 @@ class FieldTracker(models.Model):
 
 class Cart(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='carts')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -77,6 +78,10 @@ class Cart(models.Model):
         for item in self.items.all():
             total += float(item.get_item_price())
         return total * project_variables.TAX + total
+
+    @staticmethod
+    def get_user_available_carts(user):
+        return user.carts.filter()
 
     class Meta:
         verbose_name = 'سبد خرید'
@@ -174,7 +179,7 @@ class OrderItem(models.Model):
         return (OrderItem.objects
                 .prefetch_related('order__user')
                 .filter(order__user=user,
-                        order__payment_status=Order.PAYMENT_STATUS_COMPLETED,
+                        order__payment_status__in=[Order.PAYMENT_STATUS_COMPLETED, Order.PAYMENT_STATUS_PENDING],
                         course=course)
                 .first())
 

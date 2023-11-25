@@ -28,7 +28,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'course', 'contain_telegram', 'contain_sms', 'contain_email', 'price']
 
 
-class UpdateCartItemViewSerializer(serializers.ModelSerializer):
+class CartItemsViewSerializer(serializers.ModelSerializer):
     total_price = serializers.SerializerMethodField(read_only=True)
 
     def get_total_price(self, obj: CartItem):
@@ -61,7 +61,7 @@ class UpdateCartItemSerializer(serializers.ModelSerializer):
 
 
 class AddCartItemSerializer(serializers.ModelSerializer):
-    complete_course_number = serializers.CharField(write_only=True)
+    complete_course_number = serializers.CharField(write_only=True, min_length=10, max_length=10)
 
     def validate(self, attrs):
         complete_course_number = attrs['complete_course_number']
@@ -70,7 +70,8 @@ class AddCartItemSerializer(serializers.ModelSerializer):
         contain_sms = attrs['contain_sms']
         contain_email = attrs['contain_email']
         user = self.context['request'].user
-        if not Course.objects.filter(base_course_id=base_course_id, class_gp=class_gp).exists():
+        if not Course.objects.filter(base_course_id=base_course_id, class_gp=class_gp,
+                                     semester=project_variables.CURRENT_SEMESTER).exists():
             raise serializers.ValidationError({'course': 'درس مورد نظر یافت نشد.'})
         if not contain_email and not contain_sms and not contain_telegram:
             raise serializers.ValidationError({'notification': 'حداقل یکی از روش های ارتباطی را انتخاب کنید.'})
@@ -80,7 +81,8 @@ class AddCartItemSerializer(serializers.ModelSerializer):
             if contain_telegram and order_item.contain_telegram or \
                     contain_sms and order_item.contain_sms or \
                     contain_email and order_item.contain_email:
-                raise serializers.ValidationError({'order': 'این درس با این روش اطلاع رسانی، قبلاً خریداری شده است.'})
+                raise serializers.ValidationError(
+                    {'order': 'این درس با این روش اطلاع رسانی، در سفارش های شما ثبت شده است.'})
         attrs['course_id'] = course.id
         return attrs
 
@@ -156,27 +158,26 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class CreateOrderSerializer(serializers.Serializer):
-    cart_id = serializers.UUIDField(write_only=True)
     payment_method = serializers.ChoiceField(choices=Order.PAYMENT_METHOD_CHOICES, write_only=True)
 
     def validate(self, attrs):
-        cart_id = attrs['cart_id']
         user = self.context['user']
-        cart = Cart.objects.filter(id=cart_id)
-        if not cart.exists():
+        user_carts = Cart.get_user_available_carts(user=user)
+        if not user_carts.exists():
             raise serializers.ValidationError({'cart': 'امکان ثبت سفارش وجود ندارد. سبد خرید مورد نظر یافت نشد.'})
-        cart = cart.first()
+        cart = user_carts.first()
         if cart.items.count() == 0:
             raise serializers.ValidationError({'cart': 'امکان ثبت سفارش وجود ندارد. سبد خرید شما خالی است.'})
-        for item in cart.items.all():
-            if item.contain_telegram and not User_telegram.objects.filter(email=user.email).exists():
-                raise serializers.ValidationError(
-                    {
-                        'telegram': 'امکان ثبت سفارش وجود ندارد. شما تلگرام خود را فعال نکرده اید.',
-                        'telegram_link': get_bot_url(csrftoken=self.context['csrftoken'],
-                                                     token=self.context['token'])
-                    }
-                )
+        # # Check for Telegram activation
+        # for item in cart.items.all():
+        #     if item.contain_telegram and not User_telegram.objects.filter(email=user.email).exists():
+        #         raise serializers.ValidationError(
+        #             {
+        #                 'telegram': 'امکان ثبت سفارش وجود ندارد. شما تلگرام خود را فعال نکرده اید.',
+        #                 'telegram_link': get_bot_url(csrftoken=self.context['csrftoken'],
+        #                                              token=self.context['token'])
+        #             }
+        #         )
         payment_method = attrs['payment_method']
         if payment_method == Order.PAY_WALLET:
             if cart.total_price() > user.wallet.balance:
@@ -185,15 +186,14 @@ class CreateOrderSerializer(serializers.Serializer):
         return attrs
 
     def save(self, **kwargs):
-        user_id = self.context['user_id']
-        cart_id = self.validated_data['cart_id']
-        cart = Cart.objects.get(id=cart_id)
+        user = self.context['user']
+        cart = Cart.get_user_available_carts(user=user).first()
         with transaction.atomic():
             if self.validated_data['payment_method'] == Order.PAY_WALLET:
-                order = Order.objects.create(user_id=user_id, payment_method=self.validated_data['payment_method'],
+                order = Order.objects.create(user_id=user.id, payment_method=self.validated_data['payment_method'],
                                              payment_status=Order.PAYMENT_STATUS_COMPLETED)
             else:
-                order = Order.objects.create(user_id=user_id, payment_method=self.validated_data['payment_method'])
+                order = Order.objects.create(user_id=user.id, payment_method=self.validated_data['payment_method'])
             order_items = [
                 OrderItem(
                     order=order,
