@@ -169,11 +169,13 @@ class Notification(models.Model):
     TYPE_REPLY = 'R'
     TYPE_FOLLOW = 'F'
     TYPE_MENTION = 'M'
+    TYPE_NEW_POST = 'P'
     TYPE_CHOICES = (
         (TYPE_LIKE, 'لایک'),
         (TYPE_REPLY, 'پاسخ'),
         (TYPE_FOLLOW, 'دنبال کردن'),
-        (TYPE_MENTION, 'منشن')
+        (TYPE_MENTION, 'منشن'),
+        (TYPE_NEW_POST, 'پست جدید')
     )
 
     objects = NotificationQuerySet.as_manager()
@@ -210,3 +212,19 @@ class Notification(models.Model):
     def mark_as_read(self):
         self.read = True
         self.save()
+
+    def get_message(self):
+        if self.notification_type == self.TYPE_LIKE:
+            return f'{self.actor} پست شما را پسندید'
+        if self.notification_type == self.TYPE_REPLY:
+            return f'{self.actor} به پست شما پاسخ داد. پاسخ او:' \
+                   f'\n{self.tweet.content}'
+        if self.notification_type == self.TYPE_FOLLOW:
+            return f'{self.actor} شما را دنبال کرد'
+        if self.notification_type == self.TYPE_MENTION:
+            return f'{self.actor} شما را منشن کرد. پست او:' \
+                      f'\n{self.tweet.content}'
+        if self.notification_type == self.TYPE_NEW_POST:
+            return f'{self.actor} پست جدیدی ارسال کرد. پست او:' \
+                      f'\n{self.tweet.content}'
+        return None
