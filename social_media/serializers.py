@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from accounts.models import User
-from .models import Profile, Follow, Twitte
+from .models import Profile, Follow, Twitte, Notification
 from utils.variables import project_variables
 
 
@@ -237,3 +237,23 @@ class LikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Twitte.likes.through
         fields = ['profile']
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    delta_time = serializers.SerializerMethodField(read_only=True)
+    message = serializers.SerializerMethodField(read_only=True)
+    tweet_link = serializers.SerializerMethodField(read_only=True)
+
+    def get_delta_time(self, obj: Notification):
+        return obj.get_delta_time()
+
+    def get_message(self, obj: Notification):
+        return obj.get_message()
+
+    def get_tweet_link(self, obj: Notification):
+        domain = self.context['request'].META['HTTP_HOST']
+        return f'http://{domain}/twittes/{obj.tweet.id}/'
+
+    class Meta:
+        model = Notification
+        fields = ['recipient', 'actor', 'notification_type', 'read', 'delta_time', 'tweet_link', 'message']
