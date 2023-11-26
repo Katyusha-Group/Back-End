@@ -2,7 +2,6 @@ from django.dispatch.dispatcher import Signal
 
 send_notification = Signal()
 # This signal provides following arguments:
-# recipient: is the profile who will receive the notification
 # actor: is the profile who triggered the notification
 # notification_type: is the type of notification, it can be one of the following:
 #       - TYPE_LIKE: when someone likes a post

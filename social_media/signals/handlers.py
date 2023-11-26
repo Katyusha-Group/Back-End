@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from social_media.models import Profile, Notification
+from social_media.models import Profile, Notification, Follow
 from university.models import Teacher, BaseCourse
 from accounts.models import User
 from social_media.signals import send_notification
@@ -20,21 +20,25 @@ def create_profile(sender, **kwargs):
 
 @receiver(send_notification)
 def send_notification_handler(sender, **kwargs):
-    recipient = kwargs['recipient']
     notification_type = kwargs['notification_type']
     actor = kwargs['actor']
+    profiles = Follow.objects.filter(follower=actor).prefetch_related('following').all()
+    followers_profile = [follow.follower for follow in profiles]
 
-    if notification_type == Notification.TYPE_FOLLOW:
-        Notification.objects.create(
-            recipient=recipient,
-            actor=actor,
-            notification_type=notification_type,
-        )
-    else:
-        tweet = kwargs['tweet']
-        Notification.objects.create(
-            recipient=recipient,
-            actor=actor,
-            notification_type=notification_type,
-            tweet=tweet
-        )
+    notifications = []
+    for profile in followers_profile:
+        if notification_type == Notification.TYPE_FOLLOW:
+            notifications.append(Notification(
+                recipient=profile,
+                actor=actor,
+                notification_type=notification_type,
+            ))
+        else:
+            tweet = kwargs['tweet']
+            notifications.append(Notification(
+                recipient=profile,
+                actor=actor,
+                notification_type=notification_type,
+                tweet=tweet
+            ))
+    Notification.objects.bulk_create(notifications)
