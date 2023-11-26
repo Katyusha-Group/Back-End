@@ -5,6 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.fields import GenericForeignKey
 
+from social_media.managers import TwitteManager
 from university.models import BaseCourse, Teacher
 
 
@@ -29,10 +30,10 @@ class Profile(models.Model):
         'max_length': 'نام باید حداکثر ۵۰ کاراکتر باشد'})
     username = models.CharField(max_length=20, blank=True, null=True, unique=True, validators=[
         MinLengthValidator(6)],
-        error_messages={
-            'unique': 'نام کاربری تکراری است',
-            'min_length': 'نام کاربری باید حداقل ۶ کاراکتر باشد',
-            'max_length': 'نام کاربری باید حداکثر ۲۰ کاراکتر باشد'})
+                                error_messages={
+                                    'unique': 'نام کاربری تکراری است',
+                                    'min_length': 'نام کاربری باید حداقل ۶ کاراکتر باشد',
+                                    'max_length': 'نام کاربری باید حداکثر ۲۰ کاراکتر باشد'})
     image = models.ImageField(upload_to='images/profile_pics', default='images/profile_pics/default.png')
     profile_type = models.CharField(max_length=1, choices=ACTION_CHOICES, default=TYPE_USER)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -107,20 +108,7 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'{self.follower} follows {self.following}'
-        
 
-
-class TwitteManager(models.Manager):
-    def create_twitte(self, *args, **kwargs):
-        parent = kwargs.get('parent', None)
-        if parent:
-            kwargs['conversation'] = parent.get_conversation()
-            twitte = super().create(*args, **kwargs)
-        else:
-            twitte = super().create(*args, **kwargs)
-            twitte.conversation = twitte
-            twitte.save()
-        return twitte
 
 class Twitte(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
@@ -132,43 +120,43 @@ class Twitte(models.Model):
     likes = models.ManyToManyField(Profile, related_name='liked_tweets', blank=True)
     conversation = models.ForeignKey('self', related_name='replies', blank=True, null=True, on_delete=models.CASCADE)
     parent = models.ForeignKey('self', related_name='children', blank=True, null=True, on_delete=models.CASCADE)
-    
+
     def __str__(self):
         return f'{self.profile} twitted {self.content}'
-        
+
     def get_parent(self):
         if self.parent:
             return self.parent
         return self
-    
+
     def get_children(self):
         return self.children.all().order_by('-created_at')
-    
+
     def get_replies(self):
         return self.replies.all().order_by('-created_at')
-    
+
     def get_likes(self):
         return self.likes.all()
-    
+
     def get_likes_count(self):
         return self.likes.count()
-    
+
     def get_replies_count(self):
         return self.replies.count()
-    
+
     def get_children_count(self):
         return self.children.count()
-    
+
     def get_conversation(self):
         return self.conversation
-    
+
     def is_liked_by(self, profile):
         return self.likes.filter(pk=profile.pk).exists()
-    
+
     def like(self, profile):
         self.likes.add(profile)
-        
+
     def unlike(self, profile):
         self.likes.remove(profile)
-    
+
     objects = TwitteManager()
