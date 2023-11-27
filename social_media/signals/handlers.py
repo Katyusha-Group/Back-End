@@ -22,7 +22,7 @@ def create_profile(sender, **kwargs):
 def send_notification_handler(sender, **kwargs):
     notification_type = kwargs['notification_type']
     actor = kwargs['actor']
-    profiles = Follow.objects.filter(follower=actor).prefetch_related('following').all()
+    profiles = Follow.objects.filter(following=actor).prefetch_related('follower').all()
     followers_profile = [follow.follower for follow in profiles]
 
     notifications = []
