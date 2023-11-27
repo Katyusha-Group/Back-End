@@ -21,6 +21,10 @@ from utils.variables import project_variables
 
 from .permissions import IsTwitterOwner
 
+from datetime import timedelta
+from django.utils import timezone
+from django.db import models
+
 
 class ProfileViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'patch', 'head', 'options']
@@ -373,3 +377,45 @@ class NotificationViewSet(viewsets.ModelViewSet):
         profile = Profile.get_profile_for_user(user)
         notifications = profile.notifications.unread()
         return Response({'count': notifications.count()}, status=status.HTTP_200_OK)
+
+
+class TwitteChartViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAdminUser]
+    queryset = Twitte.objects.all()
+
+    def get_serializer_class(self):
+        return TwitteSerializer
+
+    @action(detail=False, methods=['get'], url_path='last-week-tweets', serializer_class=TwitteSerializer,
+            url_name='last-week-tweets')
+    def last_week_tweets(self, request):
+        # Calculate the date a week ago from the current date
+        one_week_ago = timezone.now() - timedelta(days=7)
+
+        # Query to get the count of Tweets created per day in the last week
+        tweets_per_day_last_week = Twitte.objects.filter(
+            created_at__gte=one_week_ago  # Filter Tweets created after one week ago
+        ).extra({
+            'created_day': "date(created_at)"  # Extract day from the created_at field
+        }).values('created_day').annotate(
+            tweets_count_per_day=models.Count('id')  # Count Tweets per day
+        ).order_by('created_day')
+        
+        # Create a dictionary mapping dates to the number of Tweets created that day
+        tweets_per_day_last_week_dict = {}
+        for entry in tweets_per_day_last_week:
+            tweets_per_day_last_week_dict[entry['created_day']] = entry['tweets_count_per_day']
+            
+        # Create a list of dates and number of Tweets created that day
+        tweets_per_day_last_week_list = []
+        current_date = one_week_ago
+        while current_date <= timezone.now():
+            tweets_per_day_last_week_list.append({
+                'date': current_date.strftime('%Y-%m-%d'),
+                'tweets_count': tweets_per_day_last_week_dict.get(current_date.date(), 0)
+            })
+            current_date += timedelta(days=1)
+            
+        # Return the response
+        return Response(tweets_per_day_last_week_list, status=status.HTTP_200_OK)
