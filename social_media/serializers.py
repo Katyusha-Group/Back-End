@@ -242,6 +242,8 @@ class NotificationSerializer(serializers.ModelSerializer):
     message = serializers.SerializerMethodField(read_only=True)
     tweet_link = serializers.SerializerMethodField(read_only=True)
     actor = ProfileSummarySerializer(read_only=True)
+    notification_type = serializers.CharField(read_only=True)
+    read = serializers.BooleanField(read_only=True)
 
     def get_delta_time(self, obj: Notification):
         return obj.get_delta_time()
