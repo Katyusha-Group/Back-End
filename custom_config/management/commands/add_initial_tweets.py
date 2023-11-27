@@ -25,14 +25,14 @@ class Command(BaseCommand):
 
         courses = Course.objects.filter(semester=project_variables.CURRENT_SEMESTER).all()
         for course in courses:
-            Twitte.objects.create(
+            Twitte.objects.create_twitte(
                 content=messages.get_add_message_text(course, 'C'),
                 profile=Profile.objects.get(profile_type='C', object_id=course.base_course.course_number)
             )
             for teacher in course.teachers.all():
-                Twitte.objects.create(
+                Twitte.objects.create_twitte(
                     content=messages.get_add_message_text(course, 'T'),
-                    profile=Profile.objects.get(profile_type='T', object_id=teacher.pk)
+                    profile=Profile.objects.get(profile_type='T', object_id=teacher.pk),
                 )
 
         print('Adding initial tweets to database finished; time taken:', time.time() - pre)

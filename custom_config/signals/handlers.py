@@ -137,11 +137,11 @@ def twitter_message_update_creator(sender, **kwargs):
         field = project_variables.course_field_mapper_en_to_fa_notification[field_tracker.field]
 
         title, text = messages.get_email_update_for_ordered_courses(course.base_course.name,
-                                                                    course.course_number,
+                                                                    course.complete_course_number,
                                                                     field, new_value)
         # requirements.create_notification(title, text, field_tracker.tracker)
 
-        tweet = Twitte.objects.create(
+        tweet = Twitte.objects.create_twitte(
             profile=Profile.objects.get(profile_type='C', object_id=course.base_course.course_number),
             content=messages.get_update_message_text(course.class_gp, field, new_value))
         send_notification.send(sender=None, notification_type=Notification.TYPE_NEW_POST,
