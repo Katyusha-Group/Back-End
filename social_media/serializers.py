@@ -3,6 +3,7 @@ from rest_framework import serializers
 from accounts.models import User
 from .models import Profile, Follow, Twitte, Notification
 from utils.variables import project_variables
+from .signals import send_notification
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -28,17 +29,21 @@ class ProfileUsernameSerializer(serializers.ModelSerializer):
         fields = ['username']
 
 
-class ProfileImageSerializer(serializers.ModelSerializer):
+class ProfileSummarySerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField(read_only=True)
+    profile_type = serializers.CharField(read_only=True)
+    profile_link = serializers.SerializerMethodField(read_only=True)
+
+    def get_profile_link(self, obj: Profile):
+        domain = self.context['request'].META['HTTP_HOST']
+        return f'http://{domain}/profiles/{obj.username}/'
 
     def get_image(self, obj: Profile):
-        return project_variables.DOMAIN + obj.image.url \
-            if obj.image \
-            else project_variables.DOMAIN + '/media/profile_pics/default.png'
+        return obj.get_image_url(domain=self.context['request'].META['HTTP_HOST'])
 
     class Meta:
         model = Profile
-        fields = ['name', 'image']
+        fields = ['name', 'username', 'image', 'profile_type', 'profile_link']
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -85,9 +90,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         return Follow.objects.filter(follower=obj, following=me).exists()
 
     def get_image(self, obj: Profile):
-        return project_variables.DOMAIN + obj.image.url \
-            if obj.image \
-            else project_variables.DOMAIN + '/media/profile_pics/default.png'
+        return obj.get_image_url(domain=self.context['request'].META['HTTP_HOST'])
 
     class Meta:
         model = Profile
@@ -181,7 +184,7 @@ class TwitteSerializer(serializers.ModelSerializer):
     likes_link = serializers.SerializerMethodField(read_only=True)
     children_link = serializers.SerializerMethodField(read_only=True)
     liked_by_me = serializers.SerializerMethodField(read_only=True)
-    
+
     def get_likes_link(self, obj: Twitte):
         domain = self.context['request'].META['HTTP_HOST']
         return f'http://{domain}/twittes/{obj.id}/likes/'
@@ -189,7 +192,7 @@ class TwitteSerializer(serializers.ModelSerializer):
     def get_children_link(self, obj: Twitte):
         domain = self.context['request'].META['HTTP_HOST']
         return f'http://{domain}/twittes/{obj.id}/children/'
-    
+
     def get_liked_by_me(self, obj: Twitte):
         me = Profile.get_profile_for_user(self.context['request'].user)
         return obj.is_liked_by(me)
@@ -211,8 +214,9 @@ class TwitteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Twitte
-        fields = ['id', 'profile', 'content', 'created_at', 'likes_count', 'replies_count', 'children_count', 'likes_link', 'parent', 'children_link', 'conversation_id', 'liked_by_me']
-        
+        fields = ['id', 'profile', 'content', 'created_at', 'likes_count', 'replies_count', 'children_count',
+                  'likes_link', 'parent', 'children_link', 'conversation_id', 'liked_by_me']
+
     def create(self, validated_data):
         profile = Profile.get_profile_for_user(self.context['request'].user)
         twitte = Twitte.objects.create_twitte(profile=profile, **validated_data)
@@ -243,6 +247,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     delta_time = serializers.SerializerMethodField(read_only=True)
     message = serializers.SerializerMethodField(read_only=True)
     tweet_link = serializers.SerializerMethodField(read_only=True)
+    actor = ProfileSummarySerializer(read_only=True)
 
     def get_delta_time(self, obj: Notification):
         return obj.get_delta_time()
@@ -256,4 +261,4 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
-        fields = ['recipient', 'actor', 'notification_type', 'read', 'delta_time', 'tweet_link', 'message']
+        fields = ['actor', 'notification_type', 'read', 'delta_time', 'tweet_link', 'message']

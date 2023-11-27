@@ -96,6 +96,11 @@ class Profile(models.Model):
         user_model = ContentType.objects.get_for_model(user_model)
         return Profile.objects.filter(content_type=user_model, object_id=user.pk).first()
 
+    def get_image_url(self, domain):
+        return f'http://{domain}' + self.image.url \
+            if self.image \
+            else f'http://{domain}' + '/media/profile_pics/default.png'
+
 
 class Follow(models.Model):
     follower = models.ForeignKey(Profile, related_name='following', on_delete=models.CASCADE)
