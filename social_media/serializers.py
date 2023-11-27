@@ -1,9 +1,8 @@
+from django.urls import reverse
 from rest_framework import serializers
 
 from accounts.models import User
 from .models import Profile, Follow, Twitte, Notification
-from utils.variables import project_variables
-from .signals import send_notification
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -36,7 +35,7 @@ class ProfileSummarySerializer(serializers.ModelSerializer):
 
     def get_profile_link(self, obj: Profile):
         domain = self.context['request'].META['HTTP_HOST']
-        return f'http://{domain}/profiles/{obj.username}/'
+        return f'http://{domain}' + reverse("profiles-view-profile", args=[obj.username])
 
     def get_image(self, obj: Profile):
         return obj.get_image_url(domain=self.context['request'].META['HTTP_HOST'])
