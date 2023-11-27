@@ -14,9 +14,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from university.models import Course, Department
 from university.serializers import CourseSerializer
-from .models import Profile, Follow, Twitte
+from .models import Profile, Follow, Twitte, Notification
 from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer, \
-    ProfileUsernameSerializer, TwitteSerializer, LikeSerializer
+    ProfileUsernameSerializer, TwitteSerializer, LikeSerializer, NotificationSerializer
 from utils.variables import project_variables
 
 from .permissions import IsTwitterOwner
@@ -332,8 +332,44 @@ class TwitteViewSet(viewsets.ModelViewSet):
         else:
             twitte.like(profile)
             return Response({'detail': ['liked']}, status=status.HTTP_201_CREATED)
-        
+
     @staticmethod
     def get_token_for_user(user):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        profile = Profile.get_profile_for_user(self.request.user)
+        if profile.notifications.unread().exists():
+            return profile.notifications.order_by('read', 'created_at').all()
+        return profile.notifications.order_by('-created_at').all()
+
+    def get_serializer_class(self):
+        return NotificationSerializer
+
+    def get_permissions(self):
+        if self.action == 'unread_notifications':
+            return [IsAuthenticated()]
+        return super().get_permissions()
+
+    def list(self, request, *args, **kwargs):
+        notifications = self.get_queryset()[:5]
+        serializer = self.get_serializer(
+            notifications,
+            many=True,
+        )
+        Notification.objects.filter(pk__in=[entry.pk for entry in notifications]).mark_all_as_read()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='unread-count', serializer_class=NotificationSerializer,
+            url_name='unread-count')
+    def unread_count(self, request, *args, **kwargs):
+        user = self.request.user
+        profile = Profile.get_profile_for_user(user)
+        notifications = profile.notifications.unread()
+        return Response({'count': notifications.count()}, status=status.HTTP_200_OK)

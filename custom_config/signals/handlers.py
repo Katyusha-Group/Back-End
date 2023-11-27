@@ -1,8 +1,11 @@
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
-from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment
+from custom_config.scripts import messages
+from social_media.signals import send_notification
+from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment, BaseCourse
 from custom_config.models import FieldTracker, ModelTracker, WebNotification
+from social_media.models import Profile, Twitte, Notification
 import custom_config.scripts.signals_scripts as requirements
 from university.signals import course_teachers_changed
 from utils.variables import project_variables
@@ -112,27 +115,34 @@ def teachers_changed(sender, **kwargs):
 def notification_handler(sender, **kwargs):
     if kwargs['created']:
         model_tracker = kwargs['instance']
-        title = ''
-        text = ''
+        course_name, course_number = model_tracker.course_name, model_tracker.course_number
         if model_tracker.action == ModelTracker.ACTION_CREATED:
-            title = 'ایجاد درس جدید'
-            text = 'درس {} با شماره {} ایجاد شد.'.format(model_tracker.course_name, model_tracker.course_number)
+            title, text = messages.get_email_add_for_ordered_courses(course_name, course_number)
         elif model_tracker.action == ModelTracker.ACTION_DELETED:
-            title = 'حذف درس'
-            text = 'درس {} با شماره {} حذف شد.'.format(model_tracker.course_name, model_tracker.course_number)
+            title, text = messages.get_email_delete_for_ordered_courses(course_name, course_number)
         else:
             return
         # requirements.create_notification(title, text, model_tracker)
 
 
 @receiver(post_save, sender=FieldTracker)
-def notification_update_handler(sender, **kwargs):
+def twitter_message_update_creator(sender, **kwargs):
     if kwargs['created']:
         field_tracker = kwargs['instance']
-        title = 'ویرایش درس'
-        text = 'درس {} با شماره {} ویرایش شد:'.format(field_tracker.tracker.course_name,
-                                                      field_tracker.tracker.course_number)
-        text += '\n'
-        text += f'مقدار جدید برای ستون «{project_variables.course_field_mapper_en_to_fa_notification[field_tracker.field]}» ثبت شده است.\n'
-        text += 'مقدار جدید: ' + str(field_tracker.value)
+
+        new_value = str(field_tracker.value)
+        course = Course.objects.filter(id=field_tracker.tracker.instance_id).first()
+        if course is None:
+            return
+        field = project_variables.course_field_mapper_en_to_fa_notification[field_tracker.field]
+
+        title, text = messages.get_email_update_for_ordered_courses(course.base_course.name,
+                                                                    course.complete_course_number,
+                                                                    field, new_value)
         # requirements.create_notification(title, text, field_tracker.tracker)
+
+        tweet = Twitte.objects.create_twitte(
+            profile=Profile.objects.get(profile_type='C', object_id=course.base_course.course_number),
+            content=messages.get_update_message_text(course.class_gp, field, new_value))
+        send_notification.send(sender=None, notification_type=Notification.TYPE_NEW_POST,
+                               actor=tweet.profile, tweet=tweet)
