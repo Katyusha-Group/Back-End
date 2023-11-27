@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from accounts.models import User
 from .models import Profile, Follow, Twitte, Notification
+from .signals import send_notification
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -166,14 +167,6 @@ class FollowSerializer(serializers.Serializer):
         return {'following': profile}
 
 
-class FollowingSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(read_only=True)
-
-    class Meta:
-        model = Follow
-        fields = ['profile']
-
-
 class TwitteSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(read_only=True)
     conversation_id = serializers.SerializerMethodField(read_only=True)
@@ -219,6 +212,8 @@ class TwitteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         profile = Profile.get_profile_for_user(self.context['request'].user)
         twitte = Twitte.objects.create_twitte(profile=profile, **validated_data)
+        send_notification.send(sender=Profile, notification_type=Notification.TYPE_NEW_POST,
+                               actor=profile, tweet=twitte)
         return twitte
 
     def update(self, instance, validated_data):
