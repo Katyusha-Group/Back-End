@@ -264,8 +264,8 @@ class TwitteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.action == 'list':
-            return Twitte.objects.order_by('-created_at').filter(parent=None)
-        return Twitte.objects.order_by('-created_at').all()
+            return Twitte.objects.order_by('-created_at').filter(parent=None).all()[0:35]
+        return Twitte.objects.order_by('-created_at').all()[0:35]
 
     def get_serializer_class(self):
         if self.action in ['like', 'unlike']:
