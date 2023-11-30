@@ -8,6 +8,9 @@ router.register(r'profiles', views.ProfileViewSet, basename='profiles')
 router.register(r'twittes', views.TwitteViewSet, basename='twittes')
 router.register(r'notifications', views.NotificationViewSet, basename='notifications')
 router.register(r'twitte-charts', views.TwitteChartViewSet, basename='twitte-charts')
+router.register(r'report-twitte', views.ReportTwitteViewSet, basename='report-twitte')
+router.register(r'manage-reported-twittes', views.ManageReportedTwittesViewSet, basename='manage-reported-twittes')
+
 urlpatterns = [
     path('', include(router.urls)),
 ]

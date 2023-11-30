@@ -14,12 +14,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from university.models import Course, Department
 from university.serializers import CourseSerializer
-from .models import Profile, Follow, Twitte, Notification
+from .models import Profile, Follow, Twitte, Notification, ReportTwitte
 from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer, \
-    ProfileUsernameSerializer, TwitteSerializer, LikeSerializer, NotificationSerializer
+    ProfileUsernameSerializer, TwitteSerializer, LikeSerializer, NotificationSerializer, ReportTwitteSerializer
 from utils.variables import project_variables
 
-from .permissions import IsTwitterOwner
+from .permissions import IsTwitterOwner, IsReportTwitteOwner
 from .pagination import DefaultPagination
 
 from datetime import timedelta
@@ -266,8 +266,8 @@ class TwitteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.action == 'list':
-            return Twitte.objects.order_by('-created_at').filter(parent=None).all()
-        return Twitte.objects.order_by('-created_at').all()
+            return Twitte.objects.order_by('-created_at').filter(parent=None).filter(display=True).all()
+        return Twitte.objects.order_by('-created_at').filter(display=True).all()
 
     def get_serializer_class(self):
         if self.action in ['like', 'unlike']:
@@ -287,16 +287,7 @@ class TwitteViewSet(viewsets.ModelViewSet):
             return [IsTwitterOwner()]
         return super().get_permissions()
 
-    def list(self, request, *args, **kwargs):
-        serializer = self.get_serializer(
-            self.get_queryset(),
-            context=self.get_serializer_context(),
-            many=True,
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
     def create(self, request, *args, **kwargs):
-        profile = Profile.get_profile_for_user(request.user)
         serializer = self.get_serializer(
             data=request.data,
             context=self.get_serializer_context(),
@@ -304,6 +295,12 @@ class TwitteViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    def destroy(self, request, *args, **kwargs):
+        twitte = self.get_object()
+        twitte.display = False
+        twitte.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'], url_path='(?P<pk>\d+)/likes', serializer_class=ProfileSerializer,
             url_name='twittes-view-likes')
@@ -343,6 +340,64 @@ class TwitteViewSet(viewsets.ModelViewSet):
     def get_token_for_user(user):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
+    
+class ReportTwitteViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    pagination_class = DefaultPagination
+
+    def get_queryset(self):
+        return ReportTwitte.objects.order_by('-created_at').all()
+
+    def get_serializer_class(self):
+        return ReportTwitteSerializer
+
+    def get_serializer_context(self):
+        token = self.get_token_for_user(self.request.user)
+        return {'csrftoken': self.request.COOKIES.get('csrftoken'),
+                'token': token,
+                'request': self.request}
+        
+    def get_permissions(self):
+        if self.action in ['destroy']:
+            return [IsReportTwitteOwner()]
+        return super().get_permissions()   
+
+    @staticmethod
+    def get_token_for_user(user):
+        refresh = RefreshToken.for_user(user)
+        return str(refresh.access_token)
+    
+
+class ManageReportedTwittesViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+    permission_classes = [IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
+    pagination_class = DefaultPagination
+
+    def get_serializer_class(self):
+        return TwitteSerializer
+
+    def get_queryset(self):
+        return Twitte.objects.filter(id__in=ReportTwitte.objects.values('twitte_id')).filter(display=True).all()
+
+    def get_serializer_context(self):
+        token = self.get_token_for_user(self.request.user)
+        return {'csrftoken': self.request.COOKIES.get('csrftoken'),
+                'token': token,
+                'request': self.request}
+
+    @staticmethod
+    def get_token_for_user(user):
+        refresh = RefreshToken.for_user(user)
+        return str(refresh.access_token)
+    
+    def destroy(self, request, *args, **kwargs):
+        twitte = self.get_object()
+        twitte.display = False
+        twitte.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class NotificationViewSet(viewsets.ModelViewSet):

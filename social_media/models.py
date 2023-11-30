@@ -127,6 +127,7 @@ class Twitte(models.Model):
     likes = models.ManyToManyField(Profile, related_name='liked_tweets', blank=True)
     conversation = models.ForeignKey('self', related_name='replies', blank=True, null=True, on_delete=models.CASCADE)
     parent = models.ForeignKey('self', related_name='children', blank=True, null=True, on_delete=models.CASCADE)
+    display = models.BooleanField(default=True)
 
     def __str__(self):
         return f'{self.profile} twitted {self.content}'
@@ -153,6 +154,9 @@ class Twitte(models.Model):
 
     def get_children_count(self):
         return self.children.count()
+    
+    def get_reports_count(self):
+        return ReportTwitte.objects.filter(twitte=self).count()
 
     def get_conversation(self):
         return self.conversation
@@ -165,8 +169,38 @@ class Twitte(models.Model):
 
     def unlike(self, profile):
         self.likes.remove(profile)
+        
+    def is_reported_by(self, profile):
+        return self.reports.filter(reporter=profile).exists()
+    
+    def report_reason(self, profile):
+        report = self.reports.filter(reporter=profile).first()
+        return report.reason if report else None
 
     objects = TwitteManager()
+    
+    
+class ReportTwitte(models.Model):
+    REASON_TYPES = (
+        ('S', 'اسپم'),
+        ('P', 'پورن'),
+        ('V', 'خشونت'),
+        ('O', 'سایر')
+    )
+    
+    reporter = models.ForeignKey(Profile, related_name='reported_twittes', on_delete=models.CASCADE)
+    twitte = models.ForeignKey(Twitte, related_name='reports', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    reason = models.CharField(max_length=1, choices=REASON_TYPES)
+    
+    class Meta:
+        unique_together = ('reporter', 'twitte')
+        indexes = [
+            models.Index(fields=["reporter", "twitte"]),
+        ]
+        
+    def __str__(self):
+        return f'{self.reporter} reported {self.twitte} as {self.report_type}'
 
 
 class Notification(models.Model):
