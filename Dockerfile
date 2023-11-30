@@ -13,9 +13,9 @@ COPY requirements.txt /app/
 
 
 # Install project dependencies
-RUN pip install --upgrade pip
+RUN timeout 300 pip install --upgrade pip
 
-RUN pip install -r requirements.txt
+RUN timeout 300 pip install -r requirements.txt
 
 # Copy the rest of the application's code
 COPY . /app/
