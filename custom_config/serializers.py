@@ -36,7 +36,7 @@ class CartItemsViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CartItem
-        fields = ['contain_telegram', 'contain_sms', 'contain_email', 'total_price']
+        fields = ['id', 'contain_telegram', 'contain_sms', 'contain_email', 'total_price']
 
 
 class UpdateCartItemSerializer(serializers.ModelSerializer):
