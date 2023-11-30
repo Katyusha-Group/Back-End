@@ -26,6 +26,10 @@ from .serializers import ActivationResendSerializer
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 from .utils import  EmailThread, generate_tokens
+from rest_framework.permissions import IsAdminUser
+from django.utils import timezone
+from datetime import timedelta
+from django.db import models
 
 
 class SignUpView(GenericAPIView):
@@ -440,3 +444,43 @@ class ChangePasswordlogView(GenericAPIView):
             return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserChartViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAdminUser] 
+    queryset = User.objects.all() 
+
+    def get_serializer_class(self):
+        return UserSerializer 
+
+    def last_week_users(self, request):
+        # Calculate the date a week ago from the current date
+        one_week_ago = timezone.now() - timedelta(days=6)
+
+        # Query to get the users created in the last week
+        users_created_last_week = User.objects.filter(
+            date_joined__gte=one_week_ago  # Filter users created after one week ago
+        ).extra({
+            'created_date': "date(date_joined)"  # Extract date from the date_joined field
+        }).values('created_date').annotate(
+            users_count_per_day=models.Count('id')  # Count users per day
+        ).order_by('created_date')
+        
+        # Create a dictionary mapping dates to the number of users created that day
+        users_per_day_last_week_dict = {}
+        for entry in users_created_last_week:
+            users_per_day_last_week_dict[entry['created_date']] = entry['users_count_per_day']
+            
+        # Create a list of dates and number of users created that day
+        users_per_day_last_week_list = []
+        current_date = one_week_ago.date()
+        while current_date <= timezone.now().date():
+            users_per_day_last_week_list.append({
+                'date': current_date.strftime('%Y-%m-%d'),
+                'users_count': users_per_day_last_week_dict.get(current_date, 0)
+            })
+            current_date += timedelta(days=1)
+            
+        # Return the response
+        return Response(users_per_day_last_week_list, status=status.HTTP_200_OK)

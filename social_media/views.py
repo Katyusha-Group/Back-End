@@ -20,6 +20,7 @@ from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSeria
 from utils.variables import project_variables
 
 from .permissions import IsTwitterOwner
+from .pagination import DefaultPagination
 
 from datetime import timedelta
 from django.utils import timezone
@@ -261,11 +262,12 @@ class TwitteViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+    pagination_class = DefaultPagination
 
     def get_queryset(self):
         if self.action == 'list':
-            return Twitte.objects.order_by('-created_at').filter(parent=None).all()[0:35]
-        return Twitte.objects.order_by('-created_at').all()[0:35]
+            return Twitte.objects.order_by('-created_at').filter(parent=None).all()
+        return Twitte.objects.order_by('-created_at').all()
 
     def get_serializer_class(self):
         if self.action in ['like', 'unlike']:
@@ -391,7 +393,7 @@ class TwitteChartViewSet(viewsets.ModelViewSet):
             url_name='last-week-tweets')
     def last_week_tweets(self, request):
         # Calculate the date a week ago from the current date
-        one_week_ago = timezone.now() - timedelta(days=7)
+        one_week_ago = timezone.now() - timedelta(days=6)
 
         # Query to get the count of Tweets created per day in the last week
         tweets_per_day_last_week = Twitte.objects.filter(
