@@ -17,6 +17,8 @@ RUN timeout 300 pip install --upgrade pip
 
 RUN timeout 300 pip install -r requirements.txt
 
+RUN pip install gunicorn==21.2.0
+
 # Copy the rest of the application's code
 COPY . /app/
 
