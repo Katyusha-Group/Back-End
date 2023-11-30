@@ -31,6 +31,8 @@ class CartViewSet(ModelViewSet):
             return [IsAuthenticated()]
         elif self.action == 'add_to_cart':
             return [IsAuthenticated()]
+        elif self.action == 'remove_item':
+            return [IsAuthenticated()]
         return [IsAdminUser()]
 
     def get_object(self):
@@ -41,7 +43,7 @@ class CartViewSet(ModelViewSet):
             return super().list(request, *args, **kwargs)
         cart = self.get_object()
         serializer = self.get_serializer(cart)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_name='add-to-cart', url_path='add-to-cart',
             serializer_class=AddCartItemSerializer)
@@ -58,12 +60,19 @@ class CartViewSet(ModelViewSet):
     def update_cart(self, request, item_id, *args, **kwargs):
         cart = self.get_object()
         cart_item = CartItem.objects.filter(id=item_id).first()
-        validators.not_null(value=cart_item, message='Cart item not found.')
+        validators.not_null(value=cart_item, message='آیتم مورد نظر یافت نشد.')
         serializer = self.get_serializer(data=self.request.data, context={'cart_id': cart.id, 'request': self.request})
         serializer.is_valid(raise_exception=True)
         instance = serializer.update(cart_item, serializer.validated_data)
         serializer = CartItemsViewSerializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['delete'], url_name='remove-item', url_path='remove-item/(?P<item_id>\d+)',)
+    def remove_item(self, request, item_id, *args, **kwargs):
+        cart_item = CartItem.objects.filter(id=item_id).first()
+        validators.not_null(value=cart_item, message='آیتم مورد نظر یافت نشد.')
+        cart_item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class OrderViewSet(ModelViewSet):
