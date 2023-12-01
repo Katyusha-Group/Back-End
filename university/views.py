@@ -119,7 +119,7 @@ class CourseViewSet(ListModelMixin, GenericViewSet):
         serializer = self.get_serializer(course)
         return Response(data=serializer.data)
 
-    @action(detail=False, methods=['GET', 'PUT'])
+    @action(detail=False, methods=['GET', 'PUT'], url_name='my-courses')
     def my_courses(self, request):
         student = request.user
         if request.method == 'GET':
@@ -136,6 +136,11 @@ class CourseViewSet(ListModelMixin, GenericViewSet):
         elif request.method == 'PUT':
             serializer = ModifyMyCourseSerializer(data=request.data, context={'user_id': request.user.id})
             serializer.is_valid(raise_exception=True)
+            course = get_course(course_code=serializer.validated_data['complete_course_number'],
+                                semester=project_variables.CURRENT_SEMESTER)
+            if course is None:
+                return Response(status=status.HTTP_404_NOT_FOUND,
+                                data={'detail': 'No course with this course_number in database.'})
             _, created = serializer.save(student=student)
             message = self.generate_message(created)
             return Response(status=status.HTTP_200_OK, data={'message': message})
