@@ -139,3 +139,7 @@ dmypy.json
 
 # media
 /media/
+
+# pipfile
+Pipfile.lock
+Pipfile
