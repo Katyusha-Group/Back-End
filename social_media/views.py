@@ -387,7 +387,6 @@ class ManageTwittesViewSet(TwitteViewSet):
 class ReportTwitteViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
     pagination_class = DefaultPagination
 
     def get_queryset(self):
