@@ -283,7 +283,7 @@ class TwitteViewSet(viewsets.ModelViewSet):
                 'request': self.request}
 
     def get_permissions(self):
-        if self.action == 'delete':
+        if self.action == 'destroy':
             return [IsTwitterOwner()]
         return super().get_permissions()
 
