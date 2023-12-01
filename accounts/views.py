@@ -25,7 +25,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import ActivationResendSerializer
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
-from .utils import  EmailThread, generate_tokens
+from .utils import EmailThread, generate_tokens
 from rest_framework.permissions import IsAdminUser
 from django.utils import timezone
 from datetime import timedelta
@@ -83,15 +83,14 @@ class SignUpView(GenericAPIView):
 
         # sending email verification with thread
         email_thread = EmailThread(email_handler, subject=subject,
-                                                recipient_list=[user.email],
-                                                verification_token=verification_code,
-                                                registration_tries=user.verification_tries_count,
-                                                 show_text=show_text)
+                                   recipient_list=[user.email],
+                                   verification_token=verification_code,
+                                   registration_tries=user.verification_tries_count,
+                                   show_text=show_text)
         email_thread.start()
 
-
         user_data = {
-            "user" : UserSerializer(user).data,
+            "user": UserSerializer(user).data,
             "message": "User created successfully. Please check your email to activate your account.",
             "code": verification_code,
             "url": f'{project_variables.DOMAIN}/accounts/activation-confirm/{token}',
@@ -99,9 +98,7 @@ class SignUpView(GenericAPIView):
 
         }
 
-
         return Response(user_data, status=status.HTTP_201_CREATED)
-
 
 
 class LoginView(TokenObtainPairView):
@@ -114,13 +111,12 @@ class LoginView(TokenObtainPairView):
         if user is not None:
             tokens = generate_tokens(user.id)
 
-
             login(request, user)
 
             return Response({
                 'refresh': tokens['refresh'],
                 'access': tokens['access'],
-                'user' : UserSerializer(user).data,
+                'user': UserSerializer(user).data,
             })
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -149,6 +145,8 @@ class LogoutView(APIView):
             return Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
 
         return Response(data={'detail': 'Not logged in, so cannot log out'}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class ChangePasswordView(generics.GenericAPIView):
     model = User
     permission_classes = [IsAuthenticated]
@@ -250,7 +248,6 @@ class ActivationResend(generics.GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class WalletViewSet(viewsets.GenericViewSet, ListModelMixin):
     http_method_names = ['get', 'put', 'options', 'head']
     permission_classes = [IsAuthenticated]
@@ -330,8 +327,6 @@ class ForgotPasswordView(APIView):
                 'link': f'{project_variables.DOMAIN}/accounts/code_verification_view/{token}/'
             }
         )
-
-
 
 
 class PasswordChangeAPIView(APIView):
@@ -448,11 +443,11 @@ class ChangePasswordlogView(GenericAPIView):
 
 class UserChartViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'head', 'options']
-    permission_classes = [IsAdminUser] 
-    queryset = User.objects.all() 
+    permission_classes = [IsAdminUser]
+    queryset = User.objects.all()
 
     def get_serializer_class(self):
-        return UserSerializer 
+        return UserSerializer
 
     def last_week_users(self, request):
         # Calculate the date a week ago from the current date
@@ -466,12 +461,12 @@ class UserChartViewSet(viewsets.ModelViewSet):
         }).values('created_date').annotate(
             users_count_per_day=models.Count('id')  # Count users per day
         ).order_by('created_date')
-        
+
         # Create a dictionary mapping dates to the number of users created that day
         users_per_day_last_week_dict = {}
         for entry in users_created_last_week:
             users_per_day_last_week_dict[entry['created_date']] = entry['users_count_per_day']
-            
+
         # Create a list of dates and number of users created that day
         users_per_day_last_week_list = []
         current_date = one_week_ago.date()
@@ -481,6 +476,6 @@ class UserChartViewSet(viewsets.ModelViewSet):
                 'users_count': users_per_day_last_week_dict.get(current_date, 0)
             })
             current_date += timedelta(days=1)
-            
+
         # Return the response
         return Response(users_per_day_last_week_list, status=status.HTTP_200_OK)
