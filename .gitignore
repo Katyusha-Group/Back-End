@@ -141,5 +141,5 @@ dmypy.json
 /media/
 
 # pipfile
-Pipfile.lock
-Pipfile
+./Pipfile.lock
+./Pipfile
