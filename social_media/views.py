@@ -265,9 +265,17 @@ class TwitteViewSet(viewsets.ModelViewSet):
     pagination_class = DefaultPagination
 
     def get_queryset(self):
+        queryset = Twitte.objects.all()
+        query_string = self.request.query_params.get('search', None)
+        if query_string is not None:
+            queryset = queryset.annotate(
+                content_index=StrIndex(Lower('content'), Lower(Value(query_string)))
+            ).filter(
+                content_index__gt=0
+            ).order_by('content_index').all()
         if self.action == 'list':
-            return Twitte.objects.order_by('-created_at').filter(parent=None).filter(display=True).all()
-        return Twitte.objects.order_by('-created_at').filter(display=True).all()
+            return queryset.filter(parent=None).filter(display=True)
+        return queryset.order_by('-created_at').filter(display=True)
 
     def get_serializer_class(self):
         if self.action in ['like', 'unlike']:
@@ -335,6 +343,41 @@ class TwitteViewSet(viewsets.ModelViewSet):
         else:
             twitte.like(profile)
             return Response({'detail': ['liked']}, status=status.HTTP_201_CREATED)
+
+    @staticmethod
+    def get_token_for_user(user):
+        refresh = RefreshToken.for_user(user)
+        return str(refresh.access_token)
+    
+    
+class ManageTwittesViewSet(TwitteViewSet):
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+    permission_classes = [IsAdminUser]
+    
+    def get_permissions(self):
+        return super().get_permissions()
+
+    def get_queryset(self):
+        queryset = Twitte.objects.all()
+        query_string = self.request.query_params.get('search', None)
+        if query_string is not None:
+            queryset = queryset.annotate(
+                content_index=StrIndex(Lower('content'), Lower(Value(query_string)))
+            ).filter(
+                content_index__gt=0
+            ).order_by('content_index').all()
+        return queryset
+
+    @staticmethod
+    def get_token_for_user(user):
+        refresh = RefreshToken.for_user(user)
+        return str(refresh.access_token)
+
+    def get_serializer_context(self):
+        token = self.get_token_for_user(self.request.user)
+        return {'csrftoken': self.request.COOKIES.get('csrftoken'),
+                'token': token,
+                'request': self.request}
 
     @staticmethod
     def get_token_for_user(user):
