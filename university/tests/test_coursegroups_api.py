@@ -133,17 +133,17 @@ class TestCoursegroups:
 
         for course_data, course in zip(response.data, sorted_course_with_first_course_base_course_id):
             assert course_data['base_course_id'] == course.base_course_id
-            assert course_data['capacity'] == int(course.capacity)
+            assert course_data['capacity'] == course.capacity
             assert course_data['color_intensity_percentage'] == course.color_intensity_percentage
             assert course_data['complete_course_number'] == course.complete_course_number
             assert course_data['description'] == course.description
             assert course_data['group_number'] == course.class_gp
             assert course_data['name'] == course.base_course.name
-            assert course_data['practical_unit'] == int(course.base_course.practical_unit)
-            assert course_data['registered_count'] == int(course.registered_count)
+            assert course_data['practical_unit'] == course.base_course.practical_unit
+            assert course_data['registered_count'] == course.registered_count
             assert course_data['sex'] == course.sex
-            assert course_data['total_unit'] == int(course.base_course.total_unit)
-            assert course_data['waiting_count'] == int(course.waiting_count)
+            assert course_data['total_unit'] == course.base_course.total_unit
+            assert course_data['waiting_count'] == course.waiting_count
 
     def test_if_returned_data_has_correct_values_for_course_times(self, api_client, user_instance,
                                                                   course_groups_view_url, courses,
@@ -232,8 +232,6 @@ class TestCoursegroups:
                                                           course_groups_view_url,
                                                           sorted_course_with_first_course_base_course_id):
         api_client.force_login(user=user_instance)
-        is_first_allowed = sorted_course_with_first_course_base_course_id[0].allowed_departments.filter(
-            department__department_number=user_instance.department.department_number).exists()
 
         response = api_client.get(
             course_groups_view_url(sorted_course_with_first_course_base_course_id[0].base_course_id))

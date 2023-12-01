@@ -131,8 +131,8 @@ class SimpleCourseSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    total_unit = serializers.IntegerField(source='base_course.total_unit', read_only=True)
-    practical_unit = serializers.IntegerField(source='base_course.practical_unit', read_only=True)
+    total_unit = serializers.FloatField(source='base_course.total_unit', read_only=True)
+    practical_unit = serializers.FloatField(source='base_course.practical_unit', read_only=True)
     emergency_deletion = serializers.BooleanField(source='base_course.emergency_deletion', read_only=True)
     exam_times = SimpleExamTimePlaceSerializer(many=True, read_only=True)
     course_times = CourseTimeSerializerDayRepresentation(many=True, read_only=True)
@@ -172,11 +172,13 @@ class ModifyMyCourseSerializer(serializers.Serializer):
     complete_course_number = serializers.CharField()
 
     def validate(self, attrs):
-        course_number, class_gp = attrs['complete_course_number'].split('_')
-        courses = Course.objects.filter(class_gp=class_gp, base_course_id=course_number)
-        if not courses.exists():
+        try:
+            course_number, class_gp = attrs['complete_course_number'].split('_')
+            course_number = int(course_number)
+            class_gp = int(class_gp)
+        except ValueError:
             raise serializers.ValidationError(
-                detail='No course with the given course number was found.'
+                detail='Complete course number is not provided correctly.'
             )
         return attrs
 
