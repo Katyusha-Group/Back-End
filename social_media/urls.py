@@ -10,6 +10,7 @@ router.register(r'notifications', views.NotificationViewSet, basename='notificat
 router.register(r'twitte-charts', views.TwitteChartViewSet, basename='twitte-charts')
 router.register(r'report-twitte', views.ReportTwitteViewSet, basename='report-twitte')
 router.register(r'manage-reported-twittes', views.ManageReportedTwittesViewSet, basename='manage-reported-twittes')
+router.register(r'manage-twittes', views.ManageTwittesViewSet, basename='manage-twittes')
 
 urlpatterns = [
     path('', include(router.urls)),
