@@ -271,3 +271,16 @@ CRONJOBS = [
     # ('0 0 * * *', 'custom_config.cron.delete_expired_carts'),
 ]
 
+# celery configs
+CELERY_BROKER_URL = 'redis://redis:6379/1'
+
+# cache configs
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
