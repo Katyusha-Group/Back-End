@@ -101,7 +101,8 @@ class WalletTransaction(models.Model):
     transaction_type = models.CharField(max_length=1, choices=TRANSACTION_TYPE_CHOICES, verbose_name='نوع تراکنش')
     transaction_status = models.CharField(max_length=1, choices=TRANSACTION_STATUS_CHOICES, verbose_name='وضعیت تراکنش')
     amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name='wallet_transactions')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+                             related_name='wallet_transactions')
     applied_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
     ref_code = models.CharField(max_length=20, default=create_ref_code, verbose_name='کد مرجع')
 

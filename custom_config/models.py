@@ -138,7 +138,7 @@ class Order(models.Model):
         max_length=1, choices=PAYMENT_METHOD_CHOICES, default=PAY_ONLINE
     )
     ref_code = models.CharField(max_length=20, default=create_ref_code, unique=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name='orders')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='orders')
 
     def __str__(self):
         return str(self.id) + ' : ' + self.payment_status
