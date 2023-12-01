@@ -74,7 +74,7 @@ class TestCoursesBasedDepartments:
         assert len(response.data[0]) == 19
 
     def test_if_returned_data_has_correct_fields(self, api_client, user_with_department,
-                                                 all_departments_courses_view_url, courses):
+                                                 all_departments_courses_view_url, courses_with_user_department):
         api_client.force_login(user=user_with_department)
 
         response = api_client.get(all_departments_courses_view_url)
