@@ -274,7 +274,7 @@ class TwitteViewSet(viewsets.ModelViewSet):
                 content_index__gt=0
             ).order_by('content_index').all()
         if self.action == 'list':
-            return queryset.filter(parent=None).filter(display=True)
+            return queryset.order_by('-created_at').filter(parent=None).filter(display=True)
         return queryset.order_by('-created_at').filter(display=True)
 
     def get_serializer_class(self):
@@ -350,6 +350,55 @@ class TwitteViewSet(viewsets.ModelViewSet):
         return str(refresh.access_token)
     
     
+class FollowingTwittesViewSet(TwitteViewSet):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAuthenticated]
+    pagination_class = DefaultPagination
+
+    def get_queryset(self):
+        queryset = Twitte.objects.all()
+        query_string = self.request.query_params.get('search', None)
+        if query_string is not None:
+            queryset = queryset.annotate(
+                content_index=StrIndex(Lower('content'), Lower(Value(query_string)))
+            ).filter(
+                content_index__gt=0
+            ).order_by('content_index').all()
+        if self.action == 'list':
+            return queryset.order_by('-created_at').filter(parent=None).filter(display=True).filter(profile__in=Follow.objects.filter(
+                follower=Profile.get_profile_for_user(self.request.user)).values('following'))
+        return queryset.order_by('-created_at').filter(display=True).filter(profile__in=Follow.objects.filter(
+            follower=Profile.get_profile_for_user(self.request.user)).values('following'))
+        
+        
+class ForYouTwittesViewSet(TwitteViewSet):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAuthenticated]
+    pagination_class = DefaultPagination
+
+    def get_queryset(self):
+        # i wanna get twittes that are in my followings of my followings twittes or liked by my followings
+        queryset = Twitte.objects.all()
+        query_string = self.request.query_params.get('search', None)
+        if query_string is not None:
+            queryset = queryset.annotate(
+                content_index=StrIndex(Lower('content'), Lower(Value(query_string)))
+            ).filter(
+                content_index__gt=0
+            ).order_by('content_index').all()
+        if self.action == 'list':
+            return queryset.filter(parent=None).filter(display=True).filter(Q(profile__in=Follow.objects.filter(
+                following__in=Follow.objects.filter(
+                    follower=Profile.get_profile_for_user(self.request.user)).values('following')).values('follower')) |
+                Q(id__in=Twitte.objects.filter(likes__in=Follow.objects.filter(
+                    follower=Profile.get_profile_for_user(self.request.user)).values('following')).values('id')))
+        return queryset.order_by('-created_at').filter(display=True).filter(Q(profile__in=Follow.objects.filter(
+            following__in=Follow.objects.filter(
+                follower=Profile.get_profile_for_user(self.request.user)).values('following')).values('follower')) |
+            Q(id__in=Twitte.objects.filter(likes__in=Follow.objects.filter(
+                follower=Profile.get_profile_for_user(self.request.user)).values('following')).values('id')))
+            
+    
 class ManageTwittesViewSet(TwitteViewSet):
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
     permission_classes = [IsAdminUser]
@@ -387,6 +436,7 @@ class ManageTwittesViewSet(TwitteViewSet):
 class ReportTwitteViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
     pagination_class = DefaultPagination
 
     def get_queryset(self):
