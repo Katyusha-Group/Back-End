@@ -133,9 +133,7 @@ class Twitte(models.Model):
         return f'{self.profile} twitted {self.content}'
 
     def get_parent(self):
-        if self.parent:
-            return self.parent
-        return self
+        return self.parent
 
     def get_children(self):
         return self.children.all().order_by('-created_at')
