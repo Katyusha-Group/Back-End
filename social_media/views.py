@@ -37,8 +37,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         token = self.get_token_for_user(self.request.user)
         return {'csrftoken': self.request.COOKIES.get('csrftoken'),
                 'token': token,
-                'request': self.request,
-                'user': self.request.user}
+                'request': self.request}
 
     def get_permissions(self):
         if self.action == 'delete':
@@ -275,7 +274,7 @@ class TwitteViewSet(viewsets.ModelViewSet):
                 content_index__gt=0
             ).order_by('content_index').all()
         if self.action == 'list':
-            return queryset.filter(parent=None).filter(display=True)
+            return queryset.order_by('-created_at').filter(parent=None).filter(display=True)
         return queryset.order_by('-created_at').filter(display=True)
 
     def get_serializer_class(self):
@@ -304,7 +303,7 @@ class TwitteViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
+    
     def destroy(self, request, *args, **kwargs):
         twitte = self.get_object()
         twitte.display = False
@@ -349,12 +348,61 @@ class TwitteViewSet(viewsets.ModelViewSet):
     def get_token_for_user(user):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
+    
+    
+class FollowingTwittesViewSet(TwitteViewSet):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAuthenticated]
+    pagination_class = DefaultPagination
 
+    def get_queryset(self):
+        queryset = Twitte.objects.all()
+        query_string = self.request.query_params.get('search', None)
+        if query_string is not None:
+            queryset = queryset.annotate(
+                content_index=StrIndex(Lower('content'), Lower(Value(query_string)))
+            ).filter(
+                content_index__gt=0
+            ).order_by('content_index').all()
+        if self.action == 'list':
+            return queryset.order_by('-created_at').filter(parent=None).filter(display=True).filter(profile__in=Follow.objects.filter(
+                follower=Profile.get_profile_for_user(self.request.user)).values('following'))
+        return queryset.order_by('-created_at').filter(display=True).filter(profile__in=Follow.objects.filter(
+            follower=Profile.get_profile_for_user(self.request.user)).values('following'))
+        
+        
+class ForYouTwittesViewSet(TwitteViewSet):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAuthenticated]
+    pagination_class = DefaultPagination
 
+    def get_queryset(self):
+        # i wanna get twittes that are in my followings of my followings twittes or liked by my followings
+        queryset = Twitte.objects.all()
+        query_string = self.request.query_params.get('search', None)
+        if query_string is not None:
+            queryset = queryset.annotate(
+                content_index=StrIndex(Lower('content'), Lower(Value(query_string)))
+            ).filter(
+                content_index__gt=0
+            ).order_by('content_index').all()
+        if self.action == 'list':
+            return queryset.filter(parent=None).filter(display=True).filter(Q(profile__in=Follow.objects.filter(
+                following__in=Follow.objects.filter(
+                    follower=Profile.get_profile_for_user(self.request.user)).values('following')).values('follower')) |
+                Q(id__in=Twitte.objects.filter(likes__in=Follow.objects.filter(
+                    follower=Profile.get_profile_for_user(self.request.user)).values('following')).values('id')))
+        return queryset.order_by('-created_at').filter(display=True).filter(Q(profile__in=Follow.objects.filter(
+            following__in=Follow.objects.filter(
+                follower=Profile.get_profile_for_user(self.request.user)).values('following')).values('follower')) |
+            Q(id__in=Twitte.objects.filter(likes__in=Follow.objects.filter(
+                follower=Profile.get_profile_for_user(self.request.user)).values('following')).values('id')))
+            
+    
 class ManageTwittesViewSet(TwitteViewSet):
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
     permission_classes = [IsAdminUser]
-
+    
     def get_permissions(self):
         return super().get_permissions()
 
@@ -384,8 +432,7 @@ class ManageTwittesViewSet(TwitteViewSet):
     def get_token_for_user(user):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
-
-
+    
 class ReportTwitteViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
     permission_classes = [IsAuthenticated]
@@ -403,17 +450,17 @@ class ReportTwitteViewSet(viewsets.ModelViewSet):
         return {'csrftoken': self.request.COOKIES.get('csrftoken'),
                 'token': token,
                 'request': self.request}
-
+        
     def get_permissions(self):
         if self.action in ['destroy']:
             return [IsReportTwitteOwner()]
-        return super().get_permissions()
+        return super().get_permissions()   
 
     @staticmethod
     def get_token_for_user(user):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
-
+    
 
 class ManageReportedTwittesViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
@@ -437,7 +484,7 @@ class ManageReportedTwittesViewSet(viewsets.ModelViewSet):
     def get_token_for_user(user):
         refresh = RefreshToken.for_user(user)
         return str(refresh.access_token)
-
+    
     def destroy(self, request, *args, **kwargs):
         twitte = self.get_object()
         twitte.display = False
@@ -503,12 +550,12 @@ class TwitteChartViewSet(viewsets.ModelViewSet):
         }).values('created_day').annotate(
             tweets_count_per_day=models.Count('id')  # Count Tweets per day
         ).order_by('created_day')
-
+        
         # Create a dictionary mapping dates to the number of Tweets created that day
         tweets_per_day_last_week_dict = {}
         for entry in tweets_per_day_last_week:
             tweets_per_day_last_week_dict[entry['created_day']] = entry['tweets_count_per_day']
-
+            
         # Create a list of dates and number of Tweets created that day
         tweets_per_day_last_week_list = []
         current_date = one_week_ago
@@ -518,6 +565,6 @@ class TwitteChartViewSet(viewsets.ModelViewSet):
                 'tweets_count': tweets_per_day_last_week_dict.get(current_date.date(), 0)
             })
             current_date += timedelta(days=1)
-
+            
         # Return the response
         return Response(tweets_per_day_last_week_list, status=status.HTTP_200_OK)
