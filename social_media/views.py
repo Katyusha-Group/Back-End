@@ -37,7 +37,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
         token = self.get_token_for_user(self.request.user)
         return {'csrftoken': self.request.COOKIES.get('csrftoken'),
                 'token': token,
-                'request': self.request}
+                'request': self.request,
+                'user': self.request.user}
 
     def get_permissions(self):
         if self.action == 'delete':
