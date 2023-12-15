@@ -11,7 +11,7 @@ from .views import *
 
 
 urlpatterns = [
-    path('room/<int:custId>/<int:mngId>/', room, name='room'),
-    path('<int:user_id>/', get_names, name='user-contacts'),
-    path('delete/', delete_all_chats, name='del_chats'),
+    re_path(r'room/(?P<room_name>\w+)/$', room, name='room'),
+    path('<str:username>/', get_names, name='user-contacts'),
+    path('delete/', delete_all_chats, name='del-chats'),
 ]

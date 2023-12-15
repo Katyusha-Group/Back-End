@@ -32,16 +32,16 @@ class ChatConsumer(WebsocketConsumer):
     def receive(self, text_data):
         data = json.loads(text_data)
         message = data["message"]
-        user_id = data["user_id"]
+        profile_id = data["profile_id"]
         room = data["room_name"]
-        user = Profile.objects.get(id=user_id)
-        async_to_sync(self.save_message)(user, room, message)
+        profile = Profile.objects.get(id=profile_id)
+        async_to_sync(self.save_message)(profile, room, message)
 
         date = datetime.now()
         date = date.strftime("%Y-%m-%d %H:%M:%S")
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name, {"type": "chat_message", "message": message, "user_id": user_id, "date": date}
+            self.room_group_name, {"type": "chat_message", "message": message, "profile_id": profile_id, "date": date}
         )
 
     # Receive message from room group
@@ -64,9 +64,9 @@ class ChatConsumer(WebsocketConsumer):
         room_instance = Room.objects.filter(room_name=room).first()
         if room_instance is None:
             ids = room.split("_")
-            custId = ids[0]
-            mngId = ids[1]
-            customer = Profile.objects.filter(id=custId).first()
-            manager = Profile.objects.filter(id=mngId).first()
-            room_instance = Room.objects.create(customer=customer, manager=manager, room_name=room)
+            profile1_id = ids[0]
+            profile2_id = ids[1]
+            profile1 = Profile.objects.filter(id=profile1_id).first()
+            profile2 = Profile.objects.filter(id=profile2_id).first()
+            room_instance = Room.objects.create(profile1=profile1, profile2=profile2, room_name=room)
         Chat.objects.create(sender_id=user, room_name=room, message=message)

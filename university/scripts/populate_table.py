@@ -12,6 +12,9 @@ from utils.variables import project_variables
 
 
 def populate_all_tables(golestan_data, teachers_data, population_mode=project_variables.POPULATION_INITIAL):
+    if Course.objects.all().exists():
+        print('Already populated!')
+        return
     with transaction.atomic():
         populate_semester(golestan_data)
         populate_department(golestan_data)
