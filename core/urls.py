@@ -44,6 +44,7 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('bot/', include('botapp.urls')),
     # path('__debug__/', include('debug_toolbar.urls')),
+    path("chat/", include("chat.urls")),
 ]
 
 if settings.DEBUG:
