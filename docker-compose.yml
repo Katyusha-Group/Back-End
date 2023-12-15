@@ -10,19 +10,11 @@ services:
     command:  redis-server --save 60 1 --loglevel warning
     restart: always
 
-
   backend:
     build: .
     container_name: backend
-    command: >
-      bash -c "
-      python manage.py migrate &&
-      python manage.py populate_university_database golestan_courses.xlsx &&
-      python manage.py fix_teachers_name &&
-      python manage.py delete_additional_departments &&
-      python manage.py add_profile_to_existing_entities &&
-      python manage.py add_initial_tweets &&
-      gunicorn core.wsgi:application --bind 0.0.0.0:8000"
+    command:
+      "gunicorn core.wsgi:application --bind 0.0.0.0:8000"
 
     volumes:
       - .:/app
@@ -42,6 +34,20 @@ services:
     depends_on:
       - backend
       - redis
+
+  locust-master:  # Renamed from "locust-worker" to "locust-master"
+    image: locustio/locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./locust:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --master -H http://backend:8089
+
+  locust-worker:  # This is the worker service for Locust
+    image: locustio/locust
+    volumes:
+      - ./locust:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --worker --master-host locust-master
 
   db:
     container_name: database
@@ -65,7 +71,6 @@ services:
       - media_volume:/home/app/media
     depends_on:
       - backend
-
 
 volumes:
   postgres_data:
