@@ -1,5 +1,6 @@
 from django.db import models
 
+from chat.queryset import ChatQuerySet
 from core.settings import AUTH_USER_MODEL
 
 
@@ -26,6 +27,8 @@ class Chat(models.Model):
     participants = models.ManyToManyField(
         Contact, related_name='chats', blank=True)
     messages = models.ManyToManyField(Message, blank=True)
+
+    objects = ChatQuerySet.as_manager()
 
     def __str__(self):
         return "{}".format(self.pk)
