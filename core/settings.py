@@ -26,6 +26,8 @@ DEBUG = True
 # Application definition
 
 INSTALLED_APPS = [
+    "channels",
+    # "daphne",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -47,6 +49,7 @@ INSTALLED_APPS = [
     'university',
     'social_media',
     'custom_config',
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -80,6 +83,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
+ASGI_APPLICATION = "core.asgi.application"
 
 DATABASES = {
     'default': {
@@ -87,7 +91,7 @@ DATABASES = {
         'NAME': 'katyush2_db',
         'USER': 'katyush2_admin',
         'PASSWORD': 'katyusha@dmin2023',
-        'HOST': 'database',
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }
@@ -261,6 +265,16 @@ EMAIL_HOST_PASSWORD = 'wsumkosjhltxfsox'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": 'channels.layers.InMemoryChannelLayer'
+        # "BACKEND": "channels_redis.core.RedisChannelLayer",
+        # # "CONFIG": {
+        # #     "hosts": [("127.0.0.1" , 6379)],
+        # # },
+    },
+}
+
 CRONJOBS = [
     # ('30 2 * * *', 'university.cron.watch_golestan'),
     ('* */12 * * *', 'accounts.cron.reset_verification_tries'),
@@ -272,15 +286,15 @@ CRONJOBS = [
 ]
 
 # celery configs
-CELERY_BROKER_URL = 'redis://redis:6379/1'
-
-# cache configs
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/2",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
-    }
-}
+# CELERY_BROKER_URL = 'redis://redis:6379/1'
+#
+# # cache configs
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://redis:6379/2",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         }
+#     }
+# }
