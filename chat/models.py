@@ -14,12 +14,26 @@ class Contact(models.Model):
         return self.user.username
 
 
+class Chat(models.Model):
+    participants = models.ManyToManyField(
+        Contact, related_name='chats', blank=True)
+
+    objects = ChatQuerySet.as_manager()
+
+    def is_participant(self, username):
+        return self.participants.filter(user__username=username).exists()
+
+    def __str__(self):
+        return "{}".format(self.pk)
+
+
 class Message(models.Model):
     author = models.ForeignKey(
         Contact, related_name='messages', on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
+    chat = models.ForeignKey(Chat, related_name='messages', on_delete=models.CASCADE)
 
     objects = MessageQuerySet.as_manager()
 
@@ -36,14 +50,3 @@ class Message(models.Model):
         if delta.seconds < 3600:
             return f'{delta.seconds // 60} دقیقه پیش'
         return f'{delta.seconds // 3600} ساعت پیش'
-
-
-class Chat(models.Model):
-    participants = models.ManyToManyField(
-        Contact, related_name='chats', blank=True)
-    messages = models.ManyToManyField(Message, blank=True)
-
-    objects = ChatQuerySet.as_manager()
-
-    def __str__(self):
-        return "{}".format(self.pk)
