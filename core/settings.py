@@ -15,7 +15,6 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,11 +22,13 @@ SECRET_KEY = 'django-insecure-v&!uiuu&^nb0rn@2e0u3-&qnt0g8@f+wt02z3du7@21t0klum-
 
 DEBUG = True
 
+ALLOWED_HOSTS = ['*']
+
 # Application definition
 
 INSTALLED_APPS = [
     "channels",
-    # "daphne",
+    "daphne",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -91,7 +92,7 @@ DATABASES = {
         'NAME': 'katyush2_db',
         'USER': 'katyush2_admin',
         'PASSWORD': 'katyusha@dmin2023',
-        'HOST': 'localhost',
+        'HOST': 'database',
         'PORT': '5432',
     }
 }
@@ -148,7 +149,6 @@ MEDIA_URL = 'var/www/media/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'staticfiles'),
 ]
-
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -216,7 +216,6 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
-
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -267,11 +266,11 @@ EMAIL_USE_TLS = True
 
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": 'channels.layers.InMemoryChannelLayer'
-        # "BACKEND": "channels_redis.core.RedisChannelLayer",
-        # # "CONFIG": {
-        # #     "hosts": [("127.0.0.1" , 6379)],
-        # # },
+        # "BACKEND": 'channels.layers.InMemoryChannelLayer'
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
     },
 }
 
