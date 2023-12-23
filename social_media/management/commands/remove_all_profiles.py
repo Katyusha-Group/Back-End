@@ -16,5 +16,4 @@ class Command(BaseCommand):
 
         Profile.objects.all().delete()
 
-        print("Profiles deleted. Time taken: ")
-        print(time.time() - pre)
+        print("remove_all_profiles --- Time took: ", time.time() - pre)

@@ -16,11 +16,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         pre = time.time()
 
-        print('Adding initial tweets to database started...')
+        print('add_initial_tweets --- Adding initial tweets to database started...')
 
         # Checking if initial twits already exist in database, if so, do nothing
         if Twitte.objects.filter(profile__profile_type__in=['C', 'T']).exists():
-            print('Initial twits already exist in database; time taken:', time.time() - pre)
+            print('add_initial_tweets --- Initial twits already exist in database; time taken:', time.time() - pre)
             return
 
         courses = Course.objects.filter(semester=project_variables.CURRENT_SEMESTER).all()
@@ -35,4 +35,4 @@ class Command(BaseCommand):
                     profile=Profile.objects.get(profile_type='T', object_id=teacher.pk),
                 )
 
-        print('Adding initial tweets to database finished; time taken:', time.time() - pre)
+        print('add_initial_tweets --- Time took:', time.time() - pre)

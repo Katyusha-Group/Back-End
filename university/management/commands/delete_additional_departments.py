@@ -16,4 +16,4 @@ class Command(BaseCommand):
         for department_id in project_variables.ADDITIONAL_DEPARTMENTS_ID:
             with DisableSignals([pre_delete, post_delete]):
                 Department.objects.filter(department_number=department_id).delete()
-        print(time.time() - pre)
+        print("delete_additional_departments --- Time took:", time.time() - pre)

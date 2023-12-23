@@ -23,4 +23,4 @@ class Command(BaseCommand):
         print('All teachers have been deleted!')
         CourseStudyingGP.objects.all().delete()
         print('All course studying gps been deleted!')
-        print(time.time() - pre)
+        print("delete_university_tables --- Time took", time.time() - pre)

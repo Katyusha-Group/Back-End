@@ -13,7 +13,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if Profile.objects.exists():
-            print("Profiles already exist.")
+            print("add_profile_to_existing_entities --- Profiles already exist.")
             return
 
         pre = time.time()
@@ -23,17 +23,16 @@ class Command(BaseCommand):
 
         for user in user_model.objects.all():
             Profile.objects.create(content_type=content_user_model, object_id=user.pk)
-            print(f"Profile created for {user.email}")
+            print(f"add_profile_to_existing_entities --- Profile created for {user.email}")
 
         content_course_model = ContentType.objects.get_for_model(BaseCourse)
         for course in BaseCourse.objects.all():
             Profile.objects.get_or_create(content_type=content_course_model, object_id=course.pk)
-        print(f"Profile created for all courses.")
+        print(f"add_profile_to_existing_entities --- Profile created for all courses.")
 
         content_teacher_model = ContentType.objects.get_for_model(Teacher)
         for teacher in Teacher.objects.all():
             Profile.objects.create(content_type=content_teacher_model, object_id=teacher.pk)
-        print(f"Profile created for all teachers.")
+        print(f"add_profile_to_existing_entities --- Profile created for all teachers.")
 
-        print("Profiles created. Time taken: ")
-        print(time.time() - pre)
+        print("add_profile_to_existing_entities --- Time took:", time.time() - pre)
