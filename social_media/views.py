@@ -95,6 +95,16 @@ class ProfileViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['get'], serializer_class=ProfileSerializer,
+            url_path='(?P<username>\w+)/my-profile', url_name='view-my-profile')
+    def view_my_profile(self, request, *args, **kwargs):
+        profile = Profile.get_profile_for_user(request.user)
+        serializer = self.get_serializer(
+            profile,
+            context=self.get_serializer_context(),
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['post'], url_path='follow/(?P<username>\w+)', serializer_class=FollowSerializer, )
     def follow(self, request, username):
         follower = Profile.get_profile_for_user(request.user)
