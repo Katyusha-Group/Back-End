@@ -16,7 +16,8 @@ from university.models import Course, Department
 from university.serializers import CourseSerializer
 from .models import Profile, Follow, Twitte, Notification, ReportTwitte
 from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer, \
-    ProfileUsernameSerializer, TwitteSerializer, LikeSerializer, NotificationSerializer, ReportTwitteSerializer
+    ProfileUsernameSerializer, TwitteSerializer, LikeSerializer, NotificationSerializer, ReportTwitteSerializer, \
+    MyProfileSerializer
 from utils.variables import project_variables
 
 from .permissions import IsTwitterOwner, IsReportTwitteOwner
@@ -95,7 +96,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'], serializer_class=ProfileSerializer,
+    @action(detail=False, methods=['get'], serializer_class=MyProfileSerializer,
             url_path='my-profile', url_name='view-my-profile')
     def view_my_profile(self, request, *args, **kwargs):
         profile = Profile.get_profile_for_user(request.user)
