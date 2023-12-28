@@ -33,15 +33,15 @@ services:
       - db
       - redis
 
-  worker:
-    build: .
-    container_name: worker
-    volumes:
-      - .:/app
-    command: celery -A core worker --loglevel=info
-    depends_on:
-      - backend
-      - redis
+#  worker:
+#    build: .
+#    container_name: worker
+#    volumes:
+#      - .:/app
+#    command: celery -A core worker --loglevel=info
+#    depends_on:
+#      - backend
+#      - redis
 
   db:
     container_name: database
