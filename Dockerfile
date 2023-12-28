@@ -1,27 +1,34 @@
-FROM python:3.9.0-slim-buster
+FROM ubuntu:22.04
 
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
+
+RUN apt-get update && apt-get install -y python3 python3-pip python3-venv supervisor redis-server
+
+ARG USER=root
+USER $USER
+RUN python3 -m venv katyusha_env
 
 WORKDIR /app
 
-# Install system dependencies necessary for psycopg2
-#RUN apt-get update && apt-get install -y libpq-dev gcc
-#RUN apt-get update && apt-get install -y netcat
-# Copy only the Pipfile and Pipfile.lock first to leverage Docker caching
+# install dependencies
 COPY requirements.txt /app/
+RUN /katyusha_env/bin/pip install -r requirements.txt
 
-
-# Install project dependencies
-
-RUN pip install --upgrade pip
-
-RUN pip install -r requirements.txt
-
-
-# Copy the rest of the application's code
+# Copy project
 COPY . /app/
 
-# Expose the necessary port(s)
+COPY deployment deployment
 
+COPY deployment/gunicorn.conf /etc/supervisor/conf.d/gunicorn.conf
+COPY deployment/daphne.conf /etc/supervisor/conf.d/daphne.conf
+
+RUN mkdir /logs
+# Expose ports
 EXPOSE 8000
+EXPOSE 8001
+
+RUN chmod +x /app/start.sh
+RUN chmod +x /app/deployment/start_app.sh
+RUN chmod +x /app/deployment/start_daphne.sh
+
+
+ENTRYPOINT ["./start.sh"]

@@ -14,15 +14,6 @@ services:
   backend:
     build: .
     container_name: backend
-    command: >
-      bash -c "
-      python manage.py migrate &&
-      python manage.py populate_university_database golestan_courses.xlsx &&
-      python manage.py fix_teachers_name &&
-      python manage.py delete_additional_departments &&
-      python manage.py add_profile_to_existing_entities &&
-      python manage.py add_initial_tweets &&
-      gunicorn core.wsgi:application --bind 0.0.0.0:8000"
 
     volumes:
       - .:/app
@@ -33,15 +24,15 @@ services:
       - db
       - redis
 
-  worker:
-    build: .
-    container_name: worker
-    volumes:
-      - .:/app
-    command: celery -A core worker --loglevel=info
-    depends_on:
-      - backend
-      - redis
+#  worker:
+#    build: .
+#    container_name: worker
+#    volumes:
+#      - .:/app
+#    command: celery -A core worker --loglevel=info
+#    depends_on:
+#      - backend
+#      - redis
 
   db:
     container_name: database
@@ -60,7 +51,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./default.conf:/etc/nginx/conf.d/default.conf
+      - ./deployment/nginx_default.conf:/etc/nginx/conf.d/default.conf
       - static_volume:/home/app/static
       - media_volume:/home/app/media
     depends_on:

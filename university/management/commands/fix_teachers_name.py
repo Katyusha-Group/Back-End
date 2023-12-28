@@ -29,4 +29,4 @@ class Command(BaseCommand):
             teacher = Teacher.objects.filter(name=teacher_name).first()
             if teacher:
                 teacher.delete()
-        print("fix_teachers_name --- Finished", time.time() - pre)
+        print("fix_teachers_name --- Time taken:", time.time() - pre)

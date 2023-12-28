@@ -32,4 +32,5 @@ class Command(BaseCommand):
         pre = time.time()
         populate_table.populate_all_tables(golestan_data, teachers_data,
                                            population_mode=project_variables.POPULATION_INITIAL)
+        
         print('populate_university_database --- Database populated; Time taken:', time.time() - pre)

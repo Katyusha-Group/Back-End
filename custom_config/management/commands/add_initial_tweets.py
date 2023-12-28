@@ -16,12 +16,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         pre = time.time()
 
-        print('add_initial_tweets --- Started')
+        print('add_initial_tweets --- Adding initial tweets to database started...')
 
         # Checking if initial twits already exist in database, if so, do nothing
         if Twitte.objects.filter(profile__profile_type__in=['C', 'T']).exists():
-            print('add_initial_tweets --- Initial twits already exist in database; Time taken:')
-            return
+            print('add_initial_tweets --- Initial twits already exist in database; time taken:', time.time() - pre)
 
         courses = Course.objects.filter(semester=project_variables.CURRENT_SEMESTER).all()
         for course in courses:
