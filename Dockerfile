@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 
 
-RUN apt-get update && apt-get install -y python3 python3-pip python3-venv supervisor
+RUN apt-get update && apt-get install -y python3 python3-pip python3-venv supervisor redis-server
 
 ARG USER=root
 USER $USER
@@ -20,7 +20,6 @@ COPY deployment deployment
 
 COPY deployment/gunicorn.conf /etc/supervisor/conf.d/gunicorn.conf
 COPY deployment/daphne.conf /etc/supervisor/conf.d/daphne.conf
-
 
 RUN mkdir /logs
 # Expose ports

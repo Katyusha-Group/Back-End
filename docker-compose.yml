@@ -14,15 +14,6 @@ services:
   backend:
     build: .
     container_name: backend
-    command: >
-      bash -c "
-      python manage.py migrate &&
-      python manage.py populate_university_database golestan_courses.xlsx &&
-      python manage.py fix_teachers_name &&
-      python manage.py delete_additional_departments &&
-      python manage.py add_profile_to_existing_entities &&
-      python manage.py add_initial_tweets &&
-      gunicorn core.wsgi:application --bind 0.0.0.0:8000"
 
     volumes:
       - .:/app
