@@ -4,7 +4,6 @@ from chat.models import Chat, Contact, Message
 from chat.scripts.chat_views import get_or_create_user_contact
 
 
-# TODO: Check this out
 class ContactSerializer(serializers.StringRelatedField):
     def to_internal_value(self, value):
         return value
@@ -43,6 +42,8 @@ class ChatSerializer(serializers.ModelSerializer):
     unread_count = serializers.SerializerMethodField()
 
     def get_top_message(self, obj):
+        if obj.messages.count() == 0:
+            return None
         return MessageSerializer(obj.messages.order_by('-created_at')[0]).data
 
     def get_unread_count(self, obj):
@@ -66,6 +67,11 @@ class CreateChatSerializer(serializers.ModelSerializer):
         # Only accepting one participant for now
         if len(value) != 1:
             raise serializers.ValidationError('Participants must be more than one')
+        if not isinstance(value, list):
+            raise serializers.ValidationError('Participants must be a list')
+        for username in value:
+            if username == self.context['request'].user.username:
+                raise serializers.ValidationError('User cannot create chat with himself')
         return value
 
     def create(self, validated_data):
