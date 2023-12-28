@@ -277,17 +277,30 @@ class TwitteViewSet(viewsets.ModelViewSet):
     pagination_class = DefaultPagination
 
     def get_queryset(self):
-        queryset = Twitte.objects.all()
-        query_string = self.request.query_params.get('search', None)
-        if query_string is not None:
+        queryset = Twitte.objects.all().order_by('-created_at').filter(display=True)
+        query_string = self.request.query_params
+        text_search = query_string.get('search', None)
+        twitted_by = query_string.get('twitted_by', None)
+        liked_by = query_string.get('liked_by', None)
+        replied_by = query_string.get('replied_by', None)
+
+        if text_search is not None:
             queryset = queryset.annotate(
-                content_index=StrIndex(Lower('content'), Lower(Value(query_string)))
+                content_index=StrIndex(Lower('content'), Lower(Value(text_search)))
             ).filter(
                 content_index__gt=0
-            ).order_by('content_index').all()
-        if self.action == 'list':
-            return queryset.order_by('-created_at').filter(parent=None).filter(display=True)
-        return queryset.order_by('-created_at').filter(display=True)
+            ).order_by('content_index')
+        if twitted_by is not None:
+            queryset = queryset.filter(profile__username=twitted_by).filter(parent=None)
+        if liked_by is not None:
+            queryset = queryset.filter(likes__username=liked_by)
+        if replied_by is not None:
+            queryset = queryset.filter(profile__username=replied_by).filter(parent__isnull=False) 
+        
+        if self.action == 'list' and text_search is None and twitted_by is None and liked_by is None and replied_by is None:
+            return queryset.filter(parent=None)
+        return queryset
+            
 
     def get_serializer_class(self):
         if self.action in ['like', 'unlike']:
