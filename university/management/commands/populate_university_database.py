@@ -20,9 +20,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if Course.objects.exists():
-            print('populate_university_database --- Courses already populated!')
+            print('populate_university_database --- Database already populated.')
             return
-        # get the name of Excel file
+
         golestan_file_name = options['file_name']
         # get the path of Excel file
         teachers_data = get_teachers_data()
@@ -32,4 +32,5 @@ class Command(BaseCommand):
         pre = time.time()
         populate_table.populate_all_tables(golestan_data, teachers_data,
                                            population_mode=project_variables.POPULATION_INITIAL)
-        print("populate_university_database --- Time took:", time.time() - pre)
+        
+        print('populate_university_database --- Database populated; Time taken:', time.time() - pre)

@@ -98,6 +98,30 @@ class ProfileSerializer(serializers.ModelSerializer):
                   'is_following_me', 'is_followed', 'followers_count', 'following_count']
 
 
+class MyProfileSerializer(ProfileSerializer):
+    email = serializers.SerializerMethodField()
+    gender = serializers.SerializerMethodField()
+    department = serializers.SerializerMethodField()
+
+    def get_email(self, obj: Profile):
+        if obj.profile_type == Profile.TYPE_USER or obj.profile_type == Profile.TYPE_VERIFIED_USER:
+            return obj.content_object.email
+        return None
+
+    def get_gender(self, obj):
+        if obj.profile_type == Profile.TYPE_USER or obj.profile_type == Profile.TYPE_VERIFIED_USER:
+            return obj.content_object.gender
+        return None
+
+    def get_department(self, obj):
+        if obj.profile_type == Profile.TYPE_USER or obj.profile_type == Profile.TYPE_VERIFIED_USER:
+            return obj.content_object.department.name
+        return None
+
+    class Meta(ProfileSerializer.Meta):
+        fields = ProfileSerializer.Meta.fields + ['email', 'gender', 'department']
+
+
 class UpdateProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True)
     profile_type = serializers.CharField(read_only=True)
@@ -192,7 +216,7 @@ class TwitteSerializer(serializers.ModelSerializer):
     def get_liked_by_me(self, obj: Twitte):
         me = Profile.get_profile_for_user(self.context['request'].user)
         return obj.is_liked_by(me)
-    
+
     def get_reported_by_me(self, obj: Twitte):
         me = Profile.get_profile_for_user(self.context['request'].user)
         return obj.is_reported_by(me)
@@ -212,7 +236,7 @@ class TwitteSerializer(serializers.ModelSerializer):
 
     def get_children_count(self, obj: Twitte):
         return obj.get_children_count()
-    
+
     def get_report_count(self, obj: Twitte):
         return obj.get_reports_count()
 
@@ -221,9 +245,11 @@ class TwitteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Twitte
-        fields = ['id', 'profile', 'content', 'created_at', 'likes_count', 'replies_count', 'children_count', 'report_count',
-                  'likes_link', 'parent_info', 'children_link', 'parent', 'conversation_id', 'liked_by_me', 'reported_by_me',
-                    'report_reason']
+        fields = ['id', 'profile', 'content', 'created_at', 'likes_count', 'replies_count', 'children_count',
+                  'report_count',
+                  'likes_link', 'parent_info', 'children_link', 'parent', 'conversation_id', 'liked_by_me',
+                  'reported_by_me',
+                  'report_reason']
 
     def create(self, validated_data):
         profile = Profile.get_profile_for_user(self.context['request'].user)
@@ -236,7 +262,7 @@ class TwitteSerializer(serializers.ModelSerializer):
         instance.content = validated_data.get('content', instance.content)
         instance.save()
         return instance
-    
+
 
 class TwitteDisplaySerializer(serializers.ModelSerializer):
     class Meta:
@@ -250,14 +276,14 @@ class LikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Twitte.likes.through
         fields = ['profile']
-        
+
 
 class ReportTwitteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReportTwitte
         fields = ['id', 'reporter', 'twitte', 'reason', 'created_at']
         read_only_fields = ['reporter', 'created_at']
-        
+
     def validate(self, attrs):
         attrs = super().validate(attrs)
         reporter = Profile.get_profile_for_user(self.context['request'].user)
@@ -267,19 +293,19 @@ class ReportTwitteSerializer(serializers.ModelSerializer):
         if ReportTwitte.objects.filter(reporter=reporter, twitte=twitte).exists():
             raise serializers.ValidationError({"detail": "you have already reported this twitte."})
         return attrs
-        
+
     def create(self, validated_data):
         reporter = Profile.get_profile_for_user(self.context['request'].user)
         report_twitte = ReportTwitte.objects.create(reporter=reporter, **validated_data)
         return report_twitte
-    
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         me = Profile.get_profile_for_user(self.context['request'].user)
         if me == instance.reporter:
             data.pop('reporter')
         return data
-        
+
 
 class NotificationSerializer(serializers.ModelSerializer):
     delta_time = serializers.SerializerMethodField(read_only=True)

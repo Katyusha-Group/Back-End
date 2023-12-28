@@ -35,4 +35,4 @@ class Command(BaseCommand):
             Profile.objects.create(content_type=content_teacher_model, object_id=teacher.pk)
         print(f"add_profile_to_existing_entities --- Profile created for all teachers.")
 
-        print("add_profile_to_existing_entities --- Time took:", time.time() - pre)
+        print("add_profile_to_existing_entities --- Profiles created. Time taken:", time.time() - pre)
