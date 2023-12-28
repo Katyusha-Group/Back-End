@@ -264,12 +264,15 @@ EMAIL_HOST_PASSWORD = 'wsumkosjhltxfsox'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
+redis_host = "redis"  # on server
+# redis_host = "localhost" # on localhost
+
 CHANNEL_LAYERS = {
     "default": {
         # "BACKEND": 'channels.layers.InMemoryChannelLayer'
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [(redis_host, 6379)],
         },
     },
 }
