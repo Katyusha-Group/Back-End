@@ -21,6 +21,7 @@ class Command(BaseCommand):
         # Checking if initial twits already exist in database, if so, do nothing
         if Twitte.objects.filter(profile__profile_type__in=['C', 'T']).exists():
             print('add_initial_tweets --- Initial twits already exist in database; time taken:', time.time() - pre)
+            return
 
         courses = Course.objects.filter(semester=project_variables.CURRENT_SEMESTER).all()
         for course in courses:
