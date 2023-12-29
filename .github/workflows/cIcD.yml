@@ -1,0 +1,41 @@
+name: Django CI/CD  
+
+on:  
+  push:  
+    branches: [ master ]  
+
+jobs:  
+  test:  
+    runs-on: ubuntu-latest  
+
+    steps:  
+    - name: Checkout code  
+      uses: actions/checkout@v2  
+
+    - name: Build the Docker image  
+      run: docker-compose -f docker-compose.yml up --build -d  
+
+    - name: Run tests  
+      run: docker exec -it backend sh -c "pytest ." 
+
+  deploy:  
+    needs: test  
+    runs-on: ubuntu-latest  
+
+    steps:  
+    - name: Checkout code  
+      uses: actions/checkout@v2  
+
+    - name: Setup SSH  
+      uses: webfactory/ssh-agent@v0.5.0  
+      with:  
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  
+
+    - name: Deploy to VPS  
+      run: |  
+        ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} -p ${{ secrets.VPS_PORT }} <<EOF  
+          cd /path/to/your/project  
+          docker-compose -f docker-compose.yml down  
+          git pull  
+          docker-compose -f docker-compose.yml up --build -d  
+        EOF
