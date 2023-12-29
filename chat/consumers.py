@@ -52,22 +52,6 @@ class ChatConsumer(WebsocketConsumer):
         self.chat_id = self.scope['url_route']['kwargs']['chat_id']
         self.room_group_name = 'chat_%s' % self.chat_id
 
-        # Get the username from the scope
-        username = self.scope["user"].username
-
-        # Get the chat
-        chat = Chat.objects.filter(id=self.chat_id).first()
-
-        # Check if the chat exists
-        if not chat:
-            # If the chat does not exist, deny the connection
-            raise DenyConnection("Chat does not exist")
-
-        # Check if the user is a member of the chat
-        if not chat.is_participant(username):
-            # If the user is not a member, deny the connection
-            raise DenyConnection("User is not a member of this chat room")
-
         # If the user is a member, add them to the group and accept the connection
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
