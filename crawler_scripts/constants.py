@@ -5,7 +5,7 @@ COURSE_STUDYING_GROUP_ID = 'course_studying_group_id'
 
 # paths
 CHROME_BINARY_LOCATION = 'C:/Users/Kamyar/AppData/Local/Google/Chrome SxS/Application/chrome.exe'
-DRIVER_PATH = 'C:/Users/Kamyar/Dropbox/PC/Documents/Uni/Sem6/Analysis and Designing System/Katyusha/driver/120/chromedriver.exe'
+DRIVER_PATH = 'C:/Users/Kamyar/Dropbox/PC/Documents/Uni/Sem6/Analysis and Designing System/Katyusha/driver/122/chromedriver.exe'
 CAPTCHA_IMAGES_PATH = '/captcha_images/'
 
 DEPARTMENTS = {

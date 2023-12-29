@@ -16,10 +16,10 @@ class SeleniumCrawler:
         chrome_binary_location = constants.CHROME_BINARY_LOCATION
         driver_path = constants.DRIVER_PATH
         self.options = webdriver.ChromeOptions()
-        self.options.add_argument('--headless')
-        self.options.add_argument('--disable-gpu')
-        self.options.add_argument('--no-sandbox')
-        self.options.add_experimental_option("detach", True)
+        # self.options.add_argument('--headless')
+        # self.options.add_argument('--disable-gpu')
+        # self.options.add_argument('--no-sandbox')
+        # self.options.add_experimental_option("detach", True)
         # self.driver = webdriver.Chrome(options=self.options)
         # self.driver = webdriver.Chrome(ChromeDriverManager().install())
         self.options.binary_location = chrome_binary_location
