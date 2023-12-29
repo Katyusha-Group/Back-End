@@ -218,44 +218,45 @@ SIMPLE_JWT = {
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:5173",
-]
+# CORS_ORIGIN_WHITELIST = [
+#     "http://localhost:5173",
+# ]
 
-CORS_ORIGIN_REGEX_WHITELIST = [
-    "http://localhost:5173",
-]
+# CORS_ORIGIN_REGEX_WHITELIST = [
+#     "http://localhost:5173",
+# ]
 
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]
+# CORS_ALLOW_METHODS = [
+#     'DELETE',
+#     'GET',
+#     'OPTIONS',
+#     'PATCH',
+#     'POST',
+#     'PUT',
+# ]
 
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
+# CORS_ALLOW_HEADERS = [
+#     'accept',
+#     'accept-encoding',
+#     'authorization',
+#     'content-type',
+#     'dnt',
+#     'origin',
+#     'user-agent',
+#     'x-csrftoken',
+#     'x-requested-with',
+# ]
 
-CORS_EXPOSE_HEADERS = [
-    'Cache-Control',
-    'Content-Language',
-    'Content-Type',
-    'Expires',
-    'Last-Modified',
-    'Pragma',
-]
+# CORS_EXPOSE_HEADERS = [
+#     'Cache-Control',
+#     'Content-Language',
+#     'Content-Type',
+#     'Expires',
+#     'Last-Modified',
+#     'Pragma',
+# ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
