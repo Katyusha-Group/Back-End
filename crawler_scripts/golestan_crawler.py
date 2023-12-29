@@ -36,7 +36,7 @@ class GolestanCrawler(SeleniumCrawler):
     def switch_to_inner_frames(self, frames):
         self.driver.switch_to.default_content()
         for frame in frames:
-            element = self.wait_on_find_element_by_name(frame, 10)
+            element = self.wait_on_find_element_by_name(frame, 20)
             self.driver.switch_to.frame(element)
 
     @staticmethod
