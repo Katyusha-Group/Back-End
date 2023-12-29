@@ -283,6 +283,8 @@ class TwitteViewSet(viewsets.ModelViewSet):
         twitted_by = query_string.get('twitted_by', None)
         liked_by = query_string.get('liked_by', None)
         replied_by = query_string.get('replied_by', None)
+        semantic_similar_to = query_string.get('semantic_similar_to', None)
+        appearance_similar_to = query_string.get('appearance_similar_to', None)
 
         if text_search is not None:
             queryset = queryset.annotate(
@@ -296,6 +298,24 @@ class TwitteViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(likes__username=liked_by)
         if replied_by is not None:
             queryset = queryset.filter(profile__username=replied_by).filter(parent__isnull=False) 
+        if semantic_similar_to is not None:
+            url = f"http://37.156.144.109:7084/katyusha/twitte/semantic_similarity/{semantic_similar_to}/"
+            r = requests.get(url)
+            if r.status_code == 200:
+                hits = r.json()['hits']
+                ids = [hit['id'] for hit in hits]
+                queryset = queryset.filter(id__in=ids) if queryset.filter(id__in=ids).exists() else queryset.none()
+            elif r.status_code == 404:
+                queryset = queryset.none()
+        if appearance_similar_to is not None:
+            url = f"http://37.156.144.109:7084/katyusha/twitte/?similar_object_id={appearance_similar_to}"
+            r = requests.get(url)
+            if r.status_code == 200:
+                hits = r.json()['hits']
+                ids = [hit['id'] for hit in hits]
+                queryset = queryset.filter(id__in=ids) if queryset.filter(id__in=ids).exists() else queryset.none()
+            elif r.status_code == 404:
+                queryset = queryset.none()
         
         if self.action == 'list' and text_search is None and twitted_by is None and liked_by is None and replied_by is None:
             return queryset.filter(parent=None)
