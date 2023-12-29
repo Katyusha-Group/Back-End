@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from chat.models import Chat, Contact, Message
@@ -72,16 +73,27 @@ class CreateChatSerializer(serializers.ModelSerializer):
         for username in value:
             if username == self.context['request'].user.username:
                 raise serializers.ValidationError('User cannot create chat with himself')
+        username = self.context['request'].user.username
+        for participant in value:
+            participant_contact = get_or_create_user_contact(participant)
+            if participant_contact.friends.filter(user__username=username).exists():
+                raise serializers.ValidationError('User already has a chat with this participant')
+        value.append(username)
         return value
 
     def create(self, validated_data):
-        username = self.context['request'].user.username
-        participants = validated_data.pop('participants')
-        participants.append(username)
-        chat = Chat()
-        chat.save()
-        for username in participants:
-            contact = get_or_create_user_contact(username)
-            chat.participants.add(contact)
-        chat.save()
-        return chat
+        with transaction.atomic():
+            my_contact = get_or_create_user_contact(self.context['request'].user.username)
+            participants = validated_data.pop('participants')
+            chat = Chat()
+            chat.save()
+            for username in participants:
+                contact = get_or_create_user_contact(username)
+                chat.participants.add(contact)
+                if username != self.context['request'].user.username:
+                    contact.friends.add(my_contact)
+                    my_contact.friends.add(contact)
+                    contact.save()
+                    my_contact.save()
+            chat.save()
+            return chat
