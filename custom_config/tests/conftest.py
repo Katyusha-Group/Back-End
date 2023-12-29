@@ -6,7 +6,7 @@ from model_bakery import baker
 from rest_framework.test import APIClient
 import pytest
 
-from custom_config.models import Cart
+from custom_config.models import Cart, Order
 from university.models import Semester, Department, BaseCourse, Course, ExamTimePlace, CourseTimePlace, \
     AllowedDepartment
 from utils.variables import project_variables
@@ -45,6 +45,10 @@ def course_instance(base_course_instance, current_semester):
 @pytest.fixture
 def cart_instance(user_instance):
     return baker.make(Cart, user=user_instance)
+
+@pytest.fixture
+def order_instance(user_instance):
+    return baker.make(Order, user=user_instance)
 
 
 @pytest.fixture
