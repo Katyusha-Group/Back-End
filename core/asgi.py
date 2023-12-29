@@ -27,6 +27,8 @@ import chat.routing
 application = ProtocolTypeRouter(
     {
         "http": application,
-        "websocket": URLRouter(chat.routing.websocket_urlpatterns),
+        "websocket": AllowedHostsOriginValidator(
+            AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns))
+        ),
     }
 )
