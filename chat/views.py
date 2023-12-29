@@ -6,13 +6,9 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from chat.models import Chat, Contact
-from chat.scripts.chat_views import get_or_create_user_contact
 from .serializers import ChatSerializer, CreateChatSerializer, ChatRetrieveSerializer, MessageSerializer
 
 User = get_user_model()
-
-
-# TODO: Add contacts viewset later
 
 
 class ChatViewSet(ModelViewSet):
@@ -39,6 +35,21 @@ class ChatViewSet(ModelViewSet):
         elif self.action == 'retrieve':
             return ChatRetrieveSerializer
         return ChatSerializer
+
+    @action(detail=False, methods=['get'], url_path=r'chat-with/(?P<username>[\w.@+-]+)', url_name='chat-with')
+    def get_chat(self, request, username):
+        user = User.objects.filter(username=username).first()
+        if not user:
+            return Response({'error': 'User not found'}, status=404)
+        contact = Contact.objects.get_or_create(user=user)[0]
+        chat = Chat.objects.filter(participants=contact).filter(participants__user=request.user).first()
+        if not chat:
+            serializer = CreateChatSerializer(data={'participants': [contact.user.username]},
+                                              context={'request': self.request})
+            serializer.is_valid(raise_exception=True)
+            chat = serializer.save()
+        serializer = ChatRetrieveSerializer(chat, context={'request': self.request})
+        return Response(serializer.data, status=200)
 
     @action(
         detail=False,
