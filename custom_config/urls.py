@@ -3,6 +3,8 @@ from django.urls.conf import include
 from rest_framework_nested import routers
 from . import views
 
+app_name = 'custom_config'
+
 router = routers.DefaultRouter()
 router.register(r'shop/carts', viewset=views.CartViewSet, basename='carts')
 router.register(r'shop/orders', viewset=views.OrderViewSet, basename='orders')

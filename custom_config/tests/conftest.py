@@ -6,6 +6,7 @@ from model_bakery import baker
 from rest_framework.test import APIClient
 import pytest
 
+from custom_config.models import Cart, Order
 from university.models import Semester, Department, BaseCourse, Course, ExamTimePlace, CourseTimePlace, \
     AllowedDepartment
 from utils.variables import project_variables
@@ -22,8 +23,32 @@ def user_instance():
 
 
 @pytest.fixture
+def admin_user_instance():
+    return baker.make(User, is_superuser=True, is_staff=True)
+
+
+@pytest.fixture
 def current_semester():
     return baker.make(Semester, year=project_variables.CURRENT_SEMESTER)
+
+
+@pytest.fixture
+def base_course_instance():
+    return baker.make(BaseCourse, course_number='1234567')
+
+
+@pytest.fixture
+def course_instance(base_course_instance, current_semester):
+    return baker.make(Course, base_course=base_course_instance, semester=current_semester, class_gp='01')
+
+
+@pytest.fixture
+def cart_instance(user_instance):
+    return baker.make(Cart, user=user_instance)
+
+@pytest.fixture
+def order_instance(user_instance):
+    return baker.make(Order, user=user_instance)
 
 
 @pytest.fixture
@@ -64,4 +89,3 @@ def courses(base_courses, current_semester, departments):
             baker.make(AllowedDepartment, course=course, department=base_courses[i].department)
             courses_list.append(course)
     return courses_list
-
