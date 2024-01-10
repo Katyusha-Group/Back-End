@@ -6,19 +6,6 @@ on:
 jobs:  
   build-and-test:  
     runs-on: ubuntu-latest  
-    services:  
-      redis:  
-        image: redis  
-        ports:  
-          - 6380:6379  
-      db:  
-        image: postgres:13.1-alpine  
-        env:  
-          POSTGRES_USER: katyush2_admin  
-          POSTGRES_PASSWORD: katyusha@dmin2023  
-          POSTGRES_DB: katyush2_db  
-        ports:  
-          - 5432:5432  
     steps:  
     - name: Checkout code  
       uses: actions/checkout@v2  
@@ -34,7 +21,8 @@ jobs:
         restore-keys: |  
           ${{ runner.os }}-buildx-  
 
-
+    - name: Set up permissions for start.sh  
+      run: chmod +x start.sh 
 
     - name: Build the Docker image  
       run: docker-compose -f docker-compose.yml build  
