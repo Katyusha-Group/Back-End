@@ -34,8 +34,12 @@ jobs:
         
     - name: Make scripts executable  
       run: |  
-        chmod +x ./deployment/start_daphne.sh  
-        chmod +x ./deployment/start_app.sh  
+        chmod a+x ./deployment/start_daphne.sh  
+        chmod a+x ./deployment/start_app.sh  
+        chmod a+x ./deployment/gunicorn.conf 
+        chmod a+x ./deployment/daphne.conf
+        chmod a+x ./deployment/nginx_default.conf
+
 
     - name: Run tests  
       run: docker-compose -f docker-compose.yml run backend sh -c "pytest ."  
