@@ -26,9 +26,10 @@ jobs:
       run: docker-compose -f docker-compose.yml build  
 
     - name: Execute start.sh script  
-      run: |  
+      run: |
+        ls -l
         chmod +x ./start.sh  
-        ./start.sh  
+        /app/start.sh  
 
     - name: Run tests  
       run: docker-compose -f docker-compose.yml run backend sh -c "pytest ."  
