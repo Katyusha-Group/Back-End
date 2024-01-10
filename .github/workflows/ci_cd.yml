@@ -28,8 +28,10 @@ jobs:
     - name: Execute start.sh script  
       run: |
         ls -l
+        chmod a+x start.sh
         chmod +x ./start.sh  
-        /app/start.sh  
+        ls -l
+
 
     - name: Run tests  
       run: docker-compose -f docker-compose.yml run backend sh -c "pytest ."  
