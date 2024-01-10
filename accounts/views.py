@@ -1,23 +1,22 @@
 import random
-from datetime import timedelta
+from datetime import datetime
 
 from django.contrib.auth.hashers import make_password
 from rest_framework import generics, viewsets
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
-from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-
-from utils import email_handler
-from .serializers import *
-from .serializers import LoginSerializer
-from accounts.models import User
+from social_media.models import Profile
+from utils.email import email_handler
+from utils.variables import project_variables
+from .serializers import LoginSerializer, SignUpSerializer, UserSerializer, ChangePasswordSerializer, \
+    ActivationConfirmSerializer, CustomTokenObtainPairSerializer, WalletSerializer, ModifyWalletSerializer, \
+    WalletTransactionSerializer, ForgotPasswordSerializer, ResetPasswordSerializer, CodeVerificationSerializer
+from accounts.models import User, Wallet, WalletTransaction
 from django.conf import settings
 from rest_framework.views import APIView
 from django.contrib.auth import login, logout
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.shortcuts import get_object_or_404
-from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .signals import wallet_updated_signal
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -26,9 +25,14 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import ActivationResendSerializer
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
+from .utils import EmailThread, generate_tokens
+from rest_framework.permissions import IsAdminUser
+from django.utils import timezone
+from datetime import timedelta
+from django.db import models
 
 
-class SignUpView(APIView):
+class SignUpView(GenericAPIView):
     serializer_class = SignUpSerializer
 
     permission_classes = []
@@ -39,15 +43,12 @@ class SignUpView(APIView):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
-        # validate password
-        try:
-            validate_password(request.data['password1'])
-        except exception.ValidationError as e:
-            return Response({"password": e.messages}, status=400)
         email = str.lower(validated_data['email'])
 
         verification_code = str(random.randint(1000, 9999))
         user = User.objects.filter(email__iexact=email)
+
+        # if user signup before and not verified
         if user.exists():
             user = user.first()
             user.department = validated_data['department']
@@ -58,10 +59,10 @@ class SignUpView(APIView):
             user.last_verification_sent = datetime.now()
             user.save()
         else:
-            # Save user
+            # if user didnt signup before
             user = User.objects.create(
                 department=validated_data['department'],
-                username=email,
+                username=validated_data['username'],
                 email=email,
                 gender=validated_data['gender'],
                 password=make_password(validated_data['password1']),
@@ -70,28 +71,34 @@ class SignUpView(APIView):
                 last_verification_sent=datetime.now(),
             )
 
-        token = self.get_token_for_user(user)
+        # Saving profile
+        profile = Profile.get_profile_for_user(user=user)
+        profile.name = validated_data['name']
+
+        # utils.get_access_token_for_user(user)
+        token = generate_tokens(user.id)["access"]
+
         subject = 'تایید ایمیل ثبت نام'
         show_text = user.has_verification_tries_reset or user.verification_tries_count > 1
-        email_handler.send_verification_message(subject=subject,
-                                                recipient_list=[user.email],
-                                                verification_token=verification_code,
-                                                registration_tries=user.verification_tries_count,
-                                                show_text=show_text)
 
-        return Response({
-            "user": {"department": user.department.name,
-                     "email": email,
-                     "gender": user.gender},
-            "message": "User created successfully. Please check your email to activate your account. ",
+        # sending email verification with thread
+        email_thread = EmailThread(email_handler, subject=subject,
+                                   recipient_list=[user.email],
+                                   verification_token=verification_code,
+                                   registration_tries=user.verification_tries_count,
+                                   show_text=show_text)
+        email_thread.start()
+
+        user_data = {
+            "user": UserSerializer(user).data,
+            "message": "User created successfully. Please check your email to activate your account.",
             "code": verification_code,
-            "url": f'http://katyushaiust.ir/accounts/activation-confirm/{token}',
+            "url": f'{project_variables.DOMAIN}/accounts/activation-confirm/{token}',
             "token": token,
-        }, status=201)
 
-    def get_token_for_user(self, user):
-        refresh = RefreshToken.for_user(user)
-        return str(refresh.access_token)
+        }
+
+        return Response(user_data, status=status.HTTP_201_CREATED)
 
 
 class LoginView(TokenObtainPairView):
@@ -101,56 +108,43 @@ class LoginView(TokenObtainPairView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        # token, created = Token.objects.get_or_create(user=user)
-        token = self.generate_jwt_token(user.id)
-        login(request, user)
-        return Response({'token': token,
-                         'user_id': user.id,
-                         'username': user.username,
-                         'email': user.email,
-                         })
+        if user is not None:
+            tokens = generate_tokens(user.id)
 
-    @staticmethod
-    def generate_jwt_token(user_id):
-        # Define the expiration time of the token
-        exp_time = datetime.utcnow() + timedelta(days=7)
+            login(request, user)
 
-        # Define the payload of the token
-        # payload = {
-        #     'user_id': user_id,
-        #     'exp': exp_time
-        # }
+            return Response({
+                'refresh': tokens['refresh'],
+                'access': tokens['access'],
+                'user': UserSerializer(user).data,
+            })
 
-        # Generate the token using the JWT package and your Django SECRET_KEY setting
-        # token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-        refresh = RefreshToken.for_user(User.objects.get(id=user_id))
-        token = {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
-
-        # Return the token as a string
-        return token
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]  # permission_classes = []
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         refresh_token = request.COOKIES.get('token')
+
         if refresh_token:
-            token = Token.objects.get(refresh_token=refresh_token)
-            token.blacklist()
-            response = Response()
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception as e:
+                return Response(data={'detail': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+
+            response = Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
             response.delete_cookie('refresh_token')
             response.delete_cookie('access_token')
+            return response
+
+        if request.user.is_authenticated:
+            logout(request)
             return Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
-        else:
-            if request.user.is_authenticated:
-                logout(request)
-                return Response(data={'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
-            else:
-                return Response(data={'detail': 'Not logged in, so cannot log out'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'detail': 'Not logged in, so cannot log out'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ChangePasswordView(generics.GenericAPIView):
@@ -183,11 +177,16 @@ class ActivationConfirmView(GenericAPIView):
     permission_classes = []
 
     def post(self, request, token):
-        self.is_valid_token(token)
+        token = self.validate_token(token)
+        if not token:
+            return Response({'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         user = self.get_user_from_token(token)
+        if not user:
+            return Response({'message': 'Invalid user'}, status=status.HTTP_400_BAD_REQUEST)
 
         if request.data.get('verification_code') != user.verification_code:
             return Response({'message': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
@@ -198,34 +197,22 @@ class ActivationConfirmView(GenericAPIView):
 
         return Response({'message': 'Email verified successfully'}, status=status.HTTP_200_OK)
 
-    @staticmethod
-    def get_user_from_token(token):
-        # decode the token
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        # get the user
-        user = User.objects.filter(id=payload['user_id']).first()
-        return user
-
-    @staticmethod
-    def is_valid_token(token):
+    def get_user_from_token(self, token):
         try:
-            # Decode the token with the secret key
-            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-            # If decoding is successful, the token is valid
-            return True
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            return User.objects.filter(id=user_id).first()
         except ExpiredSignatureError:
-            # If the token has expired, it is invalid
-            return False
-        except InvalidSignatureError:
-            # If the signature is invalid, the token is invalid
-            return False
+            return None
 
-    def get(self, request, token):
+    def validate_token(self, token):
         try:
-            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        except:
-            return Response({'message': 'Invalid URL'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'message': 'Please enter code verification'}, status=status.HTTP_200_OK)
+            jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            return token
+        except ExpiredSignatureError:
+            return None
+        except InvalidSignatureError:
+            return None
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -247,7 +234,7 @@ class ActivationResend(generics.GenericAPIView):
             user.last_verification_sent = datetime.now()
             user.save()
             show_text = user.has_verification_tries_reset or user.verification_tries_count > 1
-            token = self.get_token_for_user(user)
+            token = generate_tokens(user)["access"]
             email_handler.send_verification_message(subject=subject,
                                                     recipient_list=[user.email],
                                                     verification_token=verification_code,
@@ -259,10 +246,6 @@ class ActivationResend(generics.GenericAPIView):
             }, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def get_token_for_user(self, user):
-        refresh = RefreshToken.for_user(user)
-        return str(refresh.access_token)
 
 
 class WalletViewSet(viewsets.GenericViewSet, ListModelMixin):
@@ -324,7 +307,8 @@ class ForgotPasswordView(APIView):
 
         verification_code = str(random.randint(1000, 9999))
 
-        token = self.get_token_for_user(user)
+        # utils.get_access_token_for_user(user)
+        token = generate_tokens(user_id=user.id)["access"]
 
         user.verification_code = verification_code
         user.verification_tries_count = user.verification_tries_count + 1
@@ -340,13 +324,9 @@ class ForgotPasswordView(APIView):
         return Response(
             {
                 'detail': 'Code Sent',
-                'link': f'http://katyushaiust.ir/accounts/code_verification_view/{token}/'
+                'link': f'{project_variables.DOMAIN}/accounts/code_verification_view/{token}/'
             }
         )
-
-    def get_token_for_user(self, user):
-        refresh = RefreshToken.for_user(user)
-        return str(refresh.access_token)
 
 
 class PasswordChangeAPIView(APIView):
@@ -411,7 +391,7 @@ class CodeVerificationView(APIView):
         user.save()
 
         return Response(
-            {'message': 'code is valid', 'link': f'http://katyushaiust.ir/accounts/change-password/{token}/'},
+            {'message': 'code is valid', 'link': f'{project_variables.DOMAIN}/accounts/change-password/{token}/'},
             status=status.HTTP_200_OK)
 
     @staticmethod
@@ -437,78 +417,19 @@ class CodeVerificationView(APIView):
     #
 
 
-class ProfileViewSet(viewsets.ModelViewSet):
-    http_method_names = ['get', 'delete', 'patch', 'head', 'options']
-    serializer_class = ProfileSerializer
-    queryset = Profile.objects.all()
-    parser_classes = [MultiPartParser, FormParser]
-    permission_classes = [IsAuthenticated]
-
-    def get_serializer_context(self):
-        token = self.get_token_for_user(self.request.user)
-        return {'csrftoken': self.request.COOKIES.get('csrftoken'),
-                'token': token}
-
-    def get_permissions(self):
-        if self.action == 'delete':
-            return [IsAdminUser()]
-        if self.action == 'retrieve':
-            return [IsAdminUser()]
-        return super().get_permissions()
-
-    def list(self, request, *args, **kwargs):
-        user = request.user
-        if user.is_staff:
-            return super().list(request, *args, **kwargs)
-        profile = Profile.objects.filter(user=user).first()
-        serializer = self.get_serializer(
-            profile,
-            context=self.get_serializer_context(),
-        )
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['patch'], serializer_class=ProfileSerializer, permission_classes=[IsAuthenticated])
-    def update_profile(self, request, *args, **kwargs):
-        user = request.user
-        profile = Profile.objects.filter(user=user).first()
-        token = self.get_token_for_user(user)
-        serializer = UpdateProfileSerializer(
-            profile,
-            context=self.get_serializer_context(),
-            data=request.data,
-            partial=True,
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        data = serializer.data
-        data['image'] = f'{project_variables.DOMAIN}/{serializer.data["image"]}'
-        return Response(data)
-
-    def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
-
-    def get_object(self):
-        return get_object_or_404(self.get_queryset(), user=self.request.user)
-
-    @staticmethod
-    def get_token_for_user(user):
-        refresh = RefreshToken.for_user(user)
-        return str(refresh.access_token)
-
-
-class ChangePasswordlogView(APIView):
+class ChangePasswordlogView(GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = request.user
-            current_password = serializer.validated_data['old_password']
+            old_password = serializer.validated_data['old_password']
             new_password = serializer.validated_data['new_password']
 
             # Check if the current password matches the user's actual password
-            if not user.check_password(current_password):
+            if not user.check_password(old_password):
                 return Response({'error': 'Invalid current password.'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Change the user's password
@@ -518,3 +439,43 @@ class ChangePasswordlogView(APIView):
             return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserChartViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'head', 'options']
+    permission_classes = [IsAdminUser]
+    queryset = User.objects.all()
+
+    def get_serializer_class(self):
+        return UserSerializer
+
+    def last_week_users(self, request):
+        # Calculate the date a week ago from the current date
+        one_week_ago = timezone.now() - timedelta(days=6)
+
+        # Query to get the users created in the last week
+        users_created_last_week = User.objects.filter(
+            date_joined__gte=one_week_ago  # Filter users created after one week ago
+        ).extra({
+            'created_date': "date(date_joined)"  # Extract date from the date_joined field
+        }).values('created_date').annotate(
+            users_count_per_day=models.Count('id')  # Count users per day
+        ).order_by('created_date')
+
+        # Create a dictionary mapping dates to the number of users created that day
+        users_per_day_last_week_dict = {}
+        for entry in users_created_last_week:
+            users_per_day_last_week_dict[entry['created_date']] = entry['users_count_per_day']
+
+        # Create a list of dates and number of users created that day
+        users_per_day_last_week_list = []
+        current_date = one_week_ago.date()
+        while current_date <= timezone.now().date():
+            users_per_day_last_week_list.append({
+                'date': current_date.strftime('%Y-%m-%d'),
+                'users_count': users_per_day_last_week_dict.get(current_date, 0)
+            })
+            current_date += timedelta(days=1)
+
+        # Return the response
+        return Response(users_per_day_last_week_list, status=status.HTTP_200_OK)

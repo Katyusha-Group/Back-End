@@ -3,6 +3,11 @@ DEPARTMENT_ID = 'department_id'
 COURSE_STUDYING_GROUP = 'course_studying_group'
 COURSE_STUDYING_GROUP_ID = 'course_studying_group_id'
 
+# paths
+CHROME_BINARY_LOCATION = 'C:/Users/Kamyar/AppData/Local/Google/Chrome SxS/Application/chrome.exe'
+DRIVER_PATH = 'C:/Users/Kamyar/Dropbox/PC/Documents/Uni/Sem6/Analysis and Designing System/Katyusha/driver/122/chromedriver.exe'
+CAPTCHA_IMAGES_PATH = '/captcha_images/'
+
 DEPARTMENTS = {
     'مهندسي برق': 12,
     'مهندسي راه آهن': 13,
@@ -18,7 +23,7 @@ DEPARTMENTS = {
     'مركز آموزش الكترونيكي': 24,
     'واحد دماوند': 25,
     'تربيت بدني': 26,
-    'معارف اسلامي': 27,
+    'معارف اسلامي و ادبيات فارسي': 27,
     'زبان': 28,
     'شيمي': 29,
     'مديريت، اقتصاد و مهندسي پيشرفت': 32,
@@ -29,6 +34,7 @@ DEPARTMENTS = {
 COURSE_STUDYING_GP = {
     'عمومي': 11,
     'واحد آموزش كارشناسي': 11,
+    'واحد آموزش كارشناسي/ارشد پيوسته': 11,
     'واحد آموزش تحصيلات تكميلي': 12,
     'مهندسي صنايع': 15,
     'مهندسي كامپيوتر': 22,

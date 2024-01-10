@@ -1,85 +1,97 @@
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from custom_config import validators
 from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote, WebNotification
 from custom_config.permissions import IsOwner
 from custom_config.serializers import CartSerializer, CartItemSerializer, \
     AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, \
     TeacherVoteSerializer, ModifyTeacherVoteSerializer, ModifyTeacherReviewSerializer, TeacherReviewSerializer, \
-    ModifyReviewVoteSerializer, ReviewVoteSerializer, UpdateCartItemViewSerializer, CourseCartOrderInfoSerializer, \
+    ModifyReviewVoteSerializer, ReviewVoteSerializer, CartItemsViewSerializer, CourseCartOrderInfoSerializer, \
     WebNotificationSerializer
 from university.models import Teacher, Course
 from university.scripts.get_or_create import get_course
-from utils import project_variables
+from utils.variables import project_variables
 
 
 class CartViewSet(ModelViewSet):
-    http_method_names = ['get', 'post', 'delete', 'options', 'head']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
     queryset = Cart.objects.prefetch_related('items', 'items__course').all()
     serializer_class = CartSerializer
 
     def get_permissions(self):
-        if self.request.method == 'POST':
+        if self.action == 'list':
             return [IsAuthenticated()]
-        if self.action == 'retrieve':
+        elif self.action == 'update_cart':
+            return [IsAuthenticated()]
+        elif self.action == 'add_to_cart':
+            return [IsAuthenticated()]
+        elif self.action == 'remove_item':
             return [IsAuthenticated()]
         return [IsAdminUser()]
 
+    def get_object(self):
+        return Cart.objects.get_or_create(user=self.request.user)[0]
 
-class CartItemViewSet(ModelViewSet):
-    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
-    permission_classes = [IsAuthenticated]
-
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return AddCartItemSerializer
-        if self.request.method == 'PATCH':
-            return UpdateCartItemSerializer
-        return CartItemSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data,
-                                         context={'cart_id': self.kwargs['cart_pk'], 'request': self.request})
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-        serializer = UpdateCartItemViewSerializer(instance)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data,
-                                         context={'cart_id': self.kwargs['cart_pk'], 'request': self.request})
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.update(self.get_object(), serializer.validated_data)
-        serializer = UpdateCartItemViewSerializer(instance)
+    def list(self, request, *args, **kwargs):
+        if self.request.user.is_staff:
+            return super().list(request, *args, **kwargs)
+        cart = self.get_object()
+        serializer = self.get_serializer(cart)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def get_serializer_context(self):
-        return {'cart_id': self.kwargs['cart_pk'], 'request': self.request}
+    @action(detail=False, methods=['post'], url_name='add-to-cart', url_path='add-to-cart',
+            serializer_class=AddCartItemSerializer)
+    def add_to_cart(self, request, *args, **kwargs):
+        cart = self.get_object()
+        serializer = self.get_serializer(data=self.request.data, context={'cart_id': cart.id, 'request': self.request})
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+        serializer = CartItemsViewSerializer(instance)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def get_queryset(self):
-        return CartItem.objects.filter(cart_id=self.kwargs['cart_pk']).select_related('course')
+    @action(detail=False, methods=['patch'], url_name='update-cart', url_path='update-cart/(?P<item_id>\d+)',
+            serializer_class=UpdateCartItemSerializer)
+    def update_cart(self, request, item_id, *args, **kwargs):
+        cart = self.get_object()
+        cart_item = CartItem.objects.filter(id=item_id).first()
+        validators.not_null(value=cart_item, message='آیتم مورد نظر یافت نشد.')
+        serializer = self.get_serializer(data=self.request.data, context={'cart_id': cart.id, 'request': self.request})
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.update(cart_item, serializer.validated_data)
+        serializer = CartItemsViewSerializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['delete'], url_name='remove-item', url_path='remove-item/(?P<item_id>\d+)',)
+    def remove_item(self, request, item_id, *args, **kwargs):
+        cart_item = CartItem.objects.filter(id=item_id).first()
+        validators.not_null(value=cart_item, message='آیتم مورد نظر یافت نشد.')
+        cart_item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class OrderViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_permissions(self):
-        if self.request.method in ['PATCH', 'DELETE']:
+        if self.request.method in ['PATCH']:
             return [IsAdminUser(), IsOwner()]
-        return [IsAuthenticated()]
+        elif self.request.method in ['GET']:
+            return [IsAuthenticated()]
+        elif self.request.method in ['POST']:
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
 
     def create(self, request, *args, **kwargs):
         token = self.get_token_for_user(request.user)
         csrf_token = request.COOKIES.get('csrftoken', None)
         serializer = CreateOrderSerializer(data=request.data,
-                                           context={'user_id': request.user.id,
-                                                    'user': request.user,
+                                           context={'user': request.user,
                                                     'token': token,
                                                     'csrftoken': csrf_token, })
         serializer.is_valid(raise_exception=True)
@@ -115,11 +127,10 @@ class CourseCartOrderInfoRetrieveViewSet(ModelViewSet):
 
     def get_queryset(self):
         complete_course_number = self.request.query_params.get('complete_course_number', None)
-        if complete_course_number is None:
-            raise ValidationError('You need to send complete_course_number as query string.')
+        validators.not_null(value=complete_course_number,
+                            message='You need to send complete_course_number as query string.')
         course = get_course(course_code=complete_course_number, semester=project_variables.CURRENT_SEMESTER)
-        if course is None:
-            raise ValidationError('Course not found.')
+        validators.not_null(value=course, message='Course not found.')
         return Course.objects.filter(id=course.id).prefetch_related('order_items__order', 'cart_items')
 
 
@@ -128,9 +139,9 @@ class GetPricesView(APIView):
 
     def get(self, request, *args, **kwargs):
         data = {
-            'T': project_variables.TELEGRAM_PRICE,
-            'S': project_variables.SMS_PRICE,
-            'E': project_variables.EMAIL_PRICE,
+            project_variables.TELEGRAM_NOTIFICATION_TYPE: project_variables.TELEGRAM_PRICE,
+            project_variables.SMS_NOTIFICATION_TYPE: project_variables.SMS_PRICE,
+            project_variables.EMAIL_NOTIFICATION_TYPE: project_variables.EMAIL_PRICE,
         }
         return Response(data, status=status.HTTP_200_OK)
 

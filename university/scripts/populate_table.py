@@ -8,7 +8,7 @@ from crawler_scripts.golestan_data_cleaner import extract_limitation_data
 from university.models import Semester, Department, CourseStudyingGP, BaseCourse, Teacher, Course, CourseTimePlace, \
     ExamTimePlace, AllowedDepartment
 from university.scripts import clean_data, get_data
-from utils import project_variables
+from utils.variables import project_variables
 
 
 def populate_all_tables(golestan_data, teachers_data, population_mode=project_variables.POPULATION_INITIAL):

@@ -1,35 +1,76 @@
-import requests
-from rest_framework import serializers
-from accounts.models import *
-from django.contrib.auth import authenticate
-from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.password_validation import validate_password
+from django.core.validators import RegexValidator
+from django.contrib.auth import password_validation
+from django.utils.translation import gettext_lazy as _
 from django.core import exceptions as exception
+from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from utils.telegram_functions import get_bot_url
+from accounts.models import User, Wallet, WalletTransaction
+from utils.variables import project_variables
 
+
+# user serializer
+class UserSerializer(serializers.ModelSerializer):
+    department = serializers.CharField(source='department.name')
+    class Meta:
+        model = User
+        fields = ["username", "gender", "department", "email", "is_email_verified", "has_verification_tries_reset", "verification_tries_count", "id" ]
 
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
-    password1 = serializers.CharField(write_only=True)
-    password2 = serializers.CharField(write_only=True)
+    username = serializers.CharField(
+        validators=[
+            RegexValidator(
+                regex="^(?=.{6,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_... .])$",
+                message="Username must be 6-20 characters long, cannot start or end with a period or underscore"
+                        ", and cannot contain two consecutive periods or underscores."
+            )
+        ]
+    )
+    name = serializers.CharField(required=True)
+    password1 = serializers.CharField(
+        style={'input_type': 'password'},
+        validators=[password_validation.validate_password],
+        write_only=True
+    )
+    password2 = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
     class Meta:
         model = User
-        fields = ('id', 'email',
+        fields = ('id', 'email', 'username', 'name',
                   'password1', 'password2', 'gender', 'department')
         extra_kwargs = {
             'password1': {'write_only': True},
             'password2': {'write_only': True},
         }
 
-    def validate(self, attrs):
-        if attrs['password1'] != attrs['password2']:
-            raise serializers.ValidationError({
-                'password2': ['Passwords must match.'],
-            })
-        return attrs
+    def validate(self, data):
+        username = data.get('username')
+        email = data.get('email')
+
+        # Check if the username already exists
+        existing_user = User.objects.filter(username__iexact=username).first()
+
+
+        if existing_user:
+            # If the username exists, check if the email matches
+            if existing_user.email.lower() == email.lower():
+                return data
+            else:
+                # If the username exists and the email doesn't match, raise an error
+                raise serializers.ValidationError("This username is already taken.")
+        else:
+            return data
+    def validate_password2(self, value):
+        if value != self.initial_data.get('password1'):
+            raise serializers.ValidationError('Passwords must match.')
+        return value
+    def validate_password(self, value):
+        if value != self.initial_data.get('password2'):
+            raise serializers.ValidationError('Passwords must match.')
+        password_validation.validate_password(value)
+        return value
 
     def validate_email(self, value):
         user = User.objects.filter(email__iexact=value)
@@ -39,12 +80,15 @@ class SignUpSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Email already exists.")
             if user.verification_tries_count >= project_variables.MAX_VERIFICATION_TRIES:
                 raise serializers.ValidationError("You have reached the maximum number of registration tries.")
+            if user.username != self.initial_data.get('username'):
+                raise serializers.ValidationError("Email already exists.")
         return str.lower(value)
 
 
+
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(
-        label=_("Email"),
+    email_or_username = serializers.CharField(
+        label=_("Email or Username"),
         write_only=True
     )
     password = serializers.CharField(
@@ -58,36 +102,52 @@ class LoginSerializer(serializers.Serializer):
         read_only=True
     )
 
-    def validate(self, attrs):
+    def get_lookup_field(self, value):
+        return 'email__iexact' if '@' in value else 'username__iexact'
 
-        username = attrs.get('username', None)
+    def validate(self, attrs):
+        email_or_username = attrs.get('email_or_username', None)
         password = attrs.get('password', None)
 
-        if username and password:
-            username = str.lower(username)
-            user = authenticate(request=self.context.get('request'),
-                                username=username, password=password)
+        if email_or_username and password:
+            lookup_field = self.get_lookup_field(email_or_username)
+            email_or_username = self.validate_email_or_username(email_or_username)
+            user = User.objects.get(**{lookup_field: email_or_username})
 
-            # The authenticate call simply returns None for is_active=False
-            # users. (Assuming the default ModelBackend authentication
-            # backend.)
-            if not user:
-                msg = _('Does not exist or wrong password.')
+            if not user.check_password(password):
+                msg = _('Incorrect password.')
                 raise serializers.ValidationError(msg, code='authorization')
+
+
             if not user.is_email_verified:
-                raise serializers.ValidationError({"detail": "user is not verified."})
+                raise serializers.ValidationError({"detail": "User is not verified."})
+
+
+            attrs['user'] = user
         else:
-            msg = _('Must include "username" and "password".')
+            msg = _('Must include "email_or_username" and "password".')
             raise serializers.ValidationError(msg, code='authorization')
 
-        attrs['user'] = user
         return attrs
+    def validate_email_or_username(self, value):
+        if '@' in value:
+            lookup_field = 'email__iexact'
+            msg = _('Email does not exist.')
+        else:
+            lookup_field = 'username__iexact'
+            msg = _('Username does not exist.')
+
+        user_exists = User.objects.filter(**{lookup_field: value}).exists()
+        if not user_exists:
+            raise serializers.ValidationError(msg)
+
+        return str.lower(value)
 
 
 class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True)
-    new_password1 = serializers.CharField(required=True)
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True)
+    new_password1 = serializers.CharField(required=True, write_only=True)
 
     def validate(self, attrs):
         if attrs['new_password'] != attrs['new_password1']:
@@ -100,7 +160,7 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 'new_password': list(e.messages)
             })
-        return super().validate(attrs)
+        return attrs
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -153,66 +213,6 @@ class SimpleUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['user_email']
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['email', 'department', 'gender', 'first_name', 'last_name']
-
-
-class ProfileSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(source='user.first_name')
-    last_name = serializers.CharField(source='user.last_name')
-    email = serializers.CharField(source='user.email', read_only=True)
-    department = serializers.CharField(source='user.department', read_only=True)
-    gender = serializers.CharField(source='user.gender', read_only=True)
-    telegram_link = serializers.SerializerMethodField(read_only=True)
-    image = serializers.SerializerMethodField(read_only=True)
-
-    def get_image(self, obj: Profile):
-        return project_variables.DOMAIN + obj.image.url \
-            if obj.image \
-            else project_variables.DOMAIN + '/media/profile_pics/default.png'
-
-    def get_telegram_link(self, obj: Profile):
-        return get_bot_url(csrftoken=self.context['csrftoken'],
-                           token=self.context['token'])
-
-    class Meta:
-        model = Profile
-        fields = ['first_name', 'last_name', 'email', 'department', 'gender', 'image', 'telegram_link']
-
-
-class UpdateProfileSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(source='user.first_name')
-    last_name = serializers.CharField(source='user.last_name')
-    email = serializers.CharField(source='user.email', read_only=True)
-    department = serializers.CharField(source='user.department', read_only=True)
-    gender = serializers.CharField(source='user.gender', read_only=True)
-    telegram_link = serializers.SerializerMethodField(read_only=True)
-
-    def get_telegram_link(self, obj: Profile):
-        return get_bot_url(csrftoken=self.context['csrftoken'],
-                           token=self.context['token'])
-
-    def update(self, instance, validated_data):
-        for field, value in validated_data.items():
-            if field == 'user':
-                user = instance.user
-                fields = []
-                for user_field, user_value in value.items():
-                    setattr(user, user_field, user_value)
-                    fields += [user_field]
-                user.save()
-            else:
-                setattr(instance, field, value)
-        instance.save()
-        return instance
-
-    class Meta:
-        model = Profile
-        fields = ['first_name', 'last_name', 'email', 'department', 'gender', 'image', 'telegram_link']
 
 
 class WalletSerializer(serializers.ModelSerializer):

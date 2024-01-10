@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import utils.transaction_functions
+import utils.transactions.transaction_functions
 
 
 class Migration(migrations.Migration):
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('amount', models.DecimalField(decimal_places=2, max_digits=9)),
                 ('success', models.BooleanField(default=False)),
-                ('ref_code', models.CharField(default=utils.transaction_functions.create_ref_code, max_length=20, unique=True)),
+                ('ref_code', models.CharField(default=utils.transactions.transaction_functions.create_ref_code, max_length=20, unique=True)),
                 ('order', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='transactions', to='custom_config.order')),
             ],
             options={

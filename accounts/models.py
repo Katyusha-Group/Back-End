@@ -1,15 +1,18 @@
 from datetime import datetime
 from decimal import Decimal
 
+from django.contrib.contenttypes.fields import GenericRelation
+from django.core.validators import MinLengthValidator, MaxLengthValidator
 from django.db import models
-from django.core.validators import MinLengthValidator, RegexValidator
 from django.contrib.auth.models import AbstractUser
+
 from django_jalali.db import models as jmodels
 
 from core import settings
+from social_media.models import Profile
 from university.models import Department
-from utils import project_variables
-from utils.transaction_functions import create_ref_code
+from utils.variables import project_variables
+from utils.transactions.transaction_functions import create_ref_code
 
 
 class User(AbstractUser):
@@ -21,6 +24,13 @@ class User(AbstractUser):
     ]
 
     email = models.EmailField(unique=True)
+    username = models.CharField(max_length=20, unique=True,
+                                validators=[MinLengthValidator(6), ],
+                                error_messages={
+                                    'unique': 'نام کاربری تکراری است',
+                                    'min_length': 'نام کاربری باید حداقل ۶ کاراکتر باشد',
+                                    'max_length': 'نام کاربری باید حداکثر ۲۰ کاراکتر باشد'
+                                })
     is_email_verified = models.BooleanField(default=False)
     department = models.ForeignKey(to=Department, on_delete=models.DO_NOTHING)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
@@ -28,17 +38,26 @@ class User(AbstractUser):
     verification_tries_count = models.IntegerField(default=0)
     last_verification_sent = models.DateTimeField(null=True, blank=True, default=datetime.now)
     has_verification_tries_reset = models.BooleanField(default=False)
+    profile = GenericRelation(to=Profile, related_query_name='user')
+
+    def get_default_profile_name(self):
+        return self.email.split('@')[0]
+
+    def get_default_profile_username(self):
+        return self.get_username()
+
+    def get_default_profile_image(self):
+        if self.gender == 'M':
+            return 'images/profile_pics/male_default.png'
+        else:
+            return 'images/profile_pics/female_default.png'
+
+    @property
+    def is_uni_email(self):
+        return self.email.split('@')[1].endswith('iust.ac.ir')
 
     def __str__(self):
         return self.email
-
-
-class Profile(models.Model):
-    user = models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
-    image = models.ImageField(upload_to='images/profile_pics', default='images/profile_pics/default.png')
-
-    def __str__(self):
-        return self.user.email
 
 
 class Wallet(models.Model):
@@ -82,7 +101,8 @@ class WalletTransaction(models.Model):
     transaction_type = models.CharField(max_length=1, choices=TRANSACTION_TYPE_CHOICES, verbose_name='نوع تراکنش')
     transaction_status = models.CharField(max_length=1, choices=TRANSACTION_STATUS_CHOICES, verbose_name='وضعیت تراکنش')
     amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='wallet_transactions')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+                             related_name='wallet_transactions')
     applied_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
     ref_code = models.CharField(max_length=20, default=create_ref_code, verbose_name='کد مرجع')
 
@@ -93,4 +113,3 @@ class WalletTransaction(models.Model):
         ordering = ['-applied_at']
         verbose_name = 'تراکنش کیف پول'
         verbose_name_plural = 'تراکنش های کیف پول'
-

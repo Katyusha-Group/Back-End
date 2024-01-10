@@ -87,7 +87,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
     def get_complete_course_number(self, obj: Course):
-        return model_based_functions.get_complete_course_number(obj)
+        return obj.complete_course_number
 
     class Meta:
         model = Course

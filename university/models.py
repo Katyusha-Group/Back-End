@@ -1,11 +1,12 @@
 from django.db import models
-from django.core.validators import MinValueValidator
-from django_jalali.db import models as jmodels
+from django.core.validators import MinValueValidator, RegexValidator, MaxValueValidator
 from django.conf import settings
+from jdatetime import jalali
 
 from university import managers
-from utils import project_variables
-from utils.project_variables import day_mapper
+from utils.model_functions.date import get_persian_date
+from utils.variables import project_variables
+from utils.variables.project_variables import day_mapper
 
 
 # Create your models here.
@@ -26,8 +27,8 @@ class Semester(models.Model):
 class Department(models.Model):
     objects = managers.SignalSenderManager()
 
-    department_number = models.SmallIntegerField(primary_key=True, verbose_name='کد دانشکده')
-    name = models.CharField(max_length=255, unique=True, verbose_name='نام دانشکده')
+    department_number = models.PositiveSmallIntegerField(primary_key=True, verbose_name='کد دانشکده')
+    name = models.CharField(max_length=50, unique=True, verbose_name='نام دانشکده')
 
     def __str__(self):
         return str(self.name)
@@ -40,8 +41,8 @@ class Department(models.Model):
 class CourseStudyingGP(models.Model):
     objects = managers.SignalSenderManager()
 
-    gp_id = models.IntegerField(verbose_name='کد گروه آموزشی')
-    name = models.CharField(max_length=255, unique=True, verbose_name='نام گروه آموزشی')
+    gp_id = models.PositiveSmallIntegerField(verbose_name='کد گروه آموزشی')
+    name = models.CharField(max_length=50, unique=True, verbose_name='نام گروه آموزشی')
 
     def __str__(self):
         return str(self.gp_id) + ' --- ' + self.name
@@ -54,8 +55,9 @@ class CourseStudyingGP(models.Model):
 class BaseCourse(models.Model):
     objects = managers.SignalSenderManager()
 
-    course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس', db_index=True)
-    name = models.CharField(max_length=255, verbose_name='نام درس')
+    course_number = models.IntegerField(primary_key=True, verbose_name='شماره درس', db_index=True,
+                                        validators=[MinValueValidator(1000000), MaxValueValidator(9999999)])
+    name = models.CharField(max_length=50, verbose_name='نام درس')
     total_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='کل واحد')
     practical_unit = models.FloatField(validators=[MinValueValidator(0)], verbose_name='واحد های عملی')
     emergency_deletion = models.BooleanField(verbose_name='حذف اضطراری')
@@ -63,6 +65,15 @@ class BaseCourse(models.Model):
                                    related_name='base_courses')
     course_studying_gp = models.ForeignKey(to=CourseStudyingGP, on_delete=models.CASCADE,
                                            verbose_name='دوره آموزشی درس')
+
+    def get_default_profile_name(self):
+        return str(self.name)
+
+    def get_default_profile_username(self):
+        return 'C_' + str(self.course_number)
+
+    def get_default_profile_image(self):
+        return 'images/profile_pics/course_default.png'
 
     def __str__(self):
         return str(self.course_number) + ' --- ' + self.name
@@ -75,10 +86,10 @@ class BaseCourse(models.Model):
 class Teacher(models.Model):
     objects = managers.SignalSenderManager()
 
-    name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
-    golestan_name = models.CharField(max_length=255, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
+    name = models.CharField(max_length=50, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
+    golestan_name = models.CharField(max_length=50, verbose_name='نام و نام خانوادگی', unique=True, db_index=True)
     email_address = models.CharField(max_length=255, verbose_name='ایمیل', null=True, blank=True)
-    lms_id = models.IntegerField(verbose_name='شماره استاد در سامانه LMS', null=True, blank=True)
+    lms_id = models.PositiveIntegerField(verbose_name='شماره استاد در سامانه LMS', null=True, blank=True)
     teacher_image_url = models.CharField(max_length=255, verbose_name='آدرس تصویر استاد', null=True, blank=True)
     teacher_image = models.ImageField(upload_to='images/teachers_image/', verbose_name='تصویر استاد',
                                       default='images/teachers_image/default.png', blank=True)
@@ -91,6 +102,19 @@ class Teacher(models.Model):
         ]
         verbose_name = 'استاد'
         verbose_name_plural = 'اساتید'
+
+    def get_default_profile_name(self):
+        return self.name
+
+    def get_default_profile_username(self):
+        return 'T_' + str(self.id)
+
+    def get_default_profile_image(self):
+        return self.teacher_image
+
+    @property
+    def image_full_path(self):
+        return project_variables.DOMAIN + settings.MEDIA_URL + str(self.teacher_image)
 
     def __str__(self):
         return self.name
@@ -113,9 +137,10 @@ class Course(models.Model):
     objects = managers.SignalSenderManager()
 
     class_gp = models.CharField(max_length=2, verbose_name='گروه درس')
-    capacity = models.SmallIntegerField(verbose_name='ظرفیت')
-    registered_count = models.SmallIntegerField(verbose_name='تعداد ثبت نام شده ها')
-    waiting_count = models.SmallIntegerField(verbose_name='تعداد افراد حاضر در لیست انتظار')
+    capacity = models.SmallIntegerField(verbose_name='ظرفیت', validators=[MinValueValidator(0)])
+    registered_count = models.SmallIntegerField(verbose_name='تعداد ثبت نام شده ها', validators=[MinValueValidator(0)])
+    waiting_count = models.SmallIntegerField(verbose_name='تعداد افراد حاضر در لیست انتظار',
+                                             validators=[MinValueValidator(0)])
     guest_able = models.BooleanField(verbose_name='قابل اخذ توسط مهمان')
     registration_limit = models.CharField(max_length=2000, verbose_name='محدودیت اخذ')
     description = models.CharField(max_length=400, verbose_name='توضیحات')
@@ -131,21 +156,39 @@ class Course(models.Model):
     def __str__(self):
         return str(self.base_course.course_number) + '_' + str(self.class_gp)
 
+    @property
+    def complete_course_number(self):
+        return str(self.base_course.course_number) + '_' + str(self.class_gp)
+
+    @property
+    def color_intensity_percentage(self):
+        """
+        Color intensity percentage = ((Remaining capacity - Number of people on the waiting list) / (Total capacity + Number of people on the waiting list + (1.2 * Number of people who want to take the course))) * 100
+        """
+        if self.capacity == 0:
+            return 100
+
+        color_intensity_percentage = (((self.capacity - self.registered_count) * 100) / (self.capacity))
+
+        if color_intensity_percentage <= 0:
+            return 0
+        return (color_intensity_percentage // 10) * 10 + 10 if color_intensity_percentage < 95 else 100
+
     class Meta:
         verbose_name = 'درس'
         verbose_name_plural = 'درس ها'
 
 
 class ExamTimePlace(models.Model):
-    objects = managers.jSignalSenderManager()
+    objects = managers.SignalSenderManager()
 
-    date = jmodels.jDateField(verbose_name='تاریخ امتحان', help_text='سال را به فرم yyyy-mm-dd وارد کنید.')
+    date = models.DateField(verbose_name='تاریخ امتحان', help_text='سال را به فرم yyyy-mm-dd وارد کنید.')
     start_time = models.TimeField(verbose_name='زمان شروع')
     end_time = models.TimeField(verbose_name='زمان پایان')
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE, verbose_name='درس', related_name='exam_times')
 
     def __str__(self):
-        return str(self.date) + ' - ' + str(self.start_time) + ' - ' + str(self.end_time)
+        return str(self.date.year) + '-' + str(self.date.month) + '-' + str(self.date.day)
 
     class Meta:
         verbose_name = 'تاریخ امتحان'

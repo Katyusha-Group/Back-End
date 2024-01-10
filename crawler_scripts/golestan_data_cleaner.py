@@ -1,7 +1,5 @@
-import codecs
-
 import pandas as pd
-from utils import project_variables
+from utils.variables import project_variables
 
 
 def extract_limitation_data(df: pd.DataFrame):

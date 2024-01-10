@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command:  redis-server --save 60 1 --loglevel warning
+    restart: always
+
+
+  backend:
+    build: .
+    container_name: backend
+
+    volumes:
+      - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
+
+    depends_on:
+      - db
+      - redis
+
+#  worker:
+#    build: .
+#    container_name: worker
+#    volumes:
+#      - .:/app
+#    command: celery -A core worker --loglevel=info
+#    depends_on:
+#      - backend
+#      - redis
+
+  db:
+    container_name: database
+    image: postgres:13.1-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=katyush2_admin
+      - POSTGRES_PASSWORD=katyusha@dmin2023
+      - POSTGRES_DB=katyush2_db
+
+  nginx:
+    image: nginx
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./deployment/nginx_default.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/home/app/static
+      - media_volume:/home/app/media
+    depends_on:
+      - backend
+
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

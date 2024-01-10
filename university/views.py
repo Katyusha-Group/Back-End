@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
+from django.core import validators
 from django.db.models import Count, ExpressionWrapper, F, FloatField, Case, When, Value, IntegerField, Prefetch, \
     BooleanField
-from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
@@ -15,8 +15,8 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.views import APIView
 
-from university.scripts.timeline_functions import add_all_semesters_to_timeline
-from utils import project_variables
+from university.validators import validate_int, validate_queryset_existence
+from utils.variables import project_variables
 
 from custom_config.ordering_filrers import TeacherOrderingFilter
 
@@ -53,7 +53,7 @@ class SortedNamesDepartmentListView(ListAPIView):
         return sort_departments_by_user_department(departments, user_department)
 
 
-class DepartmentListView(ListAPIView):
+class DepartmentsListView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
     serializer_class = DepartmentSerializer
@@ -62,26 +62,19 @@ class DepartmentListView(ListAPIView):
         return {'user': self.request.user}
 
     def get_queryset(self):
-        departments = Department.objects.all()
-        user_department = get_user_department(self.request.user)
-        return sort_departments_by_user_department(departments, user_department)
-
-
-class AllDepartmentsListView(DepartmentListView):
-    def get_queryset(self):
         departments = Department.objects.all().prefetch_related(
             'allowed_departments__course__base_course')
         user_department = get_user_department(self.request.user)
         return sort_departments_by_user_department(departments, user_department)
 
 
-class SemesterViewSet(ModelViewSet):
+class SemestersViewList(ListAPIView):
     http_method_names = ['get', 'head', 'options']
     permission_classes = [IsAuthenticated]
     serializer_class = SemesterSerializer
 
     def get_queryset(self):
-        return Semester.objects.all()
+        return Semester.objects.order_by('-year').all()
 
 
 class CourseViewSet(ListModelMixin, GenericViewSet):
@@ -126,7 +119,7 @@ class CourseViewSet(ListModelMixin, GenericViewSet):
         serializer = self.get_serializer(course)
         return Response(data=serializer.data)
 
-    @action(detail=False, methods=['GET', 'PUT'])
+    @action(detail=False, methods=['GET', 'PUT'], url_name='my-courses')
     def my_courses(self, request):
         student = request.user
         if request.method == 'GET':
@@ -143,8 +136,13 @@ class CourseViewSet(ListModelMixin, GenericViewSet):
         elif request.method == 'PUT':
             serializer = ModifyMyCourseSerializer(data=request.data, context={'user_id': request.user.id})
             serializer.is_valid(raise_exception=True)
+            course = get_course(course_code=serializer.validated_data['complete_course_number'],
+                                semester=project_variables.CURRENT_SEMESTER)
+            if course is None:
+                return Response(status=status.HTTP_404_NOT_FOUND,
+                                data={'detail': 'No course with this course_number in database.'})
             _, created = serializer.save(student=student)
-            message = 'Course added to calendar' if created else 'Course deleted from calendar'
+            message = self.generate_message(created)
             return Response(status=status.HTTP_200_OK, data={'message': message})
 
     @action(detail=False, methods=['GET'])
@@ -168,6 +166,14 @@ class CourseViewSet(ListModelMixin, GenericViewSet):
                         data={'unit_count': sum([course.base_course.total_unit for course in course_data]),
                               'data': courses.data})
 
+    @staticmethod
+    def generate_message(created):
+        if created:
+            message = 'Course added to calendar'
+        else:
+            message = 'Course deleted from calendar'
+        return message
+
 
 class BaseCoursesTimeLineListAPIView(ListAPIView):
     http_method_names = ['get', 'head', 'options']
@@ -189,7 +195,7 @@ class TeachersTimeLineListAPIView(ListAPIView):
     serializer_class = TeacherTimeLineSerializer
 
     def get_queryset(self):
-        return Teacher.objects.filter(pk=self.kwargs['teacher_id']).all()
+        return Teacher.objects.filter(pk=self.kwargs['teacher_pk']).all()
 
     def list(self, request, *args, **kwargs):
         teachers = self.get_queryset()
@@ -198,6 +204,7 @@ class TeachersTimeLineListAPIView(ListAPIView):
 
 
 class CourseGroupListView(ModelViewSet):
+    http_method_names = ['get', 'put', 'head', 'options']
     serializer_class = CourseGroupSerializer
     permission_classes = [IsAuthenticated]
 
@@ -205,34 +212,20 @@ class CourseGroupListView(ModelViewSet):
         return {'user': self.request.user}
 
     def get_queryset(self):
-        base_course_id = self.kwargs['base_course_id']
-        if base_course_id is None:
-            raise ValidationError({'detail': 'Enter course_number as query string in the url.'}, )
-        elif base_course_id.isdigit() is True:
-            base_course_id = int(base_course_id)
-        else:
-            raise ValidationError({'detail': 'Enter course_number as query number in the url.'}, )
+        base_course_id = self.kwargs['base_course_pk']
+        validate_int(base_course_id, 'Enter course_number as an integer in the url.')
         user = self.request.user
         courses = (
             Course.objects
             .select_related('base_course', 'semester')
-            .prefetch_related('teachers',
-                              'course_times',
-                              'exam_times',
-                              'students')
-            .filter(base_course_id=base_course_id, semester_id=project_variables.CURRENT_SEMESTER,
+            .prefetch_related('teachers', 'course_times', 'exam_times', 'students')
+            .filter(base_course_id=base_course_id,
+                    semester_id=project_variables.CURRENT_SEMESTER,
                     sex__in=[user.gender, 'B'])
             .annotate(empty_capacity=ExpressionWrapper(
                 F('capacity') - F('registered_count'),
                 output_field=IntegerField()
             ))
-            .annotate(student_count=Count('students'))
-            .annotate(
-                color_intensity_percentage_first=ExpressionWrapper(
-                    (((F('capacity') - F('registered_count') - F('waiting_count')) * 100) / (
-                            F('capacity') + F('waiting_count') + (1.2 * F('student_count')))),
-                    output_field=FloatField())
-            )
             .annotate(
                 capacity_is_less_zero=Case(
                     When(empty_capacity__lte=0, then=Value(True)),
@@ -240,37 +233,46 @@ class CourseGroupListView(ModelViewSet):
                     output_field=BooleanField()
                 )
             )
-            .order_by('capacity_is_less_zero', 'empty_capacity', 'color_intensity_percentage_first')
             .all()
         )
-        if courses.exists():
-            return courses
-        else:
-            raise ValidationError({'detail': 'No course with this course_number in database.'}, )
+        validate_queryset_existence(courses, 'No course with this course_number in database.')
+        return sorted(courses, key=lambda x: (
+            x.capacity_is_less_zero, x.empty_capacity, x.color_intensity_percentage
+        ))
 
 
 class BaseAllCourseDepartment(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, department_id, *args, **kwargs):
+    def get(self, request, department_number, only_my_department, *args, **kwargs):
         all_courses = (
             Course.objects
-            .filter(base_course__department_id=department_id, semester=project_variables.CURRENT_SEMESTER)
+            .filter(base_course__department_id=department_number, semester=project_variables.CURRENT_SEMESTER,
+                    sex__in=[self.request.user.gender, 'B'])
             .select_related('base_course')
             .prefetch_related('course_times', 'exam_times', 'students', 'teachers')
             .all()
         )
-        return Response(AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
+        try:
+            validate_queryset_existence(all_courses, 'No course with this department_number in database.')
+            return Response(
+                AllCourseDepartmentSerializer(all_courses, many=True, context={'user': self.request.user}).data)
+        except ValidationError as e:
+            return Response(data={'detail': e.detail}, status=status.HTTP_404_NOT_FOUND)
 
 
 class AllCourseDepartmentList(BaseAllCourseDepartment):
+    # Retrieves courses of user's department
     def get(self, request, *args, **kwargs):
-        return super(AllCourseDepartmentList, self).get(request, request.user.department_id, *args, **kwargs)
+        return super(AllCourseDepartmentList, self).get(request, request.user.department_id, *args, **kwargs,
+                                                        only_my_department=True)
 
 
 class AllCourseDepartmentRetrieve(BaseAllCourseDepartment):
-    def get(self, request, department_id, *args, **kwargs):
-        return super(AllCourseDepartmentRetrieve, self).get(request, department_id, *args, **kwargs)
+    # Retrieves courses of specified department
+    def get(self, request, department_number, *args, **kwargs):
+        return super(AllCourseDepartmentRetrieve, self).get(request, department_number, *args, **kwargs,
+                                                            only_my_department=False)
 
 
 class TeacherViewSet(ModelViewSet):

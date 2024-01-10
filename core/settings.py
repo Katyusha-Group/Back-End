@@ -15,15 +15,20 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-v&!uiuu&^nb0rn@2e0u3-&qnt0g8@f+wt02z3du7@21t0klum-'
 
+DEBUG = True
+
+ALLOWED_HOSTS = ['*']
+
 # Application definition
 
 INSTALLED_APPS = [
+    "channels",
+    "daphne",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,7 +48,9 @@ INSTALLED_APPS = [
     'django_crontab',
     'accounts',
     'university',
+    'social_media',
     'custom_config',
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -77,14 +84,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
+ASGI_APPLICATION = "core.asgi.application"
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'katyush1_db',
-        'USER': 'katyush1_admin',
+        'NAME': 'katyush2_db',
+        'USER': 'katyush2_admin',
         'PASSWORD': 'katyusha@dmin2023',
-        'HOST': 'localhost',
+        'HOST': 'database',
         'PORT': '5432',
     }
 }
@@ -92,20 +100,20 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+# AUTH_PASSWORD_VALIDATORS = [
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+#     },
+# ]
 #
 # REST_FRAMEWORK = {
 #     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -133,15 +141,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATIC_URL = '/static/'
+STATIC_URL = 'var/www/static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
+MEDIA_URL = 'var/www/media/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'staticfiles'),
 ]
-
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -166,7 +173,16 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
+    'COERCE_DECIMAL_TO_STRING': False,
+    # 'DEFAULT_FILTER_BACKENDS': (
+    #     'rest_framework_simplejwt.authentication.JWTAuthentication',
+    # )
 }
+
+# AUTHENTICATION_BACKENDS = [
+#     'django.contrib.auth.backends.ModelBackend',
+#     'accounts.model_backends.username_email_backend.CustomBackend',
+# ]
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=10),
@@ -200,47 +216,47 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
-
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:5173",
-]
+# CORS_ORIGIN_WHITELIST = [
+#     "http://localhost:5173",
+# ]
 
-CORS_ORIGIN_REGEX_WHITELIST = [
-    "http://localhost:5173",
-]
+# CORS_ORIGIN_REGEX_WHITELIST = [
+#     "http://localhost:5173",
+# ]
 
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]
+# CORS_ALLOW_METHODS = [
+#     'DELETE',
+#     'GET',
+#     'OPTIONS',
+#     'PATCH',
+#     'POST',
+#     'PUT',
+# ]
 
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
+# CORS_ALLOW_HEADERS = [
+#     'accept',
+#     'accept-encoding',
+#     'authorization',
+#     'content-type',
+#     'dnt',
+#     'origin',
+#     'user-agent',
+#     'x-csrftoken',
+#     'x-requested-with',
+# ]
 
-CORS_EXPOSE_HEADERS = [
-    'Cache-Control',
-    'Content-Language',
-    'Content-Type',
-    'Expires',
-    'Last-Modified',
-    'Pragma',
-]
+# CORS_EXPOSE_HEADERS = [
+#     'Cache-Control',
+#     'Content-Language',
+#     'Content-Type',
+#     'Expires',
+#     'Last-Modified',
+#     'Pragma',
+# ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -248,6 +264,19 @@ EMAIL_HOST_USER = 'katyushaiust@gmail.com'
 EMAIL_HOST_PASSWORD = 'wsumkosjhltxfsox'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
+redis_host = "redis"  # on server
+# redis_host = "localhost" # on localhost
+
+CHANNEL_LAYERS = {
+    "default": {
+        # "BACKEND": 'channels.layers.InMemoryChannelLayer'
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(redis_host, 6379)],
+        },
+    },
+}
 
 CRONJOBS = [
     # ('30 2 * * *', 'university.cron.watch_golestan'),
@@ -259,3 +288,16 @@ CRONJOBS = [
     # ('0 0 * * *', 'custom_config.cron.delete_expired_carts'),
 ]
 
+# celery configs
+# CELERY_BROKER_URL = 'redis://redis:6379/1'
+#
+# # cache configs
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://redis:6379/2",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         }
+#     }
+# }

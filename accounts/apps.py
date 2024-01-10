@@ -9,4 +9,3 @@ class AccountsConfig(AppConfig):
         from .signals.handlers import create_user_wallet
         from .signals.handlers import create_wallet_transaction
         from .signals.handlers import update_wallet
-        from .signals.handlers import create_profile

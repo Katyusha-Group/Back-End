@@ -6,6 +6,7 @@ def get_golestan_courses(year):
         user_login=False, year=year
     )
     crawler.login()
+    print('Successfully logged in for year', year)
     crawler.get_courses()
     crawler.driver.quit()
     print('finished extracting data of', year)

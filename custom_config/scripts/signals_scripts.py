@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
-from custom_config.models import ModelTracker, WebNotification, OrderItem, Order
+from custom_config.models import ModelTracker, WebNotification, Order
 from university.models import Course
 from university.scripts import get_or_create
-from utils import project_variables
+from utils.variables import project_variables
 
 
 def create_model_tracker(is_course, course_name, course_number, action, pk, field_type=None):

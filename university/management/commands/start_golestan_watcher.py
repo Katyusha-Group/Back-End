@@ -4,11 +4,9 @@ from pathlib import Path
 
 import pandas as pd
 from django.core.management.base import BaseCommand
-from watchdog.observers import Observer
 
 from university.scripts import course_updater
-from utils import project_variables
-from university.scripts.golestan_observer import ExcelHandler
+from utils.variables import project_variables
 
 
 class Command(BaseCommand):

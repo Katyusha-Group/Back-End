@@ -2,9 +2,8 @@ import pandas as pd
 
 from watchdog.events import FileSystemEventHandler
 
-from university.models import Course
 from university.scripts import course_updater
-from utils import project_variables
+from utils.variables import project_variables
 
 
 class ExcelHandler(FileSystemEventHandler):

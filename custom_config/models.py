@@ -1,15 +1,13 @@
-from decimal import Decimal
 from uuid import uuid4
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
-from django_jalali.db import models as jmodels
-
 from university.models import Course, Teacher, AllowedDepartment, CourseTimePlace, ExamTimePlace
-from utils import project_variables
-from utils.transaction_functions import create_ref_code
+from utils.model_functions.date import get_persian_date
+from utils.variables import project_variables
+from utils.transactions.transaction_functions import create_ref_code
 
 
 class ModelTracker(models.Model):
@@ -69,6 +67,7 @@ class FieldTracker(models.Model):
 
 class Cart(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='carts')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -79,6 +78,10 @@ class Cart(models.Model):
         for item in self.items.all():
             total += float(item.get_item_price())
         return total * project_variables.TAX + total
+
+    @staticmethod
+    def get_user_available_carts(user):
+        return user.carts.filter()
 
     class Meta:
         verbose_name = 'سبد خرید'
@@ -127,17 +130,15 @@ class Order(models.Model):
         (PAY_WALLET, 'پرداخت از طریق کیف پول'),
     )
 
-    objects = jmodels.jManager
-
-    placed_at = jmodels.jDateTimeField(auto_now_add=True)
+    placed_at = models.DateTimeField(auto_now_add=True)
     payment_status = models.CharField(
         max_length=1, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_STATUS_PENDING
     )
     payment_method = models.CharField(
-        max_length=1, choices=PAYMENT_METHOD_CHOICES, default='O'
+        max_length=1, choices=PAYMENT_METHOD_CHOICES, default=PAY_ONLINE
     )
     ref_code = models.CharField(max_length=20, default=create_ref_code, unique=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='orders')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='orders')
 
     def __str__(self):
         return str(self.id) + ' : ' + self.payment_status
@@ -148,6 +149,10 @@ class Order(models.Model):
             total += float(item.unit_price)
         return total * project_variables.TAX + total
 
+    @property
+    def jalali_placed_at(self):
+        return get_persian_date(self.placed_at)
+
     class Meta:
         verbose_name = 'سفارش'
         verbose_name_plural = 'آیتم های سفارش'
@@ -157,7 +162,7 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name='items')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, related_name='order_items')
     class_gp = models.CharField(max_length=2, default='00')
     course_number = models.PositiveIntegerField()
@@ -174,7 +179,7 @@ class OrderItem(models.Model):
         return (OrderItem.objects
                 .prefetch_related('order__user')
                 .filter(order__user=user,
-                        order__payment_status=Order.PAYMENT_STATUS_COMPLETED,
+                        order__payment_status__in=[Order.PAYMENT_STATUS_COMPLETED, Order.PAYMENT_STATUS_PENDING],
                         course=course)
                 .first())
 
@@ -187,17 +192,19 @@ class OrderItem(models.Model):
 
 
 class WebNotification(models.Model):
-    objects = jmodels.jManager()
-
     is_read = models.BooleanField(default=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     tracker = models.ForeignKey(ModelTracker, on_delete=models.SET_NULL, related_name='trackers', null=True)
     title = models.CharField(max_length=100)
     text = models.TextField()
-    applied_at = jmodels.jDateTimeField(auto_now_add=True)
+    applied_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return str(self.id) + ' : ' + self.title
+
+    @property
+    def jalali_applied_at(self):
+        return get_persian_date(self.applied_at)
 
     class Meta:
         verbose_name = 'اعلان'

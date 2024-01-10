@@ -6,25 +6,26 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait as Wait
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.core.utils import read_version_from_cmd, PATTERN
-from utils.image_handler import ImageHandler
+
+from crawler_scripts import constants
+from utils.image.image_handler import ImageHandler
 
 
 class SeleniumCrawler:
     def __init__(self):
-        chrome_binary_location = "C:/Users/Kamyar/AppData/Local/Chromium/Application/chrome.exe"
-        driver_path = "C:/Users/Kamyar/Dropbox/PC/Documents/Uni/Sem6/Analysis and Designing System/Katyusha/driver/110/chromedriver.exe"
+        chrome_binary_location = constants.CHROME_BINARY_LOCATION
+        driver_path = constants.DRIVER_PATH
         self.options = webdriver.ChromeOptions()
-        self.options.add_argument('--headless')
-        self.options.add_argument('--disable-gpu')
-        self.options.add_argument('--no-sandbox')
-        self.options.add_experimental_option("detach", True)
+        # self.options.add_argument('--headless')
+        # self.options.add_argument('--disable-gpu')
+        # self.options.add_argument('--no-sandbox')
+        # self.options.add_experimental_option("detach", True)
         # self.driver = webdriver.Chrome(options=self.options)
         # self.driver = webdriver.Chrome(ChromeDriverManager().install())
         self.options.binary_location = chrome_binary_location
         self.driver = webdriver.Chrome(executable_path=driver_path, options=self.options)
-        self.image_handler = ImageHandler(os.path.abspath(os.path.join(__file__, os.pardir)) + '/captcha_images/')
+        self.image_handler = ImageHandler(
+            os.path.abspath(os.path.join(__file__, os.pardir)) + constants.CAPTCHA_IMAGES_PATH)
 
     def wait_on_find_element_by_xpath(self, xpath, sleep_time) -> WebElement:
         return Wait(self.driver, sleep_time).until(ec.visibility_of_element_located((By.XPATH, xpath)))
