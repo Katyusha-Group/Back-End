@@ -39,8 +39,7 @@ jobs:
 
     - name: Build the Docker image  
       run: docker-compose -f docker-compose.yml build  
-    - name: Set script permissions  
-      run: chmod +x /app/start.sh
+
     - name: Run tests  
       run: docker-compose -f docker-compose.yml run backend sh -c "pytest ."  
 
