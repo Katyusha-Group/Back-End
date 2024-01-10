@@ -31,4 +31,4 @@ RUN chmod +x /app/deployment/start_app.sh
 RUN chmod +x /app/deployment/start_daphne.sh
 
 
-ENTRYPOINT ["/app/start.sh"]
+ENTRYPOINT ["./start.sh"]
