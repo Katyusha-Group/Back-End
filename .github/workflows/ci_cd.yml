@@ -21,8 +21,6 @@ jobs:
         restore-keys: |  
           ${{ runner.os }}-buildx-  
 
-    - name: Set up permissions for start.sh  
-      run: chmod +x start.sh 
 
     - name: Build the Docker image  
       run: docker-compose -f docker-compose.yml build  
