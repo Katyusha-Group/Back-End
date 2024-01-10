@@ -1,2 +1,2 @@
-#!/bin/bash
+#!/bin/sh
 exec /usr/bin/supervisord -n
