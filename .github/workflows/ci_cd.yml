@@ -30,12 +30,12 @@ jobs:
         ls -l
         chmod a+x start.sh
         chmod +x ./start.sh  
-        ls -l
+        ls ./deployment/ -l
         
     - name: Make scripts executable  
       run: |  
-        chmod +x /deployment/start_daphne.sh  
-        chmod +x /deployment/start_app.sh  
+        chmod +x ./deployment/start_daphne.sh  
+        chmod +x ./deployment/start_app.sh  
 
     - name: Run tests  
       run: docker-compose -f docker-compose.yml run backend sh -c "pytest ."  
