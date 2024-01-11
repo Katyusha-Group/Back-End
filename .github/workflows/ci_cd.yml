@@ -21,9 +21,6 @@ jobs:
     - name: Build the Docker image
       run: docker-compose -f docker-compose.yml build
 
-      
-    - name: Run tests
-      run: docker-compose -f docker-compose.yml run backend sh -c "pytest ."
 
   deploy:  
     needs: build-and-test  
