@@ -21,9 +21,10 @@ jobs:
       run: docker-compose -f docker-compose.yml build
       
     - name: Build  Docker image
-      run: chmod +x ./start.sh
-           chmod +x ./deployment/start_app.sh
-           chmod +x ./deployment/start_daphne.sh
+      run: | 
+        chmod +x ./start.sh
+        chmod +x ./deployment/start_app.sh
+        chmod +x ./deployment/start_daphne.sh
 
 
     - name: Run tests  
