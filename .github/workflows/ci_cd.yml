@@ -28,7 +28,7 @@ jobs:
 
 
     - name: Run tests  
-      run: docker-compose -f docker-compose.yml run --rm backend pytest
+      run: pytest
 
   Deploy:  
     needs: build-and-test  
