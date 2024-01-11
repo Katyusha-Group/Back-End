@@ -20,6 +20,8 @@ jobs:
     - name: Build the Docker image
       run: docker-compose -f docker-compose.yml build
 
+    - name: Run tests  
+      run: docker-compose -f docker-compose.yml run --rm backend pytest
 
   Deploy:  
     needs: build-and-test  
