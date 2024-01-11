@@ -29,6 +29,14 @@ jobs:
       run: |
         ls -l
         chmod 777 ./start.sh 
+
+    - name: Make scripts executable  
+      run: |  
+        chmod 777 ./deployment/start_daphne.sh  
+        chmod 777 ./deployment/start_app.sh  
+        chmod 777 ./deployment/gunicorn.conf 
+        chmod 777 ./deployment/daphne.conf
+        chmod 777 ./deployment/nginx_default.conf
         
     - name: Run tests  
       run: docker-compose -f docker-compose.yml run backend sh -c "pytest ."  
