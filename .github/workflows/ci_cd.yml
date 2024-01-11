@@ -19,6 +19,10 @@ jobs:
       
     - name: Build the Docker image
       run: docker-compose -f docker-compose.yml build
+      
+    - name: Build  Docker image
+      run: chmod +x ./start.sh
+
 
     - name: Run tests  
       run: docker-compose -f docker-compose.yml run --rm backend pytest
