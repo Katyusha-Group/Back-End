@@ -29,17 +29,16 @@ jobs:
     - name: Execute start.sh script  
       run: |
         ls -l
-        chmod a+x start.sh
         chmod +x ./start.sh  
         ls ./deployment/ -l
         
     - name: Make scripts executable  
       run: |  
-        chmod a+x ./deployment/start_daphne.sh  
-        chmod a+x ./deployment/start_app.sh  
-        chmod a+x ./deployment/gunicorn.conf 
-        chmod a+x ./deployment/daphne.conf
-        chmod a+x ./deployment/nginx_default.conf
+        chmod +x ./deployment/start_daphne.sh  
+        chmod +x ./deployment/start_app.sh  
+        chmod +x ./deployment/gunicorn.conf 
+        chmod +x ./deployment/daphne.conf
+        chmod +x ./deployment/nginx_default.conf
 
 
     - name: Run tests  
