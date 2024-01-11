@@ -28,6 +28,14 @@ jobs:
     runs-on: ubuntu-latest  
     steps:  
       - uses: actions/checkout@v2  
+      - name: Print masked secrets  
+        run: |  
+          echo "USERNAME: ${{ secrets.USERNAME }}"  
+          echo "PASSWORD: ${{ secrets.PASSWORD }}"  
+          echo "HOST: ${{ secrets.HOST }}"  
+          echo "PORT: ${{ secrets.PORT }}"  
+          echo "PATH: ${{ secrets.PATH }}"
+      - uses: actions/checkout@v2  
       - name: Connect  
         uses: appleboy/ssh-action@master  
         with:  
