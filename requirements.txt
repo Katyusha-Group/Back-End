@@ -93,6 +93,7 @@ daphne
 channels-redis==4.1.0
 pytest
 pytest-django
+model-bakery
 
 
 # background process and cache

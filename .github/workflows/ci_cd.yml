@@ -1,0 +1,55 @@
+name: Django CI/CD  
+on:  
+  push:  
+    branches: [ main ] 
+
+jobs:  
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10'
+
+    - name: Create virtual environment
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run tests
+      run: pytest
+
+  Deploy:  
+    needs: build-and-test  
+    name: deploy  
+    runs-on: ubuntu-latest  
+    steps:  
+      - uses: actions/checkout@v2  
+      - name: Print masked secrets  
+        run: |  
+          echo "USERNAME: ${{ secrets.USERNAME }}"  
+          echo "PASSWORD: ${{ secrets.PASSWORD }}"  
+          echo "HOST: ${{ secrets.HOST }}"  
+          echo "PORT: ${{ secrets.PORT }}"  
+          echo "PATH: ${{ secrets.PATH }}"
+      - uses: actions/checkout@v2  
+      - name: Connect  
+        uses: appleboy/ssh-action@master  
+        with:  
+          username: ${{ secrets.USERNAME }}  
+          password: ${{ secrets.PASSWORD }}  
+          host: ${{ secrets.HOST }}  
+          port: ${{ secrets.PORT }}  
+          script: |  
+            cd ${{ secrets.PATH }}  
+            docker compose stop  
+            git pull  
+            docker compose restart
