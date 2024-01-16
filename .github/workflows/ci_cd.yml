@@ -16,19 +16,23 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
 
-      
-    - name: Build the Docker image
-      run: docker-compose -f docker-compose.yml build
-      
+            
     - name: Build  Docker image
       run: | 
         chmod +x ./start.sh
         chmod +x ./deployment/start_app.sh
         chmod +x ./deployment/start_daphne.sh
+      
+    - name: Build the Docker image
+      run: docker compose up
 
-
-    - name: Run tests  
-      run: pytest
+    - name: Wait for the application to start
+      run: sleep 10
+      
+    - name: Run tests
+      run: |
+        docker exec backend /katyusha_env/bin/pip install pytest
+        docker exec backend pytest /app/path/to/tests
 
   Deploy:  
     needs: build-and-test  
