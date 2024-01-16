@@ -6,7 +6,15 @@ on:
 jobs:  
   build-and-test:
     runs-on: ubuntu-latest
-
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: katyush2_admin
+          POSTGRES_PASSWORD: katyusha@dmin2023
+          POSTGRES_DB: katyush2_db
+        ports:
+          - 5432:5432
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
