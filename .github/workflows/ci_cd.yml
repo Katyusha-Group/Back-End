@@ -24,7 +24,7 @@ jobs:
         chmod +x ./deployment/start_daphne.sh
       
     - name: Build the Docker image
-      run: docker compose up
+      run: docker compose build
 
     - name: Wait for the application to start
       run: sleep 10
