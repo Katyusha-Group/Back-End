@@ -7,8 +7,8 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     services:
-      postgres:
-        image: postgres:latest
+      database:
+        image: postgres:13.1-alpine
         env:
           POSTGRES_USER: katyush2_admin
           POSTGRES_PASSWORD: katyusha@dmin2023
