@@ -91,6 +91,9 @@ openpyxl
 coreapi
 daphne
 channels-redis==4.1.0
+pytest
+pytest-django
+
 
 # background process and cache
 celery
