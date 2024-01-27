@@ -80,8 +80,8 @@ class Profile(models.Model):
         if not self.pk:
             user_model = get_user_model()
             if isinstance(self.content_object, user_model):
-                if self.content_object.is_uni_email:
-                    return self.TYPE_VERIFIED_USER
+                # if self.content_object.is_uni_email:
+                #     return self.TYPE_VERIFIED_USER
                 return self.TYPE_USER
             if isinstance(self.content_object, Teacher):
                 return self.TYPE_TEACHER

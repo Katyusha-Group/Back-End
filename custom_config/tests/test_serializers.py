@@ -3,8 +3,7 @@ from rest_framework import serializers
 
 from custom_config.models import CartItem, Cart, OrderItem, Order
 from custom_config.serializers import CartItemSerializer, CartSerializer, OrderItemSerializer, OrderSerializer, \
-    CourseCartOrderInfoSerializer, AddCartItemSerializer, UpdateCartItemSerializer, CreateOrderSerializer, \
-    ModifyReviewVoteSerializer, ModifyTeacherVoteSerializer, ModifyTeacherReviewSerializer
+    CourseCartOrderInfoSerializer, AddCartItemSerializer, UpdateCartItemSerializer, CreateOrderSerializer
 from model_bakery import baker
 
 from university.models import Course

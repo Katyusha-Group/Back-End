@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
-from custom_config.models import ModelTracker, WebNotification, Order
+from custom_config.models import ModelTracker, Order
 from university.models import Course
 from university.scripts import get_or_create
 from utils.variables import project_variables
@@ -40,28 +40,28 @@ def get_course_info(instance):
         course_id = instance.course.id
     return True, course_name, course_number, course_id
 
-
-def create_notification(title, text, model_tracker):
-    course_number, class_gp = model_tracker.course_number.split('_')
-
-    course = get_or_create.get_course(course_code=model_tracker.course_number,
-                                      semester=project_variables.CURRENT_SEMESTER)
-    departments = [allowed_department.department for allowed_department in course.allowed_departments.all()]
-    users = (
-        get_user_model().objects
-        .filter(Q(courses=course) | Q(department__in=departments) | Q(department=course.base_course.department)
-                | (Q(orders__items__course_number=course_number)
-                   & Q(orders__payment_status=Order.PAYMENT_STATUS_COMPLETED)
-                   & Q(orders__items__class_gp=class_gp)))
-        .distinct()
-    )
-    notifications = [
-        WebNotification(
-            title=title,
-            text=text,
-            user=user,
-            tracker=model_tracker,
-        )
-        for user in users.all()
-    ]
-    WebNotification.objects.bulk_create(notifications)
+#
+# def create_notification(title, text, model_tracker):
+#     course_number, class_gp = model_tracker.course_number.split('_')
+#
+#     course = get_or_create.get_course(course_code=model_tracker.course_number,
+#                                       semester=project_variables.CURRENT_SEMESTER)
+#     departments = [allowed_department.department for allowed_department in course.allowed_departments.all()]
+#     users = (
+#         get_user_model().objects
+#         .filter(Q(courses=course) | Q(department__in=departments) | Q(department=course.base_course.department)
+#                 | (Q(orders__items__course_number=course_number)
+#                    & Q(orders__payment_status=Order.PAYMENT_STATUS_COMPLETED)
+#                    & Q(orders__items__class_gp=class_gp)))
+#         .distinct()
+#     )
+#     notifications = [
+#         WebNotification(
+#             title=title,
+#             text=text,
+#             user=user,
+#             tracker=model_tracker,
+#         )
+#         for user in users.all()
+#     ]
+#     WebNotification.objects.bulk_create(notifications)

@@ -7,13 +7,11 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from custom_config import validators
-from custom_config.models import Cart, CartItem, Order, TeacherReview, TeacherVote, ReviewVote, WebNotification
+from custom_config.models import Cart, CartItem, Order
 from custom_config.permissions import IsOwner
-from custom_config.serializers import CartSerializer, CartItemSerializer, \
-    AddCartItemSerializer, UpdateCartItemSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, \
-    TeacherVoteSerializer, ModifyTeacherVoteSerializer, ModifyTeacherReviewSerializer, TeacherReviewSerializer, \
-    ModifyReviewVoteSerializer, ReviewVoteSerializer, CartItemsViewSerializer, CourseCartOrderInfoSerializer, \
-    WebNotificationSerializer
+from custom_config.serializers import CartSerializer, AddCartItemSerializer, UpdateCartItemSerializer, \
+    OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, \
+    CartItemsViewSerializer, CourseCartOrderInfoSerializer
 from university.models import Teacher, Course
 from university.scripts.get_or_create import get_course
 from utils.variables import project_variables
@@ -67,7 +65,7 @@ class CartViewSet(ModelViewSet):
         serializer = CartItemsViewSerializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['delete'], url_name='remove-item', url_path='remove-item/(?P<item_id>\d+)',)
+    @action(detail=False, methods=['delete'], url_name='remove-item', url_path='remove-item/(?P<item_id>\d+)', )
     def remove_item(self, request, item_id, *args, **kwargs):
         cart_item = CartItem.objects.filter(id=item_id).first()
         validators.not_null(value=cart_item, message='آیتم مورد نظر یافت نشد.')
@@ -145,95 +143,94 @@ class GetPricesView(APIView):
         }
         return Response(data, status=status.HTTP_200_OK)
 
-
-class BaseVoteReviewViewSet(ModelViewSet):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.objects = None
-        self.modification_serializer = None
-        self.show_serializer = None
-
-    def get_teacher(self):
-        teacher_pk = self.kwargs.get('teacher_pk')
-        teacher = Teacher.objects.get(pk=teacher_pk)
-        return teacher
-
-    def create(self, request, *args, **kwargs):
-        context = {'teacher': self.get_teacher(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
-        serializer = self.modification_serializer(data=request.data, context=context)
-        serializer.is_valid(raise_exception=True)
-        review = serializer.save()
-        serializer = self.show_serializer(review)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def get_permissions(self):
-        if self.request.method in ['DELETE']:
-            return [IsAdminUser()]
-        return [IsAuthenticated()]
-
-    def get_serializer_context(self):
-        return {'teacher': self.get_teacher(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
-
-    def get_queryset(self):
-        return self.objects.filter(teacher=self.get_teacher()).all()
-
-
-class TeacherVoteViewSet(BaseVoteReviewViewSet):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.objects = TeacherVote.objects
-        self.modification_serializer = ModifyTeacherVoteSerializer
-        self.show_serializer = TeacherVoteSerializer
-
-    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
-
-    def get_serializer_class(self):
-        if self.request.method == 'POST' or self.request.method == 'PATCH':
-            return self.modification_serializer
-        return self.show_serializer
-
-    def list(self, request, *args, **kwargs):
-        data = self.objects.filter(teacher=self.get_teacher())
-        total_score = sum([entry.vote for entry in data.only('vote')])
-        up_votes = data.filter(vote=1).count()
-        down_votes = data.filter(vote=-1).count()
-        serializer = self.show_serializer(data, many=True)
-        new_data = {
-            'total_count': len(serializer.data),
-            'total_score': total_score,
-            'up_votes': up_votes,
-            'down_votes': down_votes,
-            'data': serializer.data,
-        }
-        return Response(new_data)
-
-
-class TeacherReviewViewSet(BaseVoteReviewViewSet):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.objects = TeacherReview.objects
-        self.modification_serializer = ModifyTeacherReviewSerializer
-        self.show_serializer = TeacherReviewSerializer
-
-    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
-
-    def get_serializer_class(self):
-        if self.request.method == 'POST' or self.request.method == 'PATCH':
-            return self.modification_serializer
-        return self.show_serializer
-
-    def get_permissions(self):
-        if self.request.method in ['DELETE', 'PATCH']:
-            return [IsAdminUser()]
-        return [IsAuthenticated()]
-
-    def list(self, request, *args, **kwargs):
-        data = self.objects.filter(teacher=self.get_teacher()).all()
-        serializer = self.show_serializer(data, many=True)
-        new_data = {'total_count': len(serializer.data), 'data': serializer.data}
-        return Response(new_data)
-
-
+# class BaseVoteReviewViewSet(ModelViewSet):
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#         self.objects = None
+#         self.modification_serializer = None
+#         self.show_serializer = None
+#
+#     def get_teacher(self):
+#         teacher_pk = self.kwargs.get('teacher_pk')
+#         teacher = Teacher.objects.get(pk=teacher_pk)
+#         return teacher
+#
+#     def create(self, request, *args, **kwargs):
+#         context = {'teacher': self.get_teacher(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
+#         serializer = self.modification_serializer(data=request.data, context=context)
+#         serializer.is_valid(raise_exception=True)
+#         review = serializer.save()
+#         serializer = self.show_serializer(review)
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
+#
+#     def get_permissions(self):
+#         if self.request.method in ['DELETE']:
+#             return [IsAdminUser()]
+#         return [IsAuthenticated()]
+#
+#     def get_serializer_context(self):
+#         return {'teacher': self.get_teacher(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
+#
+#     def get_queryset(self):
+#         return self.objects.filter(teacher=self.get_teacher()).all()
+#
+#
+# class TeacherVoteViewSet(BaseVoteReviewViewSet):
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#         self.objects = TeacherVote.objects
+#         self.modification_serializer = ModifyTeacherVoteSerializer
+#         self.show_serializer = TeacherVoteSerializer
+#
+#     http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
+#
+#     def get_serializer_class(self):
+#         if self.request.method == 'POST' or self.request.method == 'PATCH':
+#             return self.modification_serializer
+#         return self.show_serializer
+#
+#     def list(self, request, *args, **kwargs):
+#         data = self.objects.filter(teacher=self.get_teacher())
+#         total_score = sum([entry.vote for entry in data.only('vote')])
+#         up_votes = data.filter(vote=1).count()
+#         down_votes = data.filter(vote=-1).count()
+#         serializer = self.show_serializer(data, many=True)
+#         new_data = {
+#             'total_count': len(serializer.data),
+#             'total_score': total_score,
+#             'up_votes': up_votes,
+#             'down_votes': down_votes,
+#             'data': serializer.data,
+#         }
+#         return Response(new_data)
+#
+#
+# class TeacherReviewViewSet(BaseVoteReviewViewSet):
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#         self.objects = TeacherReview.objects
+#         self.modification_serializer = ModifyTeacherReviewSerializer
+#         self.show_serializer = TeacherReviewSerializer
+#
+#     http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
+#
+#     def get_serializer_class(self):
+#         if self.request.method == 'POST' or self.request.method == 'PATCH':
+#             return self.modification_serializer
+#         return self.show_serializer
+#
+#     def get_permissions(self):
+#         if self.request.method in ['DELETE', 'PATCH']:
+#             return [IsAdminUser()]
+#         return [IsAuthenticated()]
+#
+#     def list(self, request, *args, **kwargs):
+#         data = self.objects.filter(teacher=self.get_teacher()).all()
+#         serializer = self.show_serializer(data, many=True)
+#         new_data = {'total_count': len(serializer.data), 'data': serializer.data}
+#         return Response(new_data)
+#
+#
 class ReviewVoteViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
 
@@ -280,35 +277,35 @@ class ReviewVoteViewSet(ModelViewSet):
             'data': serializer.data,
         }
         return Response(new_data)
-
-
-class WebNotificationViewSet(ModelViewSet):
-    http_method_names = ['get', 'delete', 'options', 'head']
-    serializer_class = WebNotificationSerializer
-
-    def get_permissions(self):
-        if self.request.method in ['DELETE']:
-            return [IsAdminUser()]
-        if self.action == 'retrieve':
-            return [IsAuthenticated(), IsOwner()]
-        return [IsAuthenticated()]
-
-    def get_serializer_context(self):
-        return {'user': self.request.user,
-                'is_admin': self.request.user.is_staff}
-
-    def get_queryset(self):
-        if WebNotification.objects.filter(user=self.request.user, is_read=False).exists():
-            return WebNotification.objects.filter(user=self.request.user).order_by('is_read', 'applied_at').all()
-        return WebNotification.objects.filter(user=self.request.user).order_by('-applied_at').all()
-
-    def list(self, request, *args, **kwargs):
-        data = self.get_queryset()[:10]
-        serializer = WebNotificationSerializer(data, many=True)
-        WebNotification.objects.filter(pk__in=[entry.pk for entry in data]).update(is_read=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'], url_name='unread-exists', url_path='unread-exists')
-    def unread_exists(self, request, *args, **kwargs):
-        data = self.get_queryset().filter(is_read=False).exists()
-        return Response({'unread_exists': data})
+#
+#
+# class WebNotificationViewSet(ModelViewSet):
+#     http_method_names = ['get', 'delete', 'options', 'head']
+#     serializer_class = WebNotificationSerializer
+#
+#     def get_permissions(self):
+#         if self.request.method in ['DELETE']:
+#             return [IsAdminUser()]
+#         if self.action == 'retrieve':
+#             return [IsAuthenticated(), IsOwner()]
+#         return [IsAuthenticated()]
+#
+#     def get_serializer_context(self):
+#         return {'user': self.request.user,
+#                 'is_admin': self.request.user.is_staff}
+#
+#     def get_queryset(self):
+#         if WebNotification.objects.filter(user=self.request.user, is_read=False).exists():
+#             return WebNotification.objects.filter(user=self.request.user).order_by('is_read', 'applied_at').all()
+#         return WebNotification.objects.filter(user=self.request.user).order_by('-applied_at').all()
+#
+#     def list(self, request, *args, **kwargs):
+#         data = self.get_queryset()[:10]
+#         serializer = WebNotificationSerializer(data, many=True)
+#         WebNotification.objects.filter(pk__in=[entry.pk for entry in data]).update(is_read=True)
+#         return Response(serializer.data)
+#
+#     @action(detail=False, methods=['get'], url_name='unread-exists', url_path='unread-exists')
+#     def unread_exists(self, request, *args, **kwargs):
+#         data = self.get_queryset().filter(is_read=False).exists()
+#         return Response({'unread_exists': data})
