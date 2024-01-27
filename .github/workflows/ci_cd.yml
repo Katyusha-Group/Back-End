@@ -43,7 +43,7 @@ jobs:
 
 
     - name: Run tests  
-      run: docker-compose -f docker-compose.yml run backend sh -c "pytest ."  
+      run: docker compose up  
 
   deploy:  
     needs: build-and-test  
