@@ -26,6 +26,9 @@ jobs:
     - name: Build the Docker image  
       run: docker-compose -f docker-compose.yml build  
 
+
+
+
     - name: Execute start.sh script  
       run: |
         ls -l
@@ -44,6 +47,9 @@ jobs:
 
     - name: Run tests  
       run: docker compose up  
+
+    - name: Run tests  
+      run: docker-compose -f docker-compose.yml run backend pytest
 
   deploy:  
     needs: build-and-test  
