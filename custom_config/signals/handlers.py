@@ -4,7 +4,7 @@ from django.dispatch import receiver
 from custom_config.scripts import messages
 from social_media.signals import send_notification
 from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment, BaseCourse
-from custom_config.models import FieldTracker, ModelTracker, WebNotification
+from custom_config.models import FieldTracker, ModelTracker
 from social_media.models import Profile, Twitte, Notification
 import custom_config.scripts.signals_scripts as requirements
 from university.signals import course_teachers_changed
@@ -72,7 +72,7 @@ def create_u_log_for_course_related(sender, **kwargs):
 
         tracker = requirements.create_model_tracker(is_course, course_name, course_number, 'U', course_pk, field)
 
-        WebNotification.objects.filter(tracker=tracker).delete()
+        # WebNotification.objects.filter(tracker=tracker).delete()
 
         value = ''
 

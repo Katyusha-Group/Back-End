@@ -191,42 +191,42 @@ class OrderItem(models.Model):
         ]
 
 
-class WebNotification(models.Model):
-    is_read = models.BooleanField(default=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
-    tracker = models.ForeignKey(ModelTracker, on_delete=models.SET_NULL, related_name='trackers', null=True)
-    title = models.CharField(max_length=100)
-    text = models.TextField()
-    applied_at = models.DateTimeField(auto_now_add=True)
+# class WebNotification(models.Model):
+#     is_read = models.BooleanField(default=False)
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+#     tracker = models.ForeignKey(ModelTracker, on_delete=models.SET_NULL, related_name='trackers', null=True)
+#     title = models.CharField(max_length=100)
+#     text = models.TextField()
+#     applied_at = models.DateTimeField(auto_now_add=True)
+#
+#     def __str__(self):
+#         return str(self.id) + ' : ' + self.title
+#
+#     @property
+#     def jalali_applied_at(self):
+#         return get_persian_date(self.applied_at)
+#
+#     class Meta:
+#         verbose_name = 'اعلان'
+#         verbose_name_plural = 'اعلانات'
+#         indexes = [
+#             models.Index(fields=['user', 'is_read'])
+#         ]
 
-    def __str__(self):
-        return str(self.id) + ' : ' + self.title
-
-    @property
-    def jalali_applied_at(self):
-        return get_persian_date(self.applied_at)
-
-    class Meta:
-        verbose_name = 'اعلان'
-        verbose_name_plural = 'اعلانات'
-        indexes = [
-            models.Index(fields=['user', 'is_read'])
-        ]
-
-
-class TeacherReview(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_reviews')
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_review')
-    text = models.TextField(null=True, blank=True)
-
-
-class TeacherVote(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_votes')
-    vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)], default=0)
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_votes')
-
-
-class ReviewVote(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews_votes')
-    vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)], default=0)
-    review = models.ForeignKey(TeacherReview, on_delete=models.CASCADE, related_name='votes')
+#
+# class TeacherReview(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_reviews')
+#     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_review')
+#     text = models.TextField(null=True, blank=True)
+#
+#
+# class TeacherVote(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_votes')
+#     vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)], default=0)
+#     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_votes')
+#
+#
+# class ReviewVote(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews_votes')
+#     vote = models.SmallIntegerField(validators=[MinValueValidator(-1), MaxValueValidator(1)], default=0)
+#     review = models.ForeignKey(TeacherReview, on_delete=models.CASCADE, related_name='votes')
