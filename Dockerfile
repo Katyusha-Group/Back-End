@@ -26,9 +26,13 @@ RUN mkdir /logs
 EXPOSE 8000
 EXPOSE 8001
 
+COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
+RUN chmod 777 /app/start.sh
+
+# Ensure other scripts are executable
 RUN chmod +x /app/deployment/start_app.sh
 RUN chmod +x /app/deployment/start_daphne.sh
 
-
-ENTRYPOINT ["./start.sh"]
+# Set the entry point to the start script
+ENTRYPOINT ["/app/start.sh"]
