@@ -22,33 +22,16 @@ jobs:
         restore-keys: |  
           ${{ runner.os }}-buildx-  
 
-
     - name: Build the Docker image  
       run: docker-compose -f docker-compose.yml build  
 
-
-
-
-    - name: Execute start.sh script  
-      run: |
-        ls -l
-        chmod a+x start.sh
-        chmod +x ./start.sh  
-        ls ./deployment/ -l
-        
     - name: Make scripts executable  
       run: |  
+        chmod a+x start.sh
         chmod a+x ./deployment/start_daphne.sh  
         chmod a+x ./deployment/start_app.sh  
-        chmod a+x ./deployment/gunicorn.conf 
-        chmod a+x ./deployment/daphne.conf
-        chmod a+x ./deployment/nginx_default.conf
 
-
-    - name: Run tests  
-      run: docker compose up  
-
-    - name: Run tests  
+    - name: Execute Tests
       run: docker-compose -f docker-compose.yml run backend pytest
 
   deploy:  
