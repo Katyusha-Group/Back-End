@@ -231,52 +231,52 @@ class GetPricesView(APIView):
 #         return Response(new_data)
 #
 #
-class ReviewVoteViewSet(ModelViewSet):
-    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
-
-    def get_serializer_class(self):
-        if self.request.method == 'POST' or self.request.method == 'PATCH':
-            return ModifyReviewVoteSerializer
-        return ReviewVoteSerializer
-
-    def get_review(self):
-        review_pk = self.kwargs.get('teacher_review_pk')
-        review = TeacherReview.objects.get(pk=review_pk)
-        return review
-
-    def create(self, request, *args, **kwargs):
-        context = {'review': self.get_review(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
-        serializer = ModifyReviewVoteSerializer(data=request.data, context=context)
-        serializer.is_valid(raise_exception=True)
-        vote = serializer.save()
-        serializer = ReviewVoteSerializer(vote)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def get_permissions(self):
-        if self.request.method in ['DELETE']:
-            return [IsAdminUser()]
-        return [IsAuthenticated()]
-
-    def get_serializer_context(self):
-        return {'review': self.get_review(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
-
-    def get_queryset(self):
-        return ReviewVote.objects.filter(review=self.get_review()).all()
-
-    def list(self, request, *args, **kwargs):
-        data = ReviewVote.objects.filter(review=self.get_review())
-        total_score = sum([entry.vote for entry in data.only('vote')])
-        up_votes = data.filter(vote=1).count()
-        down_votes = data.filter(vote=-1).count()
-        serializer = ReviewVoteSerializer(data, many=True)
-        new_data = {
-            'total_count': len(serializer.data),
-            'total_score': total_score,
-            'up_votes': up_votes,
-            'down_votes': down_votes,
-            'data': serializer.data,
-        }
-        return Response(new_data)
+# class ReviewVoteViewSet(ModelViewSet):
+#     http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
+#
+#     def get_serializer_class(self):
+#         if self.request.method == 'POST' or self.request.method == 'PATCH':
+#             return ModifyReviewVoteSerializer
+#         return ReviewVoteSerializer
+#
+#     def get_review(self):
+#         review_pk = self.kwargs.get('teacher_review_pk')
+#         review = TeacherReview.objects.get(pk=review_pk)
+#         return review
+#
+#     def create(self, request, *args, **kwargs):
+#         context = {'review': self.get_review(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
+#         serializer = ModifyReviewVoteSerializer(data=request.data, context=context)
+#         serializer.is_valid(raise_exception=True)
+#         vote = serializer.save()
+#         serializer = ReviewVoteSerializer(vote)
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
+#
+#     def get_permissions(self):
+#         if self.request.method in ['DELETE']:
+#             return [IsAdminUser()]
+#         return [IsAuthenticated()]
+#
+#     def get_serializer_context(self):
+#         return {'review': self.get_review(), 'user': self.request.user, 'is_admin': self.request.user.is_staff}
+#
+#     def get_queryset(self):
+#         return ReviewVote.objects.filter(review=self.get_review()).all()
+#
+#     def list(self, request, *args, **kwargs):
+#         data = ReviewVote.objects.filter(review=self.get_review())
+#         total_score = sum([entry.vote for entry in data.only('vote')])
+#         up_votes = data.filter(vote=1).count()
+#         down_votes = data.filter(vote=-1).count()
+#         serializer = ReviewVoteSerializer(data, many=True)
+#         new_data = {
+#             'total_count': len(serializer.data),
+#             'total_score': total_score,
+#             'up_votes': up_votes,
+#             'down_votes': down_votes,
+#             'data': serializer.data,
+#         }
+#         return Response(new_data)
 #
 #
 # class WebNotificationViewSet(ModelViewSet):
