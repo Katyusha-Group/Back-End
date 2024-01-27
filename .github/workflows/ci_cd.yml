@@ -3,61 +3,66 @@ on:
   push:  
     branches: [ main ] 
 
+
 jobs:  
-  build-and-test:
-    runs-on: ubuntu-latest
-    services:
-      database:
-        image: postgres:13.1-alpine
-        env:
-          POSTGRES_USER: katyush2_admin
-          POSTGRES_PASSWORD: katyusha@dmin2023
-          POSTGRES_DB: katyush2_db
-        ports:
-          - 5432:5432
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10'
-
-    - name: Create virtual environment
-      run: |
-        python -m venv venv
-        source venv/bin/activate
-
-    - name: Install dependencies
-      run: pip install -r requirements.txt
-
-    - name: Run tests
-      run: pytest
-
-  Deploy:  
-    needs: build-and-test  
-    name: deploy  
+  build-and-test:  
     runs-on: ubuntu-latest  
     steps:  
-      - uses: actions/checkout@v2  
-      - name: Print masked secrets  
-        run: |  
-          echo "USERNAME: ${{ secrets.USERNAME }}"  
-          echo "PASSWORD: ${{ secrets.PASSWORD }}"  
-          echo "HOST: ${{ secrets.HOST }}"  
-          echo "PORT: ${{ secrets.PORT }}"  
-          echo "PATH: ${{ secrets.PATH }}"
-      - uses: actions/checkout@v2  
-      - name: Connect  
-        uses: appleboy/ssh-action@master  
-        with:  
-          username: ${{ secrets.USERNAME }}  
-          password: ${{ secrets.PASSWORD }}  
-          host: ${{ secrets.HOST }}  
-          port: ${{ secrets.PORT }}  
-          script: |  
-            cd ${{ secrets.PATH }}  
-            docker compose stop  
-            git pull  
-            docker compose restart
+    - name: Checkout code  
+      uses: actions/checkout@v2  
+
+    - name: Set up Docker Buildx  
+      uses: docker/setup-buildx-action@v1  
+
+    - name: Cache Docker layers  
+      uses: actions/cache@v2  
+      with:  
+        path: /tmp/.buildx-cache  
+        key: ${{ runner.os }}-buildx-${{ github.sha }}  
+        restore-keys: |  
+          ${{ runner.os }}-buildx-  
+
+
+    - name: Build the Docker image  
+      run: docker-compose -f docker-compose.yml build  
+
+    - name: Execute start.sh script  
+      run: |
+        ls -l
+        chmod a+x start.sh
+        chmod +x ./start.sh  
+        ls ./deployment/ -l
+        
+    - name: Make scripts executable  
+      run: |  
+        chmod a+x ./deployment/start_daphne.sh  
+        chmod a+x ./deployment/start_app.sh  
+        chmod a+x ./deployment/gunicorn.conf 
+        chmod a+x ./deployment/daphne.conf
+        chmod a+x ./deployment/nginx_default.conf
+
+
+    - name: Run tests  
+      run: docker-compose -f docker-compose.yml run backend sh -c "pytest ."  
+
+  deploy:  
+    needs: build-and-test  
+    runs-on: ubuntu-latest  
+    if: github.ref == 'refs/heads/master'  
+    steps:  
+    - name: Checkout code  
+      uses: actions/checkout@v2  
+
+    - name: Setup SSH  
+      uses: webfactory/ssh-agent@v0.5.0  
+      with:  
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  
+
+    - name: Deploy to VPS  
+      run: |  
+        ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} -p ${{ secrets.VPS_PORT }} <<EOF  
+          cd /path/to/your/project  
+          docker-compose -f docker-compose.yml down  
+          git pull  
+          docker-compose -f docker-compose.yml up --build -d  
+        EOF
