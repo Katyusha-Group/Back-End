@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from model_bakery import baker
 
 from social_media.models import Profile, Notification, Twitte, Follow, ReportTwitte
@@ -83,102 +84,90 @@ class TestFollowModel:
         assert str(follow) == 'actor follows recipient'
 
 
-@pytest.mark.skip
-class TestTwitteModel:
 
+class TestTwitteModel:
     def test_str_representation(self, twitte_instance):
         expected_string = f'{twitte_instance.profile} twitted {twitte_instance.content}'
         assert str(twitte_instance) == expected_string
 
-    def test_tweet_creation(self, profile):
+    def test_tweet_creation(self, profile_twitte):
         tweet_content = "This is a test tweet"
-        tweet = Twitte.objects.create(profile=profile, content=tweet_content)
+        tweet = Twitte.objects.create(profile=profile_twitte, content=tweet_content)
         assert tweet.content == tweet_content
 
-    def test_tweet_content_validation(self, profile):
+    def test_tweet_content_validation(self, profile_twitte):
         with pytest.raises(ValidationError):
             # Assuming the max length is 280 characters
             long_content = "a" * 281
-            Twitte.objects.create(profile=profile, content=long_content).full_clean()
+            Twitte.objects.create(profile=profile_twitte, content=long_content).full_clean()
 
-    def test_tweet_likes(self, profile):
-        tweet = baker.make(Twitte, profile=profile)
-        other_profile = baker.make(Profile)
+    def test_tweet_likes(self, profile_twitte, other_profile_twitte):
+        tweet = baker.make(Twitte, profile=profile_twitte)
 
-        tweet.like(other_profile)
-        assert tweet.is_liked_by(other_profile)
+        tweet.like(other_profile_twitte)
+        assert tweet.is_liked_by(other_profile_twitte)
 
-        tweet.unlike(other_profile)
-        assert not tweet.is_liked_by(other_profile)
+        tweet.unlike(other_profile_twitte)
+        assert not tweet.is_liked_by(other_profile_twitte)
 
-    def test_tweet_reply_and_conversation(self, profile):
-        parent_tweet = baker.make(Twitte, profile=profile)
-        reply_tweet = baker.make(Twitte, profile=profile, parent=parent_tweet)
+    def test_tweet_reply_and_conversation(self, profile_twitte):
+        parent_tweet = baker.make(Twitte, profile=profile_twitte)
+        reply_tweet = baker.make(Twitte, profile=profile_twitte, parent=parent_tweet)
 
         assert reply_tweet.get_parent() == parent_tweet
         assert parent_tweet.get_children().filter(pk=reply_tweet.pk).exists()
 
-    def test_tweet_counts(self, profile):
-        tweet = baker.make(Twitte, profile=profile)
+    def test_tweet_counts(self, profile_twitte):
+        tweet = baker.make(Twitte, profile=profile_twitte)
         for _ in range(5):
-            baker.make(Twitte, parent=tweet)
+            Twitte.objects.create(profile=profile_twitte, parent=tweet)
 
         assert tweet.get_children_count() == 5
-        # Additional counts (likes, replies) can be tested similarly
 
-    def test_tweet_report_count(self, profile, twitte):
-        # Assuming ReportTwitte model and fixtures are set up
-        for _ in range(3):
-            baker.make('social_media.ReportTwitte', twitte=twitte)
-
-        assert twitte.get_reports_count() == 3
+    def test_tweet_report_count(self, profile_twitte, other_profile_twitte, twitte_instance):
+        ReportTwitte.objects.create(reporter=profile_twitte, twitte=twitte_instance, reason='S')
+        ReportTwitte.objects.create(reporter=other_profile_twitte, twitte=twitte_instance, reason='S')
+        assert twitte_instance.get_reports_count() == 2
         
-    def test_tweet_likes_count(self, profile):
-        tweet = baker.make(Twitte, profile=profile)
-        for _ in range(3):
-            liker = baker.make(Profile)
-            tweet.like(liker)
+    def test_tweet_likes_count(self, profile_twitte, other_profile_twitte, twitte_instance):
+        twitte_instance.like(profile_twitte)
+        twitte_instance.like(other_profile_twitte)
+        assert twitte_instance.get_likes_count() == 2
 
-        assert tweet.get_likes_count() == 3
-
-    def test_tweet_replies_count(self, profile):
-        parent_tweet = baker.make(Twitte, profile=profile)
-        for _ in range(4):
-            baker.make(Twitte, parent=parent_tweet)
-
-        assert parent_tweet.get_replies_count() == 4
-
-    def test_tweet_reports_count(self, profile, twitte):
-        # Assuming ReportTwitte model and fixtures are set up
+    def test_tweet_replies_count(self, profile_twitte, twitte_instance):
         for _ in range(5):
-            reporter = baker.make(Profile)
-            baker.make('social_media.ReportTwitte', twitte=twitte, reporter=reporter)
+            Twitte.objects.create(profile=profile_twitte, parent=twitte_instance)
 
-        assert twitte.get_reports_count() == 5
+        assert twitte_instance.get_children_count() == 5
         
-@pytest.mark.skip
+
 class TestReportTwitteModel:
 
-    def test_str_representation(self, report_twitte_instance):
-        expected_string = f'{report_twitte_instance.reporter} reported {report_twitte_instance.twitte} as {report_twitte_instance.reason}'
-        assert str(report_twitte_instance) == expected_string
+    def test_str_representation(self, reporter_profile, twitte_instance):
+        report = baker.make(ReportTwitte, reporter=reporter_profile, twitte=twitte_instance, reason='S')
+        expected_string = f'{report.reporter} reported {report.twitte} as {report.get_reason_display()}'
+        assert str(report) == expected_string
 
-    def test_report_creation(self, profile, twitte):
-        report_reason = 'S'
-        report = ReportTwitte.objects.create(reporter=profile, twitte=twitte, reason=report_reason)
-        assert report.reason == report_reason
+    def test_report_creation(self, reporter_profile):
+        twitte_instance = baker.make(Twitte, profile=reporter_profile)
+        report = ReportTwitte.objects.create(reporter=reporter_profile, twitte=twitte_instance, reason='S')
+        assert report.reason == 'S'
+    
+    def test_unique_constraint(self, reporter_profile):
+        twitte_instance = baker.make(Twitte, profile=reporter_profile)
+        ReportTwitte.objects.create(reporter=reporter_profile, twitte=twitte_instance, reason='S')
+        
+        with pytest.raises(IntegrityError):
+            ReportTwitte.objects.create(reporter=reporter_profile, twitte=twitte_instance, reason='S')
 
-    def test_unique_constraint(self, profile, twitte):
-        ReportTwitte.objects.create(reporter=profile, twitte=twitte, reason='S')
+    def test_reason_field(self, reporter_profile, twitte_instance):
+        report_twitte = ReportTwitte(reporter=reporter_profile, twitte=twitte_instance, reason='X')
+        
         with pytest.raises(ValidationError):
-            ReportTwitte.objects.create(reporter=profile, twitte=twitte, reason='S').full_clean()
+            report_twitte.full_clean()
+            report_twitte.save()
 
-    def test_reason_field(self, profile, twitte):
-        # Test if reason is one of the specified choices
-        report = ReportTwitte.objects.create(reporter=profile, twitte=twitte, reason='S')
-        assert report.reason in dict(ReportTwitte.REASON_TYPES)
-
-    def test_relationships(self, profile, twitte):
-        report = ReportTwitte.objects.create(reporter=profile, twitte=twitte, reason='S')
-        assert report.reporter == profile
-        assert report.twitte == twitte
+    def test_relationships(self, reporter_profile, twitte_instance):
+        report_twitte = ReportTwitte.objects.create(reporter=reporter_profile, twitte=twitte_instance, reason='S')
+        assert report_twitte.reporter == reporter_profile
+        assert report_twitte.twitte == twitte_instance

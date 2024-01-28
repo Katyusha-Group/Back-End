@@ -198,7 +198,7 @@ class ReportTwitte(models.Model):
         ]
         
     def __str__(self):
-        return f'{self.reporter} reported {self.twitte} as {self.report_type}'
+        return f'{self.reporter} reported {self.twitte} as {self.get_reason_display()}'
 
 
 class Notification(models.Model):
