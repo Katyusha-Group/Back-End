@@ -41,8 +41,23 @@ jobs:
 
     - name: Check Database Connection
       run: |
-        # Replace with your Django manage.py command that checks the database connection
-        python manage.py check_db_connection
+        python -c "
+        import psycopg2
+
+        try:
+            conn = psycopg2.connect(
+                dbname='katyush2_db',
+                user='katyush2_admin',
+                password='katyusha@dmin2023',
+                host='localhost',
+                port='5432'
+            )
+            conn.close()
+            print('Database connection successful!')
+        except Exception as e:
+            print('Database connection error:', str(e))
+            exit(1)
+        "
 
     - name: Run Tests
       env:
