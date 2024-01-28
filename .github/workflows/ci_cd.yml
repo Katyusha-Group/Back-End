@@ -3,18 +3,35 @@ on:
   push:  
     branches: [ main ] 
 
+
 jobs:  
   build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        max-parallel: 4
+        db: [postgres]
+        python-version: ["3.10"]  # Specify a Python version that is available
+        include:
+          - db: postgres
+            db_port: 5432
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: katyush2_admin
+          POSTGRES_PASSWORD: katyusha@dmin2023
+          POSTGRES_DB: katyush2_db
+        ports:
+          - 5432:5432
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3  # Use v2 with a more recent Python version
       with:
-        python-version: '3.10'
+        python-version: ${{ matrix.python-version }}
 
     - name: Create virtual environment
       run: |
@@ -25,31 +42,32 @@ jobs:
       run: pip install -r requirements.txt
 
     - name: Run tests
+      env:
+          DB: ${{ matrix.db }}
+          DB_HOST: 'localhost'
+          DB_PORT: ${{ matrix.db_port }}
+          DB_PASSWORD: katyusha@dmin2023
       run: pytest
 
-  Deploy:  
+
+  deploy:  
     needs: build-and-test  
-    name: deploy  
     runs-on: ubuntu-latest  
+    if: github.ref == 'refs/heads/master'  
     steps:  
-      - uses: actions/checkout@v2  
-      - name: Print masked secrets  
-        run: |  
-          echo "USERNAME: ${{ secrets.USERNAME }}"  
-          echo "PASSWORD: ${{ secrets.PASSWORD }}"  
-          echo "HOST: ${{ secrets.HOST }}"  
-          echo "PORT: ${{ secrets.PORT }}"  
-          echo "PATH: ${{ secrets.PATH }}"
-      - uses: actions/checkout@v2  
-      - name: Connect  
-        uses: appleboy/ssh-action@master  
-        with:  
-          username: ${{ secrets.USERNAME }}  
-          password: ${{ secrets.PASSWORD }}  
-          host: ${{ secrets.HOST }}  
-          port: ${{ secrets.PORT }}  
-          script: |  
-            cd ${{ secrets.PATH }}  
-            docker compose stop  
-            git pull  
-            docker compose restart
+    - name: Checkout code  
+      uses: actions/checkout@v2  
+
+    - name: Setup SSH  
+      uses: webfactory/ssh-agent@v0.5.0  
+      with:  
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  
+
+    - name: Deploy to VPS  
+      run: |  
+        ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} -p ${{ secrets.VPS_PORT }} <<EOF  
+          cd /path/to/your/project  
+          docker-compose -f docker-compose.yml down  
+          git pull  
+          docker-compose -f docker-compose.yml up --build -d  
+        EOF
