@@ -94,7 +94,7 @@ channels-redis==4.1.0
 pytest
 pytest-django
 model-bakery
-
+freezegun
 
 # background process and cache
 celery
