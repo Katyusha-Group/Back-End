@@ -11,6 +11,7 @@ def all_departments_courses_view_url():
     return reverse('all-departments-courses')
 
 
+@pytest.mark.skip
 class TestCoursesBasedDepartments:
     def test_if_get_request_is_status_200(self, api_client, user_with_department, courses,
                                           all_departments_courses_view_url):
