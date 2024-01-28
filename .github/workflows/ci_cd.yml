@@ -85,8 +85,8 @@ jobs:
     - name: Deploy to VPS  
       run: |  
         ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} -p ${{ secrets.VPS_PORT }} <<EOF  
-          cd /path/to/your/project  
-          docker-compose -f docker-compose.yml down  
+          cd /root/Back-End
+          docker compose down  
           git pull  
-          docker-compose -f docker-compose.yml up --build -d  
+          docker compose up --build -d  
         EOF
