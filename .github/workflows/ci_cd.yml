@@ -23,13 +23,16 @@ jobs:
           ${{ runner.os }}-buildx-  
 
     - name: Build
-      run: docker-compose up
+      run: docker-compose build
 
     - name: Make scripts executable  
       run: |  
         chmod a+x start.sh
         chmod a+x ./deployment/start_daphne.sh  
         chmod a+x ./deployment/start_app.sh  
+
+    - name: Execute Tests
+      run: docker-compose up
 
     - name: Execute Tests
       run: docker-compose -f docker-compose.yml run backend pytest
