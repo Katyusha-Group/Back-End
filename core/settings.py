@@ -14,11 +14,11 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
-# from environs import Env
+from environs import Env
 
 # Environment Variables
-# env = Env()
-# env.read_env()
+env = Env()
+env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,8 +26,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-v&!uiuu&^nb0rn@2e0u3-&qnt0g8@f+wt02z3du7@21t0klum-'
 
 DEBUG = True
-
-ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -92,20 +90,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 ASGI_APPLICATION = "core.asgi.application"
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
-    #     'NAME': env.str('DB_NAME'),
-    #     'USER': env.str('DB_USER'), 
-    #     'PASSWORD': env.str('DB_PASSWORD'),  
-    #     'HOST': env.str('DB_HOST'), 
-    #     'PORT': '5432',
-    # }
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'katyush2_db',
-        'USER': 'katyush2_admin',
-        'PASSWORD': 'katyusha@dmin2023',
-        'HOST': 'database',
+        'NAME': env.str('DB_NAME'),
+        'USER': env.str('DB_USER'), 
+        'PASSWORD': env.str('DB_PASSWORD'),  
+        'HOST': env.str('DB_HOST'), 
         'PORT': '5432',
     }
 }
@@ -127,15 +117,6 @@ DATABASES = {
 #         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
 #     },
 # ]
-#
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': [
-#         'rest_framework.authentication.SessionAuthentication',
-#         'rest_framework_simplejwt.authentication.JWTAuthentication',
-#         'rest_framework.authentication.TokenAuthentication',
-#         'rest_framework.authentication.BasicAuthentication',
-#     ],
-# }
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -174,9 +155,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.User'
 
-# email configuration
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -187,15 +165,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'COERCE_DECIMAL_TO_STRING': False,
-    # 'DEFAULT_FILTER_BACKENDS': (
-    #     'rest_framework_simplejwt.authentication.JWTAuthentication',
-    # )
 }
-
-# AUTHENTICATION_BACKENDS = [
-#     'django.contrib.auth.backends.ModelBackend',
-#     'accounts.model_backends.username_email_backend.CustomBackend',
-# ]
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=10),
@@ -229,47 +199,10 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
+ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = True
-
-# CORS_ORIGIN_WHITELIST = [
-#     "http://localhost:5173",
-# ]
-
-# CORS_ORIGIN_REGEX_WHITELIST = [
-#     "http://localhost:5173",
-# ]
-
-# CORS_ALLOW_METHODS = [
-#     'DELETE',
-#     'GET',
-#     'OPTIONS',
-#     'PATCH',
-#     'POST',
-#     'PUT',
-# ]
-
-# CORS_ALLOW_HEADERS = [
-#     'accept',
-#     'accept-encoding',
-#     'authorization',
-#     'content-type',
-#     'dnt',
-#     'origin',
-#     'user-agent',
-#     'x-csrftoken',
-#     'x-requested-with',
-# ]
-
-# CORS_EXPOSE_HEADERS = [
-#     'Cache-Control',
-#     'Content-Language',
-#     'Content-Type',
-#     'Expires',
-#     'Last-Modified',
-#     'Pragma',
-# ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -278,17 +211,13 @@ EMAIL_HOST_PASSWORD = 'wsumkosjhltxfsox'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-# REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1') 
-redis_host = "redis"  # on server
-# redis_host = "localhost" # on localhost
+REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1') 
 
 CHANNEL_LAYERS = {
     "default": {
-        # "BACKEND": 'channels.layers.InMemoryChannelLayer'
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            # "hosts": [(REDIS_HOST, 6379)],
-            "hosts": [(redis_host, 6379)],
+            "hosts": [(REDIS_HOST, 6379)],
         },
     },
 }
