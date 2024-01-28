@@ -21,7 +21,6 @@ jobs:
           POSTGRES_USER: katyush2_admin
           POSTGRES_PASSWORD: katyusha@dmin2023
           POSTGRES_DB: katyush2_db
-
         ports:
           - 5432:5432
 
