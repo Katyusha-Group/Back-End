@@ -1,6 +1,5 @@
 FROM ubuntu:22.04
 
-
 RUN apt-get update && apt-get install -y python3 python3-pip python3-venv supervisor redis-server
 
 ARG USER=root
@@ -26,9 +25,18 @@ RUN mkdir /logs
 EXPOSE 8000
 EXPOSE 8001
 
+COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
+RUN chmod 777 /app/start.sh
+
+# Remove carriage return characters
+RUN sed -i 's/\r$//' /app/start.sh
+
+# Ensure other scripts are executable
 RUN chmod +x /app/deployment/start_app.sh
+RUN sed -i 's/\r$//' /app/deployment/start_app.sh
 RUN chmod +x /app/deployment/start_daphne.sh
+RUN sed -i 's/\r$//' /app/deployment/start_daphne.sh
 
-
-ENTRYPOINT ["./start.sh"]
+# Set the entry point to the start script
+ENTRYPOINT ["/app/start.sh"]

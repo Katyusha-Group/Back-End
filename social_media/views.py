@@ -297,7 +297,7 @@ class TwitteViewSet(viewsets.ModelViewSet):
         if liked_by is not None:
             queryset = queryset.filter(likes__username=liked_by)
         if replied_by is not None:
-            queryset = queryset.filter(profile__username=replied_by).filter(parent__isnull=False) 
+            queryset = queryset.filter(profile__username=replied_by).exclude(parent=None)
         if semantic_similar_to is not None:
             url = f"http://37.156.144.109:7084/katyusha/twitte/semantic_similarity/{semantic_similar_to}/"
             r = requests.get(url)

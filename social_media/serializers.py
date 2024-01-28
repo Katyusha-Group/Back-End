@@ -36,7 +36,7 @@ class ProfileSummarySerializer(serializers.ModelSerializer):
 
     def get_profile_link(self, obj: Profile):
         domain = self.context['request'].META['HTTP_HOST']
-        return f'http://{domain}' + reverse("profiles-view-profile", args=[obj.username])
+        return f'http://{domain}' + reverse("social_media:profiles-view-profile", args=[obj.username])
 
     def get_image(self, obj: Profile):
         return obj.get_image_url(domain=self.context['request'].META['HTTP_HOST'])
@@ -322,8 +322,10 @@ class NotificationSerializer(serializers.ModelSerializer):
         return obj.get_message()
 
     def get_tweet_link(self, obj: Notification):
-        domain = self.context['request'].META['HTTP_HOST']
-        return f'http://{domain}/twittes/{obj.tweet.id}/'
+        if obj.tweet:
+            domain = self.context['request'].META['HTTP_HOST']
+            return f'http://{domain}/twittes/{obj.tweet.id}/'
+        return None
 
     class Meta:
         model = Notification

@@ -3,6 +3,8 @@ from . import views
 from rest_framework_nested import routers
 
 
+app_name = 'social_media'
+
 router = routers.DefaultRouter()
 router.register(r'profiles', views.ProfileViewSet, basename='profiles')
 router.register(r'twittes', views.TwitteViewSet, basename='twittes')

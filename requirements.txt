@@ -1,102 +1,126 @@
-anyio==3.7.1 ; python_version >= '3.7'
-asgiref==3.7.2 ; python_version >= '3.7'
-attrs==23.1.0 ; python_version >= '3.7'
-beautifulsoup4==4.12.2 ; python_full_version >= '3.6.0'
+﻿amqp==5.2.0
+anyio==3.7.1
+asgiref==3.7.2
+async-timeout==4.0.3
+attrs==23.1.0
+autobahn==23.6.2
+Automat==22.10.0
+beautifulsoup4==4.12.2
+billiard==4.2.0
 bs4==0.0.1
-certifi==2023.5.7 ; python_version >= '3.6'
+celery==5.3.6
+certifi==2023.5.7
 cffi==1.15.1
 channels==4.0.0
-charset-normalizer==3.1.0 ; python_full_version >= '3.7.0'
-colorama==0.4.6 ; platform_system == 'Windows'
-cycler==0.11.0 ; python_version >= '3.6'
-django==3.2
+channels-redis==4.1.0
+charset-normalizer==3.1.0
+click==8.1.7
+click-didyoumean==0.3.0
+click-plugins==1.1.1
+click-repl==0.3.0
+colorama==0.4.6
+constantly==23.10.4
+coreapi==2.3.3
+coreschema==0.0.4
+cryptography==42.0.1
+cycler==0.11.0
+daphne==4.0.0
+Django==3.2
 django-cors-headers==4.1.0
 django-crontab==0.7.1
 django-debug-toolbar==3.4.0
 django-filter==23.2
 django-jalali==6.0.1
 django-mail-templated==2.6.5
+django-redis==5.4.0
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.2.2
 drf-nested-routers==0.93.4
-drf-yasg[validation]==1.21.6
-exceptiongroup==1.1.2 ; python_version < '3.11'
-fonttools==4.40.0 ; python_version >= '3.8'
-h11==0.14.0 ; python_version >= '3.7'
-httpcore==0.17.3 ; python_version >= '3.7'
-httpx==0.24.1 ; python_version >= '3.7'
-idna==3.4 ; python_version >= '3.5'
-imageio==2.31.1 ; python_version >= '3.7'
+drf-yasg==1.21.6
+et-xmlfile==1.1.0
+exceptiongroup==1.1.2
+fonttools==4.40.0
+gunicorn==21.2.0
+h11==0.14.0
+httpcore==0.17.3
+httpx==0.24.1
+hyperlink==21.0.0
+idna==3.4
+imageio==2.31.1
 importlib-metadata==6.7.0
-inflection==0.5.1 ; python_version >= '3.5'
-jdatetime==4.1.1 ; python_version >= '3.7'
-joblib==1.3.1 ; python_version >= '3.7'
-jsonschema==4.18.0 ; python_version >= '3.8'
-jsonschema-specifications==2023.6.1 ; python_version >= '3.8'
+incremental==22.10.0
+inflection==0.5.1
+iniconfig==2.0.0
+itypes==1.2.0
+jdatetime==4.1.1
+Jinja2==3.1.3
+joblib==1.3.1
+jsonschema==4.18.0
+jsonschema-specifications==2023.6.1
 kavenegar==1.1.2
-kiwisolver==1.4.4 ; python_version >= '3.7'
+kiwisolver==1.4.4
+kombu==5.3.5
 lxml==4.9.3
-markdown==3.4.3
+Markdown==3.4.3
+MarkupSafe==2.1.4
 matplotlib==3.5.1
-mechanicalsoup==1.3.0
-networkx==3.1 ; python_version >= '3.8'
-numpy==1.25.0
-# opencv-python==4.5.5.62
-outcome==1.2.0 ; python_version >= '3.7'
-packaging==23.1 ; python_version >= '3.7'
+MechanicalSoup==1.3.0
+model-bakery==1.17.0
+msgpack==1.0.7
+networkx==3.1
+numpy
+openpyxl==3.1.2
+outcome==1.2.0
+packaging==23.1
 pandas==1.4.0
 persiantools==3.0.1
-pillow==10.0.0
-# psycopg2==2.9.6
-psycopg2-binary==2.9.9 # for ubuntu
+Pillow==10.0.0
+pluggy==1.4.0
+prompt-toolkit==3.0.43
+psycopg2-binary==2.9.9
+pyasn1==0.5.1
+pyasn1-modules==0.3.0
 pycparser==2.21
-pyjwt==2.7.0 ; python_version >= '3.7'
-pyparsing==3.1.0 ; python_full_version >= '3.6.8'
-pysocks==1.7.1
-python-dateutil==2.8.2 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
+PyJWT==2.7.0
+pyOpenSSL==24.0.0
+pyparsing==3.1.0
+PySocks==1.7.1
+pytest==7.4.4
+pytest-django==4.7.0
+python-dateutil==2.8.2
 python-decouple==3.8
-python-dotenv==1.0.0 ; python_version >= '3.8'
+python-dotenv==1.0.0
 python-telegram-bot==20.3
 pytz==2023.3
-pywavelets==1.4.1 ; python_version >= '3.8'
-pyyaml==6.0 ; python_version >= '3.6'
-referencing==0.29.1 ; python_version >= '3.8'
+PyWavelets==1.4.1
+PyYAML==6.0
+redis==5.0.1
+referencing==0.29.1
 requests==2.31.0
 rest-framework-simplejwt==0.0.2
-rpds-py==0.8.8 ; python_version >= '3.8'
-# scikit-image==0.19.1
-# scikit-learn==1.0.2
-# scipy==1.11.1 ; python_version < '3.13' and python_version >= '3.9'
-# selenium==4.8.0
-six==1.16.0 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-sniffio==1.3.0 ; python_version >= '3.7'
+rpds-py==0.8.8
+service-identity==24.1.0
+six==1.16.0
+sniffio==1.3.0
 sortedcontainers==2.4.0
-soupsieve==2.4.1 ; python_version >= '3.7'
-sqlparse==0.4.4 ; python_version >= '3.5'
+soupsieve==2.4.1
+sqlparse==0.4.4
 swagger-spec-validator==3.0.3
-threadpoolctl==3.1.0 ; python_version >= '3.6'
-tifffile==2023.7.4 ; python_version >= '3.8'
-tqdm==4.65.0 ; python_version >= '3.7'
-trio==0.22.1 ; python_version >= '3.7'
-trio-websocket==0.10.3 ; python_version >= '3.7'
-typing-extensions==4.7.1 ; python_version < '3.11'
-uritemplate==4.1.1 ; python_version >= '3.6'
-urllib3[socks]==1.26.16 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'
-# watchdog==3.0.0
-# webdriver-manager==3.8.6
-wsproto==1.2.0 ; python_full_version >= '3.7.0'
-zipp==3.15.0 ; python_version >= '3.7'
-gunicorn
-openpyxl
-coreapi
-daphne
-channels-redis==4.1.0
-pytest
-pytest-django
-model-bakery
-
-
-# background process and cache
-celery
-redis
-django-redis
+threadpoolctl==3.1.0
+tifffile==2023.7.4
+tomli==2.0.1
+tqdm==4.65.0
+trio==0.22.1
+trio-websocket==0.10.3
+Twisted==23.10.0
+twisted-iocpsupport==1.0.4
+txaio==23.1.1
+typing_extensions==4.7.1
+tzdata==2023.4
+uritemplate==4.1.1
+urllib3==1.26.16
+vine==5.1.0
+wcwidth==0.2.13
+wsproto==1.2.0
+zipp==3.15.0
+zope.interface==6.1

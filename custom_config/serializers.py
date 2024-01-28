@@ -4,8 +4,7 @@ from rest_framework import serializers
 
 from accounts.serializers import SimpleUserSerializer
 from botapp.models import User_telegram
-from custom_config.models import Cart, CartItem, Order, OrderItem, TeacherReview, TeacherVote, ReviewVote, \
-    WebNotification
+from custom_config.models import Cart, CartItem, Order, OrderItem
 from custom_config.signals import order_created
 
 from university.models import Course
@@ -276,141 +275,141 @@ class CourseCartOrderInfoSerializer(serializers.ModelSerializer):
         fields = ['name', 'price', 'contain_telegram', 'contain_sms',
                   'contain_email']
 
-
-class BaseFlatteningSerializer(serializers.ModelSerializer):
-    def to_representation(self, obj):
-        representation = super().to_representation(obj)
-        if 'user' in representation:
-            user_representation = representation.pop('user')
-            for sub_key in user_representation:
-                representation[sub_key] = user_representation[sub_key]
-            if self.context.get('is_admin'):
-                return representation
-            # TODO: Check if you want to show id to every one or just the admin
-            # if 'id' in representation:
-            #     representation.pop('id')
-            return representation
-
-
-class ReviewVoteSerializer(BaseFlatteningSerializer):
-    user = SimpleUserSerializer(read_only=True)
-
-    class Meta:
-        model = ReviewVote
-        fields = ['id', 'user', 'vote', ]
-
-
-class ModifyReviewVoteSerializer(serializers.ModelSerializer):
-    def validate_vote(self, value):
-        if value > 1 or value < -1:
-            raise serializers.ValidationError('You must send a vote between -1 and 1.')
-        return value
-
-    def save(self, **kwargs):
-        user = self.context.get('user')
-        review = self.context.get('review')
-        vote = self.validated_data['vote']
-
-        review_vote, _ = ReviewVote.objects.get_or_create(user=user, review=review)
-        review_vote.vote = vote
-        review_vote.save()
-        self.instance = review_vote
-        return self.instance
-
-    class Meta:
-        model = ReviewVote
-        fields = ['vote', ]
-
-
-class TeacherVoteSerializer(BaseFlatteningSerializer):
-    user = SimpleUserSerializer(read_only=True)
-
-    class Meta:
-        model = TeacherVote
-        fields = ['id', 'user', 'vote', ]
-
-
-class ModifyTeacherVoteSerializer(serializers.ModelSerializer):
-    def validate_vote(self, value):
-        if value > 1 or value < -1:
-            raise serializers.ValidationError('You must send a vote between -1 and 1.')
-        return value
-
-    def save(self, **kwargs):
-        user = self.context.get('user')
-        teacher = self.context.get('teacher')
-        vote = self.validated_data['vote']
-
-        teacher_vote, _ = TeacherVote.objects.get_or_create(user=user, teacher=teacher)
-        teacher_vote.vote = vote
-        teacher_vote.save()
-        self.instance = teacher_vote
-        return self.instance
-
-    class Meta:
-        model = TeacherVote
-        fields = ['vote', ]
-
-
-class TeacherReviewSerializer(BaseFlatteningSerializer):
-    user = SimpleUserSerializer(read_only=True)
-    votes = ReviewVoteSerializer(many=True, read_only=True)
-    total_votes_count = serializers.SerializerMethodField(read_only=True)
-    total_votes_score = serializers.SerializerMethodField(read_only=True)
-    total_up_vote_count = serializers.SerializerMethodField(read_only=True)
-    total_down_vote_count = serializers.SerializerMethodField(read_only=True)
-
-    def get_total_votes_count(self, teacher_review: TeacherReview):
-        return teacher_review.votes.count()
-
-    def get_total_votes_score(self, teacher_review: TeacherReview):
-        return sum(vote.vote for vote in teacher_review.votes.all())
-
-    def get_total_up_vote_count(self, teacher_review: TeacherReview):
-        return teacher_review.votes.filter(vote=1).count()
-
-    def get_total_down_vote_count(self, teacher_review: TeacherReview):
-        return teacher_review.votes.filter(vote=-1).count()
-
-    class Meta:
-        model = TeacherReview
-        fields = ['id', 'user', 'text', 'votes',
-                  'total_votes_count', 'total_votes_score',
-                  'total_up_vote_count', 'total_down_vote_count']
-
-
-class ModifyTeacherReviewSerializer(serializers.ModelSerializer):
-    def validate_text(self, value):
-        if value is None or len(value) == 0:
-            raise serializers.ValidationError('You need to fill in the text of review.')
-        return value
-
-    def save(self, **kwargs):
-        user = self.context.get('user')
-        teacher = self.context.get('teacher')
-        text = self.validated_data['text']
-
-        teacher_review = TeacherReview.objects.create(user=user, teacher=teacher)
-        teacher_review.text = text
-        teacher_review.save()
-        self.instance = teacher_review
-        return self.instance
-
-    class Meta:
-        model = TeacherReview
-        fields = ['text', ]
-
-
-class WebNotificationSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=True)
-    title = serializers.CharField(read_only=True)
-    text = serializers.CharField(read_only=True)
-    applied_at = serializers.SerializerMethodField(read_only=True)
-    is_read = serializers.BooleanField()
-
-    def get_applied_at(self, web_notification: WebNotification):
-        return web_notification.jalali_applied_at
-
-    class Meta:
-        model = WebNotification
-        fields = ['id', 'title', 'text', 'applied_at', 'is_read']
+#
+# class BaseFlatteningSerializer(serializers.ModelSerializer):
+#     def to_representation(self, obj):
+#         representation = super().to_representation(obj)
+#         if 'user' in representation:
+#             user_representation = representation.pop('user')
+#             for sub_key in user_representation:
+#                 representation[sub_key] = user_representation[sub_key]
+#             if self.context.get('is_admin'):
+#                 return representation
+#             # TODO: Check if you want to show id to every one or just the admin
+#             # if 'id' in representation:
+#             #     representation.pop('id')
+#             return representation
+#
+#
+# class ReviewVoteSerializer(BaseFlatteningSerializer):
+#     user = SimpleUserSerializer(read_only=True)
+#
+#     class Meta:
+#         model = ReviewVote
+#         fields = ['id', 'user', 'vote', ]
+#
+#
+# class ModifyReviewVoteSerializer(serializers.ModelSerializer):
+#     def validate_vote(self, value):
+#         if value > 1 or value < -1:
+#             raise serializers.ValidationError('You must send a vote between -1 and 1.')
+#         return value
+#
+#     def save(self, **kwargs):
+#         user = self.context.get('user')
+#         review = self.context.get('review')
+#         vote = self.validated_data['vote']
+#
+#         review_vote, _ = ReviewVote.objects.get_or_create(user=user, review=review)
+#         review_vote.vote = vote
+#         review_vote.save()
+#         self.instance = review_vote
+#         return self.instance
+#
+#     class Meta:
+#         model = ReviewVote
+#         fields = ['vote', ]
+#
+#
+# class TeacherVoteSerializer(BaseFlatteningSerializer):
+#     user = SimpleUserSerializer(read_only=True)
+#
+#     class Meta:
+#         model = TeacherVote
+#         fields = ['id', 'user', 'vote', ]
+#
+#
+# class ModifyTeacherVoteSerializer(serializers.ModelSerializer):
+#     def validate_vote(self, value):
+#         if value > 1 or value < -1:
+#             raise serializers.ValidationError('You must send a vote between -1 and 1.')
+#         return value
+#
+#     def save(self, **kwargs):
+#         user = self.context.get('user')
+#         teacher = self.context.get('teacher')
+#         vote = self.validated_data['vote']
+#
+#         teacher_vote, _ = TeacherVote.objects.get_or_create(user=user, teacher=teacher)
+#         teacher_vote.vote = vote
+#         teacher_vote.save()
+#         self.instance = teacher_vote
+#         return self.instance
+#
+#     class Meta:
+#         model = TeacherVote
+#         fields = ['vote', ]
+#
+#
+# class TeacherReviewSerializer(BaseFlatteningSerializer):
+#     user = SimpleUserSerializer(read_only=True)
+#     votes = ReviewVoteSerializer(many=True, read_only=True)
+#     total_votes_count = serializers.SerializerMethodField(read_only=True)
+#     total_votes_score = serializers.SerializerMethodField(read_only=True)
+#     total_up_vote_count = serializers.SerializerMethodField(read_only=True)
+#     total_down_vote_count = serializers.SerializerMethodField(read_only=True)
+#
+#     def get_total_votes_count(self, teacher_review: TeacherReview):
+#         return teacher_review.votes.count()
+#
+#     def get_total_votes_score(self, teacher_review: TeacherReview):
+#         return sum(vote.vote for vote in teacher_review.votes.all())
+#
+#     def get_total_up_vote_count(self, teacher_review: TeacherReview):
+#         return teacher_review.votes.filter(vote=1).count()
+#
+#     def get_total_down_vote_count(self, teacher_review: TeacherReview):
+#         return teacher_review.votes.filter(vote=-1).count()
+#
+#     class Meta:
+#         model = TeacherReview
+#         fields = ['id', 'user', 'text', 'votes',
+#                   'total_votes_count', 'total_votes_score',
+#                   'total_up_vote_count', 'total_down_vote_count']
+#
+#
+# class ModifyTeacherReviewSerializer(serializers.ModelSerializer):
+#     def validate_text(self, value):
+#         if value is None or len(value) == 0:
+#             raise serializers.ValidationError('You need to fill in the text of review.')
+#         return value
+#
+#     def save(self, **kwargs):
+#         user = self.context.get('user')
+#         teacher = self.context.get('teacher')
+#         text = self.validated_data['text']
+#
+#         teacher_review = TeacherReview.objects.create(user=user, teacher=teacher)
+#         teacher_review.text = text
+#         teacher_review.save()
+#         self.instance = teacher_review
+#         return self.instance
+#
+#     class Meta:
+#         model = TeacherReview
+#         fields = ['text', ]
+#
+#
+# class WebNotificationSerializer(serializers.ModelSerializer):
+#     id = serializers.IntegerField(read_only=True)
+#     title = serializers.CharField(read_only=True)
+#     text = serializers.CharField(read_only=True)
+#     applied_at = serializers.SerializerMethodField(read_only=True)
+#     is_read = serializers.BooleanField()
+#
+#     def get_applied_at(self, web_notification: WebNotification):
+#         return web_notification.jalali_applied_at
+#
+#     class Meta:
+#         model = WebNotification
+#         fields = ['id', 'title', 'text', 'applied_at', 'is_read']
