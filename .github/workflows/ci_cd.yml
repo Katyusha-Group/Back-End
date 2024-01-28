@@ -27,7 +27,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3  # Use v2 with a more recent Python version
       with:
@@ -41,6 +40,26 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements.txt
 
+    - name: Check Database Connection
+      run: |
+        python -c "
+        import psycopg2
+
+        try:
+            conn = psycopg2.connect(
+                dbname='katyush2_db',
+                user='katyush2_admin',
+                password='katyusha@dmin2023',
+                host='localhost',
+                port='5432'
+            )
+            conn.close()
+            print('Database connection successful!')
+        except Exception as e:
+            print('Database connection error:', str(e))
+            exit(1)
+        "
+
     - name: Run tests
       env:
           DB: ${{ matrix.db }}
@@ -48,7 +67,6 @@ jobs:
           DB_PORT: ${{ matrix.db_port }}
           DB_PASSWORD: katyusha@dmin2023
       run: pytest
-
 
   deploy:  
     needs: build-and-test  
