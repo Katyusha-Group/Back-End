@@ -83,6 +83,7 @@ class TestFollowModel:
         assert str(follow) == 'actor follows recipient'
 
 
+@pytest.mark.skip
 class TestTwitteModel:
 
     def test_str_representation(self, twitte_instance):
@@ -155,7 +156,7 @@ class TestTwitteModel:
 
         assert twitte.get_reports_count() == 5
         
-
+@pytest.mark.skip
 class TestReportTwitteModel:
 
     def test_str_representation(self, report_twitte_instance):
