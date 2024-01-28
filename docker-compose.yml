@@ -9,31 +9,20 @@ services:
       - "6379:6379"
     command:  redis-server --save 60 1 --loglevel warning
     restart: always
-    networks:
-      - katyusha
 
 
   backend:
     build: .
     container_name: backend
+
     volumes:
       - .:/app
       - static_volume:/app/static
       - media_volume:/app/media
-    environment:
-      - POSTGRES_HOST_AUTH_METHOD=trust
-      - POSTGRES_USER=katyush2_admin
-      - POSTGRES_PASSWORD=katyusha@dmin2023
-      - POSTGRES_DB=katyush2_db
+
     depends_on:
       - db
       - redis
-    env_file:
-      - ./core/deploy.env 
-    links:
-      - db:db
-    networks:
-      - katyusha
 
 #  worker:
 #    build: .
@@ -51,12 +40,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_HOST_AUTH_METHOD=trust 
       - POSTGRES_USER=katyush2_admin
       - POSTGRES_PASSWORD=katyusha@dmin2023
       - POSTGRES_DB=katyush2_db
-    networks:
-      - katyusha
 
   nginx:
     image: nginx
@@ -76,7 +62,3 @@ volumes:
   postgres_data:
   static_volume:
   media_volume:
-
-networks:
-  katyusha:
-    driver: bridge

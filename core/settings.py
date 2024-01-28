@@ -14,11 +14,11 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
-from environs import Env
+# from environs import Env
 
 # Environment Variables
-env = Env()
-env.read_env()
+# env = Env()
+# env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -92,12 +92,20 @@ WSGI_APPLICATION = 'core.wsgi.application'
 ASGI_APPLICATION = "core.asgi.application"
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #     'NAME': env.str('DB_NAME'),
+    #     'USER': env.str('DB_USER'), 
+    #     'PASSWORD': env.str('DB_PASSWORD'),  
+    #     'HOST': env.str('DB_HOST'), 
+    #     'PORT': '5432',
+    # }
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': env.str('DB_NAME'),
-        'USER': env.str('DB_USER'), 
-        'PASSWORD': env.str('DB_PASSWORD'),  
-        'HOST': env.str('DB_HOST'), 
+        'NAME': 'katyush2_db',
+        'USER': 'katyush2_admin',
+        'PASSWORD': 'katyusha@dmin2023',
+        'HOST': 'database',
         'PORT': '5432',
     }
 }
@@ -270,7 +278,8 @@ EMAIL_HOST_PASSWORD = 'wsumkosjhltxfsox'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1')  # on server
+# REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1') 
+redis_host = "redis"  # on server
 # redis_host = "localhost" # on localhost
 
 CHANNEL_LAYERS = {
@@ -278,7 +287,8 @@ CHANNEL_LAYERS = {
         # "BACKEND": 'channels.layers.InMemoryChannelLayer'
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [(REDIS_HOST, 6379)],
+            # "hosts": [(REDIS_HOST, 6379)],
+            "hosts": [(redis_host, 6379)],
         },
     },
 }
