@@ -65,6 +65,7 @@ jobs:
           DB_HOST: 'localhost'
           DB_PORT: ${{ matrix.db_port }}
           DB_PASSWORD: katyusha@dmin2023
+          DB_NAME: 'katyush2_db'
       run: pytest
 
   deploy:  
