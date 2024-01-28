@@ -8,7 +8,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
       matrix:
         db: [postgres]
         python-version: ["3.10"]  # Specify a Python version that is available
@@ -22,11 +21,7 @@ jobs:
           POSTGRES_USER: katyush2_admin
           POSTGRES_PASSWORD: katyusha@dmin2023
           POSTGRES_DB: katyush2_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+
         ports:
           - 5432:5432
 
