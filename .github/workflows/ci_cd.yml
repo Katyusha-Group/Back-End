@@ -22,14 +22,17 @@ jobs:
         restore-keys: |  
           ${{ runner.os }}-buildx-  
 
-    - name: Execute Tests
-      run: docker-compose -f docker-compose.yml run backend pytest
+    - name: Build
+      run: docker-compose up
 
     - name: Make scripts executable  
       run: |  
         chmod a+x start.sh
         chmod a+x ./deployment/start_daphne.sh  
         chmod a+x ./deployment/start_app.sh  
+
+    - name: Execute Tests
+      run: docker-compose -f docker-compose.yml run backend pytest
 
 
 
