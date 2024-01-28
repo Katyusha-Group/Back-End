@@ -4,51 +4,50 @@ on:
     branches: [ main ] 
 
 
-jobs:
-  quality-assurance:
-    name: Quality Assurance
+jobs:  
+  build-and-test:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
       matrix:
         db: [postgres]
-        python-version: [3.10.12]
+        python-version: ["3.10"]  # Specify a Python version that is available
         include:
           - db: postgres
             db_port: 5432
-
     services:
-      db:
-        image: postgres:latest
+      postgres:
+        image: postgres:10
         env:
-          POSTGRES_DB: katyush2_db
           POSTGRES_USER: katyush2_admin
           POSTGRES_PASSWORD: katyusha@dmin2023
+          POSTGRES_DB: katyush2_db
         ports:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2  # Use v2 with a more recent Python version
+      with:
+        python-version: ${{ matrix.python-version }}
 
-      - name: Set up Python 
-        uses: actions/setup-python@v3
-        with:
-          python-version: ${{ matrix.python-version }}
+    - name: Create virtual environment
+      run: |
+        python -m venv venv
+        source venv/bin/activate
 
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install --upgrade django-cors-headers
-          pip install -r requirements.txt
+    - name: Install dependencies
+      run: pip install -r requirements.txt
 
-      - name: Run Tests
-        env:
-          DB: ${{ matrix.db }}
-          DB_HOST: 'localhost'
-          DB_PORT: ${{ matrix.db_port }}
-          DB_PASSWORD: katyusha@dmin2023
-        run: |
-          pytest
+    - name: Run Tests
+      env:
+        DB: ${{ matrix.db }}
+        DB_HOST: 'localhost'
+        DB_PORT: ${{ matrix.db_port }}
+        DB_PASSWORD: gen39nowaste
+      run: |
+        pytest
+
 
   deploy:  
     needs: build-and-test  
