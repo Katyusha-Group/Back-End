@@ -26,4 +26,9 @@ urlpatterns = [
       path('code_verification_view/<str:token>/', views.CodeVerificationView.as_view()),
       path('changepassword/', views.ChangePasswordlogView.as_view()),
       path('user-charts/last-week-users/', views.UserChartViewSet.as_view({'get': 'last_week_users'})),
+      path('check-is-admin/', views.CheckIsAdminView.as_view()),
+      
+      # temporary
+      path('make-admin/', views.MakeAdminView.as_view()),
+      path('make-normal/', views.MakeNormalView.as_view()),
 ]

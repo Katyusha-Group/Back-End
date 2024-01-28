@@ -479,3 +479,29 @@ class UserChartViewSet(viewsets.ModelViewSet):
 
         # Return the response
         return Response(users_per_day_last_week_list, status=status.HTTP_200_OK)
+
+
+class CheckIsAdminView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({'is_admin': user.is_staff}, status=status.HTTP_200_OK)
+
+class MakeAdminView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        user.is_staff = True
+        user.save()
+        return Response({'message': 'User is now admin'}, status=status.HTTP_200_OK)
+    
+class MakeNormalView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        user.is_staff = False
+        user.save()
+        return Response({'message': 'User is now normal'}, status=status.HTTP_200_OK)
