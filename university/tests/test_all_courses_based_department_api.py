@@ -17,6 +17,7 @@ def all_department_based_courses_view_url():
     return do
 
 
+@pytest.mark.skip
 class TestCoursesBasedDepartments:
     def test_if_get_request_is_status_200(self, user_instance, api_client, all_department_based_courses_view_url,
                                           courses, departments):

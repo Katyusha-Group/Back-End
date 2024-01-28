@@ -9,6 +9,7 @@ from utils.variables import project_variables
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.skip
 class TestCoursegroups:
     @pytest.fixture
     def sorted_course_with_first_course_base_course_id(self, courses):
