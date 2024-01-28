@@ -241,7 +241,7 @@ class TwitteSerializer(serializers.ModelSerializer):
         return obj.get_reports_count()
 
     def get_conversation_id(self, obj: Twitte):
-        return obj.get_conversation().id
+        return obj.get_conversation().id if obj.get_conversation() else None
 
     class Meta:
         model = Twitte

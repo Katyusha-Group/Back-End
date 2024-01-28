@@ -35,6 +35,32 @@ def actor_profile():
     user = baker.make(User, gender='M', email='actor@gmail.com')
     return Profile.get_profile_for_user(user)
 
+@pytest.fixture
+def profile_twitte():
+    user = baker.make(User, gender='M', email='profile_twitte@gmail.com')
+    return Profile.get_profile_for_user(user)
+
+@pytest.fixture
+def other_profile_twitte():
+    user = baker.make(User, gender='M', email='other_profile_twitte@gmail.com')
+    return Profile.get_profile_for_user(user)
+
+@pytest.fixture
+def twitte_instance(profile_twitte):
+    return baker.make(Twitte, profile=profile_twitte)
+
+@pytest.fixture
+def other_twitte_instance(other_profile_twitte):
+    return baker.make(Twitte, profile=other_profile_twitte)
+
+@pytest.fixture
+def reporter_profile():
+    user = baker.make(User, gender='M', email='reporter_profile@gmail.com')
+    return Profile.get_profile_for_user(user)
+
+@pytest.fixture
+def to_report_twitte_instance(profile_twitte):
+    return baker.make(Twitte, profile=profile_twitte)
 
 def tweet():
     return baker.make(Twitte)
