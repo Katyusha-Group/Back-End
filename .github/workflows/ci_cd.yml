@@ -11,7 +11,7 @@ jobs:
       max-parallel: 4
       matrix:
         db: [postgres]
-        python-version: [3.8]  # Specify a Python version that is available
+        python-version: [3.10]  # Specify a Python version that is available
         include:
           - db: postgres
             db_port: 5432
