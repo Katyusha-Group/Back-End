@@ -39,12 +39,17 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements.txt
 
+    - name: Check Database Connection
+      run: |
+        # Replace with your Django manage.py command that checks the database connection
+        python manage.py check_db_connection
+
     - name: Run Tests
       env:
-        DB: ${{ matrix.db }}
+        DB: 'postgres'
         DB_HOST: 'localhost'
-        DB_PORT: ${{ matrix.db_port }}
-        DB_PASSWORD: gen39nowaste
+        DB_PORT: '5432'
+        DB_PASSWORD: 'katyusha@dmin2023'
       run: |
         pytest
 
