@@ -3,7 +3,6 @@ on:
   push:  
     branches: [ main ] 
 
-
 jobs:  
   build-and-test:
     runs-on: ubuntu-latest
@@ -70,24 +69,21 @@ jobs:
           WEBSITE_URL: 'localhost'
       run: pytest
 
-  deploy:  
-    needs: build-and-test  
+  Deploy:  
+    needs: build-and-test  # This ensures that deploy job runs only if build job succeeds  
+    name: deploy  
     runs-on: ubuntu-latest  
-    if: github.ref == 'refs/heads/master'  
     steps:  
-    - name: Checkout code  
-      uses: actions/checkout@v2  
-
-    - name: Setup SSH  
-      uses: webfactory/ssh-agent@v0.5.0  
-      with:  
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  
-
-    - name: Deploy to VPS  
-      run: |  
-        ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} -p ${{ secrets.VPS_PORT }} <<EOF  
-          cd /path/to/your/project  
-          docker-compose -f docker-compose.yml down  
-          git pull  
-          docker-compose -f docker-compose.yml up --build -d  
-        EOF
+      - uses: actions/checkout@v2  
+      - name: Connect  
+        uses: appleboy/ssh-action@master  
+        with:  
+          username: ${{ secrets.USERNAME }}  
+          password: ${{ secrets.PASSWORD }}  
+          host: ${{ secrets.HOST }}  
+          port: ${{ secrets.PORT }}  
+          script: |  
+            cd /root/Back-End
+            docker compose down  
+            git pull  
+            docker compose up --build -d
