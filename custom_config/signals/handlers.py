@@ -3,7 +3,7 @@ from django.dispatch import receiver
 
 from custom_config.scripts import messages
 from social_media.signals import send_notification
-from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment, BaseCourse
+from university.models import Course, ExamTimePlace, CourseTimePlace, AllowedDepartment, BaseCourse, Teacher
 from custom_config.models import FieldTracker, ModelTracker
 from social_media.models import Profile, Twitte, Notification
 import custom_config.scripts.signals_scripts as requirements
@@ -117,11 +117,30 @@ def notification_handler(sender, **kwargs):
         model_tracker = kwargs['instance']
         course_name, course_number = model_tracker.course_name, model_tracker.course_number
         if model_tracker.action == ModelTracker.ACTION_CREATED:
-            title, text = messages.get_email_add_for_ordered_courses(course_name, course_number)
+            course = Course.objects.filter(id=model_tracker.instance_id).first()
+            text = messages.get_add_message_text(course=course, model_type='C')
+            tweet = Twitte.objects.create_twitte(
+                profile=Profile.objects.get(profile_type='C', object_id=course.base_course.course_number),
+                content=text)
+            send_notification.send(sender=None, notification_type=Notification.TYPE_NEW_POST,
+                                   actor=tweet.profile, tweet=tweet)
+
+            text = messages.get_add_message_text(course=course, model_type='T')
+            for teacher in course.teachers.all():
+                tweet = Twitte.objects.create_twitte(
+                    profile=Profile.objects.get(profile_type='T', object_id=teacher.id),
+                    content=text)
+                send_notification.send(sender=None, notification_type=Notification.TYPE_NEW_POST,
+                                       actor=tweet.profile, tweet=tweet)
+
         elif model_tracker.action == ModelTracker.ACTION_DELETED:
-            title, text = messages.get_email_delete_for_ordered_courses(course_name, course_number)
-        else:
-            return
+            course_number, class_gp = course_number.split('_')
+            text = messages.get_delete_message_text(class_gp, 'C')
+            tweet = Twitte.objects.create_twitte(
+                profile=Profile.objects.get(profile_type='C', object_id=int(course_number)),
+                content=text)
+            send_notification.send(sender=None, notification_type=Notification.TYPE_NEW_POST,
+                                   actor=tweet.profile, tweet=tweet)
         # requirements.create_notification(title, text, model_tracker)
 
 
