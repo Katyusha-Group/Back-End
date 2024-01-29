@@ -93,7 +93,7 @@ class SignUpView(GenericAPIView):
             "user": UserSerializer(user).data,
             "message": "User created successfully. Please check your email to activate your account.",
             "code": verification_code,
-            "url": f'{project_variables.DOMAIN}/accounts/activation-confirm/{token}',
+            "url": f'{settings.WEBSITE_URL}/accounts/activation-confirm/{token}',
             "token": token,
 
         }
@@ -242,7 +242,7 @@ class ActivationResend(generics.GenericAPIView):
                                                     show_text=show_text)
             return Response({
                 "message": "email sent",
-                "url": f'{project_variables.DOMAIN}/accounts/activation-confirm/{token}',
+                "url": f'{settings.WEBSITE_URL}/accounts/activation-confirm/{token}',
             }, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -324,7 +324,7 @@ class ForgotPasswordView(APIView):
         return Response(
             {
                 'detail': 'Code Sent',
-                'link': f'{project_variables.DOMAIN}/accounts/code_verification_view/{token}/'
+                'link': f'{settings.WEBSITE_URL}/accounts/code_verification_view/{token}/'
             }
         )
 
@@ -391,7 +391,7 @@ class CodeVerificationView(APIView):
         user.save()
 
         return Response(
-            {'message': 'code is valid', 'link': f'{project_variables.DOMAIN}/accounts/change-password/{token}/'},
+            {'message': 'code is valid', 'link': f'{settings.WEBSITE_URL}/accounts/change-password/{token}/'},
             status=status.HTTP_200_OK)
 
     @staticmethod

@@ -1,10 +1,9 @@
 import requests
-
-from utils.variables import project_variables
+from django.conf import settings
 
 
 def get_bot_url(csrftoken, token):
-    url = f'{project_variables.DOMAIN}/bot/telegram_link'
+    url = f'{settings.WEBSITE_URL}/bot/telegram_link'
     headers = {
         'X-CSRFToken': f'{csrftoken}',
         'Authorization': f'Bearer {token}',

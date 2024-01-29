@@ -20,6 +20,9 @@ from environs import Env
 env = Env()
 env.read_env()
 
+# Setting Website URL
+WEBSITE_URL = env.str('WEBSITE_URL')
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 

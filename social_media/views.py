@@ -1,4 +1,5 @@
 import requests
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, Value, Case, When, BooleanField, ExpressionWrapper, F, IntegerField, Prefetch
@@ -18,7 +19,6 @@ from .models import Profile, Follow, Twitte, Notification, ReportTwitte
 from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer, \
     ProfileUsernameSerializer, TwitteSerializer, LikeSerializer, NotificationSerializer, ReportTwitteSerializer, \
     MyProfileSerializer
-from utils.variables import project_variables
 
 from .permissions import IsTwitterOwner, IsReportTwitteOwner
 from .pagination import DefaultPagination
@@ -81,7 +81,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         data = serializer.data
-        data['image'] = f'{project_variables.DOMAIN}/{serializer.data["image"]}'
+        data['image'] = f'{settings.WEBSITE_URL}/{serializer.data["image"]}'
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], serializer_class=ProfileSerializer,
