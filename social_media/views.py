@@ -439,6 +439,8 @@ class ManageTwittesViewSet(TwitteViewSet):
     permission_classes = [IsAdminUser]
     
     def get_permissions(self):
+        if self.action == 'destroy':
+            return [IsAdminUser()]
         return super().get_permissions()
 
     def get_queryset(self):
