@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db.models import Count, Q
 from django.urls import reverse
 from rest_framework import serializers
@@ -58,7 +59,7 @@ class SimpleTeacherSerializer(serializers.ModelSerializer):
     teacher_image = serializers.SerializerMethodField(read_only=True)
 
     def get_teacher_image(self, obj: Teacher):
-        return project_variables.DOMAIN + obj.teacher_image.url if obj.teacher_image else None
+        return settings.WEBSITE_URL + obj.teacher_image.url if obj.teacher_image else None
 
     class Meta:
         model = Teacher
@@ -392,13 +393,13 @@ class TeacherSerializer(SimpleTeacherSerializer):
     teacher_reviews = serializers.SerializerMethodField(read_only=True)
 
     def get_timeline(self, obj: Teacher):
-        return project_variables.DOMAIN + reverse('teacher-timeline', kwargs={'teacher_pk': obj.id})
+        return settings.WEBSITE_URL + reverse('teacher-timeline', kwargs={'teacher_pk': obj.id})
 
     def get_teacher_votes(self, obj: Teacher):
-        return project_variables.DOMAIN + reverse('teacher-votes-list', kwargs={'teacher_pk': obj.id})
+        return settings.WEBSITE_URL + reverse('teacher-votes-list', kwargs={'teacher_pk': obj.id})
 
     def get_teacher_reviews(self, obj: Teacher):
-        return project_variables.DOMAIN + reverse('teacher-reviews-list', kwargs={'teacher_pk': obj.id})
+        return settings.WEBSITE_URL + reverse('teacher-reviews-list', kwargs={'teacher_pk': obj.id})
 
     def get_courses(self, obj: Teacher):
         courses = Course.objects.filter(teachers__in=[obj], semester=project_variables.CURRENT_SEMESTER).distinct()

@@ -1,4 +1,5 @@
 import requests
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, Value, Case, When, BooleanField, ExpressionWrapper, F, IntegerField, Prefetch
@@ -13,12 +14,11 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from university.models import Course, Department
-from university.serializers import CourseSerializer
+from university.serializers import CourseSerializer, TeacherTimeLineSerializer, BaseCourseTimeLineSerializer
 from .models import Profile, Follow, Twitte, Notification, ReportTwitte
 from .serializers import ProfileSerializer, UpdateProfileSerializer, FollowSerializer, FollowersYouFollowSerializer, \
     ProfileUsernameSerializer, TwitteSerializer, LikeSerializer, NotificationSerializer, ReportTwitteSerializer, \
     MyProfileSerializer
-from utils.variables import project_variables
 
 from .permissions import IsTwitterOwner, IsReportTwitteOwner
 from .pagination import DefaultPagination
@@ -81,7 +81,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         data = serializer.data
-        data['image'] = f'{project_variables.DOMAIN}/{serializer.data["image"]}'
+        data['image'] = f'{settings.WEBSITE_URL}/{serializer.data["image"]}'
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], serializer_class=ProfileSerializer,
@@ -191,13 +191,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
         course = profile.content_object
         if not course:
             return Response({'detail': ['course not found']}, status=status.HTTP_404_NOT_FOUND)
-        url = reverse('course-timeline', kwargs={'course_number': course.course_number})
-        domain = self.get_serializer_context()['request'].build_absolute_uri('/')[:-1]
-        headers = {
-            'Authorization': f'Bearer {self.get_serializer_context()["token"]}'
-        }
-        response = requests.get(domain + url, headers=headers)
-        return Response(response.json(), status=response.status_code)
+        serializer = BaseCourseTimeLineSerializer([course], many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/teacher-timeline', )
     def view_teacher_timeline(self, request, username: str):
@@ -209,13 +204,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
         teacher = profile.content_object
         if not teacher:
             return Response({'detail': ['teacher not found']}, status=status.HTTP_404_NOT_FOUND)
-        url = reverse('teacher-timeline', kwargs={'teacher_id': teacher.id})
-        domain = self.get_serializer_context()['request'].build_absolute_uri('/')[:-1]
-        headers = {
-            'Authorization': f'Bearer {self.get_serializer_context()["token"]}'
-        }
-        response = requests.get(domain + url, headers=headers)
-        return Response(response.json(), status=response.status_code)
+        serializer = TeacherTimeLineSerializer([teacher], many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='(?P<username>\w+)/student-calendar', )
     def view_student_calendar(self, request, username: str):
@@ -449,6 +439,8 @@ class ManageTwittesViewSet(TwitteViewSet):
     permission_classes = [IsAdminUser]
     
     def get_permissions(self):
+        if self.action == 'destroy':
+            return [IsAdminUser()]
         return super().get_permissions()
 
     def get_queryset(self):

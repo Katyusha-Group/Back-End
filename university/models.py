@@ -1,10 +1,8 @@
 from django.db import models
 from django.core.validators import MinValueValidator, RegexValidator, MaxValueValidator
 from django.conf import settings
-from jdatetime import jalali
 
 from university import managers
-from utils.model_functions.date import get_persian_date
 from utils.variables import project_variables
 from utils.variables.project_variables import day_mapper
 
@@ -114,7 +112,7 @@ class Teacher(models.Model):
 
     @property
     def image_full_path(self):
-        return project_variables.DOMAIN + settings.MEDIA_URL + str(self.teacher_image)
+        return settings.WEBSITE_URL + settings.MEDIA_URL + str(self.teacher_image)
 
     def __str__(self):
         return self.name

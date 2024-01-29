@@ -129,7 +129,7 @@ SMS_PRICE = 2000
 TELEGRAM_PRICE = 1000
 MAX_VERIFICATION_TRIES = 5
 
-DOMAIN = 'http://37.32.13.62'
+DOMAIN = 'http://84.32.10.112'
 
 # General Departments
 GENERAL_DEPARTMENTS_ID = [
@@ -205,11 +205,11 @@ start_time_mapper = {
     7: 0,
     9: 1,
     10: 2,
-    12: 3,
-    13: 4,
-    15: 5,
-    16: 6,
-    18: 7,
+    13: 3,
+    14: 4,
+    16: 5,
+    17: 6,
+    19: 7,
 }
 
 action_mapper = {
