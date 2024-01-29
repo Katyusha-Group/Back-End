@@ -67,6 +67,7 @@ jobs:
           DB_PASSWORD: katyusha@dmin2023
           DB_NAME: 'katyush2_db'
           DB_USER: 'katyush2_admin'
+          WEBSITE_URL: 'localhost'
       run: pytest
 
   deploy:  
