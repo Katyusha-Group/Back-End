@@ -124,17 +124,13 @@ class TestProfileAPI:
         assert len(response.data) == 1
         assert response.data[0]['username'] == 'anotheruser'
 
-    @pytest.mark.skip(reason='Need check')
     def test_view_course_timeline(self, setup):
         base_course = baker.make(BaseCourse, name='Test Course', course_number=1234567)
         base_course_profile = Profile.objects.filter(content_type=ContentType.objects.get_for_model(BaseCourse),
                                                      object_id=base_course.pk).first()
-        try:
-            response = self.client.get(reverse('social_media:profiles-view-course-timeline',
-                                               kwargs={'username': base_course_profile.username}))
-            assert response.status_code == 200
-        except ConnectionError:
-            pass
+        response = self.client.get(reverse('social_media:profiles-view-course-timeline',
+                                           kwargs={'username': base_course_profile.username}))
+        assert response.status_code == 200
 
     def test_view_course_timeline_not_found(self, setup):
         response = self.client.get(reverse('social_media:profiles-view-course-timeline',
@@ -146,17 +142,13 @@ class TestProfileAPI:
                                            kwargs={'username': self.profile.username}))
         assert response.status_code == 400
 
-    @pytest.mark.skip(reason='Need check')
     def test_view_teacher_timeline(self, setup):
         teacher = baker.make(Teacher, name='Test Teacher')
         teacher_profile = Profile.objects.filter(content_type=ContentType.objects.get_for_model(Teacher),
                                                  object_id=teacher.pk).first()
-        try:
-            response = self.client.get(reverse('social_media:profiles-view-teacher-timeline',
-                                               kwargs={'username': teacher_profile.username}))
-            assert response.status_code == 200
-        except ConnectionError:
-            pass
+        response = self.client.get(reverse('social_media:profiles-view-teacher-timeline',
+                                           kwargs={'username': teacher_profile.username}))
+        assert response.status_code == 200
 
     def test_view_teacher_timeline_not_found(self, setup):
         response = self.client.get(reverse('social_media:profiles-view-teacher-timeline',

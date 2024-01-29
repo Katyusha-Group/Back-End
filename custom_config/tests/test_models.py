@@ -17,17 +17,22 @@ pytestmark = pytest.mark.django_db
 class TestModelTrackerModel:
     @pytest.fixture
     def model_tracker_instance(self):
-        return baker.make(ModelTracker)
+        base_course = baker.make(BaseCourse, course_number='1234567', name='test')
+        course = baker.make(Course, base_course=base_course, class_gp='01')
+        return baker.make(ModelTracker, instance_id=course.id, model=Course.__name__, is_course=True, action='C', )
 
     def test_return_str(self):
         base_course = baker.make(BaseCourse, course_number='1234567', name='test')
-        course = baker.make(Course, base_course=base_course)
+        course = baker.make(Course, base_course=base_course, class_gp='01')
         allowed_department = baker.make(AllowedDepartment, course=course)
         course_time_place = baker.make(CourseTimePlace, course=course)
         exam_time_place = baker.make(ExamTimePlace, course=course)
-        model_tracker = baker.make(ModelTracker, instance_id=allowed_department.id, model=AllowedDepartment.__name__)
-        model_tracker1 = baker.make(ModelTracker, instance_id=course_time_place.id, model=CourseTimePlace.__name__)
-        model_tracker2 = baker.make(ModelTracker, instance_id=exam_time_place.id, model=ExamTimePlace.__name__)
+        model_tracker = baker.make(ModelTracker, instance_id=allowed_department.id, model=AllowedDepartment.__name__,
+                                   action='U')
+        model_tracker1 = baker.make(ModelTracker, instance_id=course_time_place.id, model=CourseTimePlace.__name__,
+                                    action='U')
+        model_tracker2 = baker.make(ModelTracker, instance_id=exam_time_place.id, model=ExamTimePlace.__name__,
+                                    action='U')
 
         assert str(model_tracker) == str(allowed_department)
         assert str(model_tracker1) == str(course_time_place)
@@ -63,11 +68,13 @@ class TestModelTrackerModel:
 class TestFieldTracker:
     @pytest.fixture
     def model_tracker_instance(self):
-        return baker.make(ModelTracker)
+        base_course = baker.make(BaseCourse, course_number='1234567', name='test')
+        course = baker.make(Course, base_course=base_course, class_gp='01')
+        return baker.make(ModelTracker, instance_id=course.id, model=Course.__name__, is_course=True, action='U', )
 
     @pytest.fixture
-    def field_tracker_instance(self):
-        return baker.make(FieldTracker)
+    def field_tracker_instance(self, model_tracker_instance):
+        return baker.make(FieldTracker, tracker=model_tracker_instance, field='capacity', value='23')
 
     def test_return_str(self, field_tracker_instance):
         assert str(field_tracker_instance) == str(field_tracker_instance.field) + ' : ' + str(

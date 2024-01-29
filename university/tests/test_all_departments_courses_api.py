@@ -11,7 +11,6 @@ def all_departments_courses_view_url():
     return reverse('all-departments-courses')
 
 
-@pytest.mark.skip
 class TestCoursesBasedDepartments:
     def test_if_get_request_is_status_200(self, api_client, user_with_department, courses,
                                           all_departments_courses_view_url):
@@ -64,10 +63,10 @@ class TestCoursesBasedDepartments:
 
         assert len(response.data) == sum(
             [1 for course in courses if course.base_course.department == departments[0] and (
-                        course.sex == user_with_department.gender or course.sex is 'B')])
+                    course.sex == user_with_department.gender or course.sex is 'B')])
 
     def test_if_returned_data_has_correct_length_of_keys(self, api_client, user_with_department,
-                                                           all_departments_courses_view_url, courses):
+                                                         all_departments_courses_view_url, courses):
         api_client.force_login(user=user_with_department)
 
         response = api_client.get(all_departments_courses_view_url)
@@ -147,8 +146,10 @@ class TestCoursesBasedDepartments:
                 course_time_presentation = 7
 
             assert str(response_course_time[i]['course_day']) == str(course_time[i].day)
-            assert str(response_course_time[i]['course_start_time']).split('.')[0] == str(course_time[i].start_time).split('.')[0]
-            assert str(response_course_time[i]['course_end_time']).split('.')[0] == str(course_time[i].end_time).split('.')[0]
+            assert str(response_course_time[i]['course_start_time']).split('.')[0] == \
+                   str(course_time[i].start_time).split('.')[0]
+            assert str(response_course_time[i]['course_end_time']).split('.')[0] == \
+                   str(course_time[i].end_time).split('.')[0]
             assert str(response_course_time[i]['place']) == str(course_time[i].place)
             assert str(response_course_time[i]['course_time_representation']) == str(course_time_presentation)
 
@@ -165,8 +166,10 @@ class TestCoursesBasedDepartments:
         assert len(response_exam_time) == len(course_exam_time)
         for i in range(len(response_exam_time)):
             assert str(response_exam_time[i]['date']) == str(course_exam_time[i].date)
-            assert str(response_exam_time[i]['exam_start_time']).split('.')[0] == str(course_exam_time[i].start_time).split('.')[0]
-            assert str(response_exam_time[i]['exam_end_time']).split('.')[0] == str(course_exam_time[i].end_time).split('.')[0]
+            assert str(response_exam_time[i]['exam_start_time']).split('.')[0] == \
+                   str(course_exam_time[i].start_time).split('.')[0]
+            assert str(response_exam_time[i]['exam_end_time']).split('.')[0] == \
+                   str(course_exam_time[i].end_time).split('.')[0]
 
     def test_if_returned_data_has_correct_values_in_teachers_list(self, api_client, user_with_department,
                                                                   all_departments_courses_view_url,
@@ -184,8 +187,6 @@ class TestCoursesBasedDepartments:
             assert str(response_teachers[i]['name']) == str(course_teachers[i].name)
             assert str(response_teachers[i]['teacher_image']) == str(course_teachers[i].image_full_path)
 
-
-    @pytest.mark.skip
     def test_if_returned_data_has_correct_complete_course_number(self, api_client, user_with_department,
                                                                  all_departments_courses_view_url,
                                                                  courses_with_user_department):
@@ -196,8 +197,8 @@ class TestCoursesBasedDepartments:
         for course in courses_with_user_department:
             if response.data[0]['id'] == course.id:
                 assert response.data[0]['complete_course_number'] == course.complete_course_number
+                break
 
-    @pytest.mark.skip
     def test_if_returned_data_has_correct_color_intensity(self, api_client, user_with_department,
                                                           all_departments_courses_view_url,
                                                           courses_with_user_department):
@@ -208,8 +209,8 @@ class TestCoursesBasedDepartments:
         for course in courses_with_user_department:
             if response.data[0]['id'] == course.id:
                 assert response.data[0]['color_intensity_percentage'] == course.color_intensity_percentage
+                break
 
-    @pytest.mark.skip
     def test_if_returned_data_has_correct_is_allowed_field(self, api_client, user_with_department,
                                                            all_departments_courses_view_url,
                                                            courses_with_user_department):
